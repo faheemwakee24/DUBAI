@@ -12,7 +12,7 @@ import GlassCard from '../../components/ui/GlassCard';
 import { Images } from '../../assets/images';
 import { metrics } from '../../constants/metrics';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FontFamily, getFontFamily } from '../../constants/fonts';
+import { FontFamily } from '../../constants/fonts';
 import colors from '../../constants/colors';
 
 type WelcomeScreenNavigationProp = NativeStackNavigationProp<
@@ -20,7 +20,6 @@ type WelcomeScreenNavigationProp = NativeStackNavigationProp<
   'Welcome'
 >;
 
-const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
   const navigation = useNavigation<WelcomeScreenNavigationProp>();
@@ -47,7 +46,7 @@ export default function WelcomeScreen() {
         <GlassCard style={styles.welcomeCard}>
           <Text style={styles.welcomeTitle}>Welcome to Dub Nxt </Text>
           <Text
-           
+
             style={styles.welcomeSubtitle}
           >
             Transform videos with AI dubbing and bring characters to life
@@ -131,8 +130,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
     fontFamily: FontFamily.spaceGrotesk.bold,
-    fontSize:metrics.width(25),
-    color:colors.white
+    fontSize: metrics.width(25),
+    color: colors.white
   },
   welcomeSubtitle: {
     textAlign: 'center',
