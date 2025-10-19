@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
-import { ScreenBackground } from '../../components/ui';
+import { ScreenBackground, PrimaryButton, Icon } from '../../components/ui';
 
 type WelcomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Welcome'>;
 
@@ -34,12 +34,7 @@ export default function WelcomeScreen() {
                 {/* Main logo circle */}
                 <View style={styles.logoCircle}>
                     {/* Microphone/speech icon */}
-                    <View style={styles.micIcon}>
-                        <View style={styles.micBody} />
-                        <View style={styles.soundWave1} />
-                        <View style={styles.soundWave2} />
-                        <View style={styles.soundWave3} />
-                    </View>
+                    <Icon name="microphone" size={60} color="#fff" />
                 </View>
             </View>
 
@@ -51,13 +46,24 @@ export default function WelcomeScreen() {
                 </Text>
 
                 {/* Buttons */}
-                <TouchableOpacity style={styles.createAccountButton} onPress={handleCreateAccount}>
-                    <Text style={styles.createAccountText}>Create an Account</Text>
-                </TouchableOpacity>
+                <PrimaryButton
+                    title="Create an Account"
+                    onPress={handleCreateAccount}
+                    variant="secondary"
+                    size="medium"
+                    fullWidth
+                    style={styles.buttonSpacing}
+                />
 
-                <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
-                    <Text style={styles.signInText}>Sign In</Text>
-                </TouchableOpacity>
+                <PrimaryButton
+                    title="Sign In"
+                    onPress={handleSignIn}
+                    variant="primary"
+                    size="medium"
+                    fullWidth
+                    icon={<Icon name="arrow-right" size={20} color="#fff" />}
+                    iconPosition="right"
+                />
             </View>
         </ScreenBackground>
     );
@@ -104,44 +110,6 @@ const styles = StyleSheet.create({
         shadowRadius: 20,
         elevation: 10,
     },
-    micIcon: {
-        width: 60,
-        height: 60,
-        justifyContent: 'center',
-        alignItems: 'center',
-        position: 'relative',
-    },
-    micBody: {
-        width: 20,
-        height: 30,
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        position: 'absolute',
-    },
-    soundWave1: {
-        position: 'absolute',
-        right: -8,
-        width: 8,
-        height: 4,
-        backgroundColor: '#fff',
-        borderRadius: 2,
-    },
-    soundWave2: {
-        position: 'absolute',
-        right: -12,
-        width: 12,
-        height: 6,
-        backgroundColor: '#fff',
-        borderRadius: 3,
-    },
-    soundWave3: {
-        position: 'absolute',
-        right: -16,
-        width: 16,
-        height: 8,
-        backgroundColor: '#fff',
-        borderRadius: 4,
-    },
     welcomeCard: {
         backgroundColor: 'rgba(255, 255, 255, 0.1)',
         margin: 20,
@@ -165,29 +133,7 @@ const styles = StyleSheet.create({
         lineHeight: 22,
         marginBottom: 30,
     },
-    createAccountButton: {
-        backgroundColor: '#333',
-        paddingVertical: 16,
-        borderRadius: 12,
+    buttonSpacing: {
         marginBottom: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
-    },
-    createAccountText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-        textAlign: 'center',
-    },
-    signInButton: {
-        backgroundColor: '#ff6b35',
-        paddingVertical: 16,
-        borderRadius: 12,
-    },
-    signInText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-        textAlign: 'center',
     },
 });
