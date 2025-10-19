@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
+import { Typography } from '../../constants/fonts';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 type ButtonSize = 'small' | 'medium' | 'large';
@@ -32,7 +33,7 @@ export default function PrimaryButton({
     iconPosition = 'left',
 }: PrimaryButtonProps) {
     const getButtonStyle = (): ViewStyle => {
-        const baseStyle = [styles.base, styles[size]];
+        const baseStyle: ViewStyle[] = [styles.base, styles[size]];
 
         if (fullWidth) {
             baseStyle.push(styles.fullWidth);
@@ -65,7 +66,7 @@ export default function PrimaryButton({
     };
 
     const getTextStyle = (): TextStyle => {
-        const baseTextStyle = [styles.text, styles[`${size}Text`]];
+        const baseTextStyle: TextStyle[] = [styles.text, styles[`${size}Text` as keyof typeof styles]];
 
         switch (variant) {
             case 'primary':
@@ -193,17 +194,17 @@ const styles = StyleSheet.create({
 
     // Text styles
     text: {
-        fontWeight: '600',
+        ...Typography.button,
         textAlign: 'center',
     },
     smallText: {
-        fontSize: 14,
+        ...Typography.buttonSmall,
     },
     mediumText: {
-        fontSize: 16,
+        ...Typography.button,
     },
     largeText: {
-        fontSize: 18,
+        ...Typography.buttonLarge,
     },
 
     // Text variants
