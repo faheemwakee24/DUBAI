@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
-import { ScreenBackground, PrimaryButton, Icon } from '../../components/ui';
+import { ScreenBackground, PrimaryButton, Icon, Text } from '../../components/ui';
 
 type WelcomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Welcome'>;
 
@@ -34,14 +34,16 @@ export default function WelcomeScreen() {
                 {/* Main logo circle */}
                 <View style={styles.logoCircle}>
                     {/* Microphone/speech icon */}
-                    <Icon name="microphone" size={60} color="#fff" />
+                    <Icon name="Microphone" size={60} color="#fff" />
                 </View>
             </View>
 
             {/* Welcome Card */}
             <View style={styles.welcomeCard}>
-                <Text style={styles.welcomeTitle}>Welcome to Dub AI</Text>
-                <Text style={styles.welcomeSubtitle}>
+                <Text variant="h1" color="#fff" style={styles.welcomeTitle}>
+                    Welcome to Dub AI
+                </Text>
+                <Text variant="bodyLarge" color="rgba(255, 255, 255, 0.8)" style={styles.welcomeSubtitle}>
                     Transform videos with AI dubbing and bring characters to life
                 </Text>
 
@@ -61,7 +63,7 @@ export default function WelcomeScreen() {
                     variant="primary"
                     size="medium"
                     fullWidth
-                    icon={<Icon name="arrow-right" size={20} color="#fff" />}
+                    icon={<Icon name="ArrowRight" size={20} color="#fff" />}
                     iconPosition="right"
                 />
             </View>
@@ -115,22 +117,15 @@ const styles = StyleSheet.create({
         margin: 20,
         padding: 30,
         borderRadius: 20,
-        backdropFilter: 'blur(10px)',
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.2)',
     },
     welcomeTitle: {
-        fontSize: 28,
-        fontWeight: '800',
-        color: '#fff',
         textAlign: 'center',
         marginBottom: 12,
     },
     welcomeSubtitle: {
-        fontSize: 16,
-        color: 'rgba(255, 255, 255, 0.8)',
         textAlign: 'center',
-        lineHeight: 22,
         marginBottom: 30,
     },
     buttonSpacing: {
