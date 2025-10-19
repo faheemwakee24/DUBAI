@@ -7,6 +7,7 @@ import {
   ScreenBackground,
   PrimaryButton,
   Icon,
+  LiquidGlassBackground,
 } from '../../components/ui';
 import GlassCard from '../../components/ui/GlassCard';
 import { Images } from '../../assets/images';
@@ -39,15 +40,14 @@ export default function WelcomeScreen() {
       <SafeAreaView style={styles.container}>
         {/* Logo Section */}
         <View style={styles.logoContainer}>
-          {/* Concentric rings for sound wave effect */}
           <Image source={Images.WelcomeImage} style={styles.welcomeImage} />
         </View>
 
         {/* Welcome Card */}
-        <GlassCard style={styles.welcomeCard}>
+        <LiquidGlassBackground style={styles.welcomeCard}>
           <Text style={styles.welcomeTitle}>Welcome to Dub Nxt </Text>
           <Text
-           
+
             style={styles.welcomeSubtitle}
           >
             Transform videos with AI dubbing and bring characters to life
@@ -69,10 +69,9 @@ export default function WelcomeScreen() {
             variant="primary"
             size="medium"
             fullWidth
-            icon={<Icon name="ArrowRight" size={20} color="#fff" />}
             iconPosition="right"
           />
-        </GlassCard>
+        </LiquidGlassBackground>
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -120,30 +119,27 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   welcomeCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     margin: 20,
-    padding: 30,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 20,
   },
   welcomeTitle: {
     textAlign: 'center',
     marginBottom: 12,
     fontFamily: FontFamily.spaceGrotesk.bold,
-    fontSize:metrics.width(25),
-    color:colors.white
+    fontSize: metrics.width(25),
+    color: colors.white
   },
   welcomeSubtitle: {
     textAlign: 'center',
     marginBottom: 30,
   },
   buttonSpacing: {
-    marginBottom: 12,
+    marginBottom: metrics.width(15),
   },
   welcomeImage: {
     width: metrics.screenWidth,
-    height: metrics.screenHeight * 0.6,
-    marginTop: metrics.width(50),
+    height: metrics.screenHeight * 0.8,
+
   },
 });

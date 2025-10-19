@@ -1,6 +1,8 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
 import { Typography } from '../../constants/fonts';
+import colors from '../../constants/colors';
+import { metrics } from '../../constants/metrics';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 type ButtonSize = 'small' | 'medium' | 'large';
@@ -100,7 +102,7 @@ export default function PrimaryButton({
                 <>
                     <ActivityIndicator
                         size="small"
-                        color={variant === 'primary' ? '#fff' : '#ff6b35'}
+                        color={variant === 'primary' ? colors.white : colors.primary}
                         style={styles.loader}
                     />
                     <Text style={getTextStyle()}>{title}</Text>
@@ -138,40 +140,32 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 12,
-        borderWidth: 1,
+        borderRadius: 16,
     },
 
     // Sizes
     small: {
-        paddingVertical: 8,
+        paddingVertical: metrics.width(15),
         paddingHorizontal: 16,
         minHeight: 36,
     },
     medium: {
-        paddingVertical: 12,
+        paddingVertical: metrics.width(16),
         paddingHorizontal: 24,
         minHeight: 48,
     },
     large: {
-        paddingVertical: 16,
+        paddingVertical: metrics.width(20),
         paddingHorizontal: 32,
         minHeight: 56,
     },
 
     // Variants
     primary: {
-        backgroundColor: '#ff6b35',
-        borderColor: '#ff6b35',
-        shadowColor: '#ff6b35',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 3,
+        backgroundColor: colors.primary,
     },
     secondary: {
-        backgroundColor: '#333',
-        borderColor: 'rgba(255, 255, 255, 0.2)',
+        backgroundColor: colors.inactiveButton,
     },
     outline: {
         backgroundColor: 'transparent',

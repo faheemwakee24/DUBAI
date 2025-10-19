@@ -15,9 +15,9 @@ type GlassCardProps = PropsWithChildren<{
 export default function GlassCard({
   children,
   style,
-  backgroundColor = '#FFFFFF05',
+  backgroundColor = colors.white5,
   borderRadius = 20,
-  borderWidth = 1,
+  borderWidth = 0,
   borderColor,
   padding = 16,
   margin = 0,
@@ -46,13 +46,6 @@ const styles = StyleSheet.create({
   container: {
     // Glass morphism base styles
     shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
   },
 });
 

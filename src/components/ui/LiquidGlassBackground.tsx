@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
         borderRadius: 24,
     },
     fallback: {
-        backgroundColor: 'rgba(255,255,255,0.35)',
+        backgroundColor: 'rgba(255,255,255,0.3)',
     },
 });
 
