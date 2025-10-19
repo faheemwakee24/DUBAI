@@ -9,6 +9,10 @@ import PrivateKey from './private-key.svg';
 import Microphone from './microphone.svg';
 import User from './user.svg';
 import ArrowRight from './arrow-right.svg';
+import GooglePLay from './GooglePay.svg';
+import AppleIcon from './AppleIcon.svg'
+import ClosedEye from './ClosedEye.svg';
+import OpenEye from './OpenEye.svg';
 
 // Export all SVGs in a centralized object
 export const Svgs = {
@@ -29,6 +33,11 @@ export const Svgs = {
 
     // Audio & Media
     Microphone,
+    GooglePLay,
+    AppleIcon,
+    ClosedEye,
+    OpenEye,
+
 };
 
 // Export individual icons for direct import if needed

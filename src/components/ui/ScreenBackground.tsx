@@ -12,7 +12,7 @@ export default function ScreenBackground({ children, style }: ScreenBackgroundPr
     return (
         <View style={[styles.container, style]}>
             <LinearGradient
-                colors={['#330904', '#040102', '#330904']}
+                colors={['#330904', '#040102', '#040102', '#330904']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.gradient}

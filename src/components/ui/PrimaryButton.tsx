@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator, View } from 'react-native';
 import { Typography } from '../../constants/fonts';
 import colors from '../../constants/colors';
 import { metrics } from '../../constants/metrics';
@@ -113,9 +113,9 @@ export default function PrimaryButton({
         if (icon) {
             return (
                 <>
-                    {iconPosition === 'left' && icon}
+                    {iconPosition === 'left' && <View style={styles.iconContainer}>{icon}</View>}
                     <Text style={getTextStyle()}>{title}</Text>
-                    {iconPosition === 'right' && icon}
+                    {iconPosition === 'right' && <View style={styles.iconContainer}>{icon}</View>}
                 </>
             );
         }
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
 
     // Sizes
     small: {
-        paddingVertical: metrics.width(15),
+        paddingVertical: metrics.width(14),
         paddingHorizontal: 16,
         minHeight: 36,
     },
@@ -222,4 +222,7 @@ const styles = StyleSheet.create({
     loader: {
         marginRight: 8,
     },
+    iconContainer: {
+        marginHorizontal: metrics.width(11),
+    }
 });

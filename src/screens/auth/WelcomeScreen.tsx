@@ -13,7 +13,7 @@ import GlassCard from '../../components/ui/GlassCard';
 import { Images } from '../../assets/images';
 import { metrics } from '../../constants/metrics';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FontFamily, getFontFamily } from '../../constants/fonts';
+import { FontFamily } from '../../constants/fonts';
 import colors from '../../constants/colors';
 
 type WelcomeScreenNavigationProp = NativeStackNavigationProp<
@@ -21,7 +21,6 @@ type WelcomeScreenNavigationProp = NativeStackNavigationProp<
   'Welcome'
 >;
 
-const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
   const navigation = useNavigation<WelcomeScreenNavigationProp>();

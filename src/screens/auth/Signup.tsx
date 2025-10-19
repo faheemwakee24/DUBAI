@@ -18,19 +18,12 @@ import colors from '../../constants/colors';
 import { Svgs } from '../../assets/icons';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '../../navigation/RootNavigator';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-type LoginScreenNavigationProp = NativeStackNavigationProp<
-    RootStackParamList,
-    'Signup',
-    'ForgotPasword'
->;
 
 
-export default function AuthLoginScreen() {
+export default function SignUp() {
     const [email, setEmail] = useState('');
-    const navigation = useNavigation<LoginScreenNavigationProp>();
     const [password, setPassword] = useState('');
+    const navigation = useNavigation();
 
     const handleSignIn = () => {
         // Handle sign in logic
@@ -38,16 +31,11 @@ export default function AuthLoginScreen() {
     };
 
 
-    const handleForgotPassword = () => {
-        // Handle forgot password
-        console.log('Forgot password pressed');
-        navigation.navigate('ForgotPasword');
-    };
 
     const handleSignUp = () => {
         // Handle sign up navigation
-        navigation.navigate('Signup');
         console.log('Sign up pressed');
+        navigation.goBack();
     };
 
     return (
@@ -61,12 +49,25 @@ export default function AuthLoginScreen() {
                 >
                     {/* Welcome Section */}
                     <View style={styles.welcomeSection}>
-                        <Text style={styles.welcomeTitle}>Welcome Back!</Text>
-                        <Text style={styles.welcomeSubtitle}>Sign in to continue your journey.</Text>
+                        <Text style={styles.welcomeTitle}>Get Started</Text>
+                        <Text style={styles.welcomeSubtitle}>Sign up to begin your journey.</Text>
                     </View>
 
                     {/* Input Fields */}
                     <View style={styles.inputSection}>
+
+                        {/* Email Input */}
+                        <Input
+                            label="Full Name"
+                            placeholder="Enter your Name"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            fullWidth
+                            required
+                        />
                         {/* Email Input */}
                         <Input
                             label="Email"
@@ -92,17 +93,12 @@ export default function AuthLoginScreen() {
                             fullWidth
                             required
                         />
-
-                        {/* Forgot Password */}
-                        <TouchableOpacity style={styles.forgotPasswordContainer} onPress={handleForgotPassword}>
-                            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                        </TouchableOpacity>
                     </View>
 
                     {/* Sign In Button */}
                     <View style={styles.buttonSection}>
                         <PrimaryButton
-                            title="Sign In"
+                            title="Create"
                             onPress={handleSignIn}
                             variant="primary"
                             size="medium"
@@ -130,7 +126,7 @@ export default function AuthLoginScreen() {
                     {/* Social Login Buttons */}
                     <View style={styles.socialSection}>
                         <PrimaryButton
-                            title="Sign In with Google"
+                            title="Sign Up with Google"
                             onPress={handleSignIn}
                             variant="secondary"
                             size="medium"
@@ -138,7 +134,7 @@ export default function AuthLoginScreen() {
                             fullWidth={true}
                         />
                         <PrimaryButton
-                            title="Sign In with Apple"
+                            title="Sign Up with Apple"
                             onPress={handleSignIn}
                             variant="secondary"
                             size="medium"
@@ -152,9 +148,9 @@ export default function AuthLoginScreen() {
 
                 </ScrollView>
                 <View style={styles.signUpSection}>
-                    <Text style={styles.signUpText}>Don't have an account? </Text>
+                    <Text style={styles.signUpText}>Already have an account? </Text>
                     <TouchableOpacity onPress={handleSignUp}>
-                        <Text style={styles.signUpLink}>Sign Up</Text>
+                        <Text style={styles.signUpLink}>Sign In</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>

@@ -15,39 +15,24 @@ import { FontFamily, Typography } from '../../constants/fonts';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { metrics } from '../../constants/metrics';
 import colors from '../../constants/colors';
-import { Svgs } from '../../assets/icons';
-import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 type LoginScreenNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
-    'Signup',
-    'ForgotPasword'
+    'ResetPin'
 >;
 
 
-export default function AuthLoginScreen() {
+export default function ForgotPasword() {
     const [email, setEmail] = useState('');
     const navigation = useNavigation<LoginScreenNavigationProp>();
-    const [password, setPassword] = useState('');
+
 
     const handleSignIn = () => {
         // Handle sign in logic
         console.log('Sign in pressed');
-    };
-
-
-    const handleForgotPassword = () => {
-        // Handle forgot password
-        console.log('Forgot password pressed');
-        navigation.navigate('ForgotPasword');
-    };
-
-    const handleSignUp = () => {
-        // Handle sign up navigation
-        navigation.navigate('Signup');
-        console.log('Sign up pressed');
+        navigation.navigate('ResetPin');
     };
 
     return (
@@ -61,8 +46,8 @@ export default function AuthLoginScreen() {
                 >
                     {/* Welcome Section */}
                     <View style={styles.welcomeSection}>
-                        <Text style={styles.welcomeTitle}>Welcome Back!</Text>
-                        <Text style={styles.welcomeSubtitle}>Sign in to continue your journey.</Text>
+                        <Text style={styles.welcomeTitle}>Forgot Password</Text>
+                        <Text style={styles.welcomeSubtitle}>Enter your email to reset your password</Text>
                     </View>
 
                     {/* Input Fields */}
@@ -80,82 +65,25 @@ export default function AuthLoginScreen() {
                             required
                         />
 
-                        {/* Password Input */}
-                        <Input
-                            label="Password"
-                            placeholder="Enter your Password"
-                            value={password}
-                            onChangeText={setPassword}
-                            showPasswordToggle
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                            fullWidth
-                            required
-                        />
 
-                        {/* Forgot Password */}
-                        <TouchableOpacity style={styles.forgotPasswordContainer} onPress={handleForgotPassword}>
-                            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                        </TouchableOpacity>
+
                     </View>
 
-                    {/* Sign In Button */}
-                    <View style={styles.buttonSection}>
-                        <PrimaryButton
-                            title="Sign In"
-                            onPress={handleSignIn}
-                            variant="primary"
-                            size="medium"
-                            fullWidth={true}
-                        />
-                    </View>
 
-                    {/* Divider */}
-                    <View style={styles.dividerContainer}>
-                        <LinearGradient
-                            colors={[colors.gradient1, colors.gradient2, colors.gradient3]} // example colors
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={styles.dividerLine}
-                        />
-                        <Text style={styles.dividerText}>Or continue with</Text>
-                        <LinearGradient
-                            colors={[colors.gradient3, colors.gradient2, colors.gradient1]} // example colors
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={styles.dividerLine}
-                        />
-                    </View>
 
-                    {/* Social Login Buttons */}
-                    <View style={styles.socialSection}>
-                        <PrimaryButton
-                            title="Sign In with Google"
-                            onPress={handleSignIn}
-                            variant="secondary"
-                            size="medium"
-                            icon={<Svgs.GooglePLay />}
-                            fullWidth={true}
-                        />
-                        <PrimaryButton
-                            title="Sign In with Apple"
-                            onPress={handleSignIn}
-                            variant="secondary"
-                            size="medium"
-                            iconPosition="left"
-                            icon={<Svgs.AppleIcon />}
-                            fullWidth={true}
-                        />
-                    </View>
+
 
                     {/* Sign Up Link */}
 
                 </ScrollView>
                 <View style={styles.signUpSection}>
-                    <Text style={styles.signUpText}>Don't have an account? </Text>
-                    <TouchableOpacity onPress={handleSignUp}>
-                        <Text style={styles.signUpLink}>Sign Up</Text>
-                    </TouchableOpacity>
+                    <PrimaryButton
+                        title="Reset Password"
+                        onPress={handleSignIn}
+                        variant="primary"
+                        size="medium"
+                        fullWidth={true}
+                    />
                 </View>
             </SafeAreaView>
         </ScreenBackground>
@@ -277,6 +205,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: metrics.width(20),
+        marginHorizontal: metrics.width(20),
     },
     signUpText: {
         fontFamily: FontFamily.spaceGrotesk.regular,
