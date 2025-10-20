@@ -41,7 +41,7 @@ export default function UploadVedio() {
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
-           <Header title="Upload Video"   showBackButton
+           <Header title="Video Dubbing"   showBackButton
            RigthIcon={<Svgs.HistoryIcon height={metrics.width(20)} width={metrics.width(20)}/>}
            
            />
