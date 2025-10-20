@@ -6,5 +6,7 @@ export { default as Icon } from './Icon';
 export { default as Text } from './Text';
 export { default as Input } from './Input';
 export { default as OTPInput } from './OTPInput';
+export { default as Header } from './Header';
+export { default as ProgressBar } from './ProgressBar';
 
 

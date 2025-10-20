@@ -20,6 +20,7 @@ type PrimaryButtonProps = {
     icon?: React.ReactNode;
     iconPosition?: 'left' | 'right';
     extraContainerStyle?:ViewStyle;
+    extraTextStyle?:TextStyle;
 };
 
 export default function PrimaryButton({
@@ -34,7 +35,8 @@ export default function PrimaryButton({
     fullWidth = false,
     icon,
     iconPosition = 'left',
-    extraContainerStyle
+    extraContainerStyle,
+    extraTextStyle
 }: PrimaryButtonProps) {
     const getButtonStyle = (): ViewStyle => {
         const baseStyle: ViewStyle[] = [styles.base, styles[size]];
@@ -70,7 +72,7 @@ export default function PrimaryButton({
     };
 
     const getTextStyle = (): TextStyle => {
-        const baseTextStyle: TextStyle[] = [styles.text, styles[`${size}Text` as keyof typeof styles]];
+        const baseTextStyle: TextStyle[] = [styles.text, styles[`${size}Text` as keyof typeof styles],extraTextStyle?extraTextStyle:{}];
 
         switch (variant) {
             case 'primary':
@@ -147,7 +149,7 @@ const styles = StyleSheet.create({
 
     // Sizes
     small: {
-        paddingVertical: metrics.width(14),
+        paddingVertical: metrics.width(10),
         paddingHorizontal: 16,
         minHeight: 36,
     },

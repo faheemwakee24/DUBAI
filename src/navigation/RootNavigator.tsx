@@ -10,46 +10,78 @@ import SignUp from '../screens/auth/Signup';
 import ForgotPasword from '../screens/auth/ForgotPasword';
 import ResetPin from '../screens/auth/ResetPin';
 import Onboarding from '../screens/auth/Onboarding';
+import UploadVedio from '../screens/vedioDub/UploadVedio';
+import { GeneratingVedio, PreViewVedio, SelectVedioDescription } from '../screens/vedioDub';
 
 export type RootStackParamList = {
-    Welcome: undefined;
-    Login: undefined;
-    Home: undefined;
-    Profile: undefined;
-    Settings: undefined;
-    Signup: undefined;
-    ForgotPasword: undefined;
-    ResetPin: undefined;
-    Onboarding: undefined;
+  Welcome: undefined;
+  Login: undefined;
+  Home: undefined;
+  Profile: undefined;
+  Settings: undefined;
+  Signup: undefined;
+  ForgotPasword: undefined;
+  ResetPin: undefined;
+  Onboarding: undefined;
+  UploadVedio: undefined;
+  SelectVedioDescription: undefined;
+  GeneratingVedio:undefined;
+  PreViewVedio:undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
-    return (
-        <NavigationContainer
-
-
-        >
-            <Stack.Navigator
-                screenOptions={{
-                    headerShown: false,
-                    animation: 'slide_from_right',
-                }}
-            >
-                <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
-                <Stack.Screen name="Login" component={AuthLoginScreen} options={{ headerShown: false }} />
-                <Stack.Screen name="Signup" component={SignUp} options={{ headerShown: false }} />
-                <Stack.Screen name="ForgotPasword" component={ForgotPasword} options={{ headerShown: false }} />
-                <Stack.Screen name="ResetPin" component={ResetPin} options={{ headerShown: false }} />
-                <Stack.Screen name="Onboarding" component={Onboarding} options={{ headerShown: false }} />
-
-                <Stack.Screen name="Home" component={HomeScreen} />
-                <Stack.Screen name="Profile" component={ProfileScreen} />
-                <Stack.Screen name="Settings" component={SettingsScreen} />
-            </Stack.Navigator>
-        </NavigationContainer>
-    );
+  return (
+    <NavigationContainer>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      >
+        <Stack.Screen
+          name="Welcome"
+          component={WelcomeScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Login"
+          component={AuthLoginScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Signup"
+          component={SignUp}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ForgotPasword"
+          component={ForgotPasword}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ResetPin"
+          component={ResetPin}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Onboarding"
+          component={Onboarding}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="UploadVedio"
+          component={UploadVedio}
+          options={{ headerShown: false }}
+        />
+                <Stack.Screen name="SelectVedioDescription" component={SelectVedioDescription} />
+                <Stack.Screen name="GeneratingVedio" component={GeneratingVedio} />
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="PreViewVedio" component={PreViewVedio} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
 }
-
-

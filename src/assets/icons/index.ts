@@ -14,6 +14,13 @@ import AppleIcon from './AppleIcon.svg'
 import ClosedEye from './ClosedEye.svg';
 import OpenEye from './OpenEye.svg';
 import Arrows from './Arrows.svg'
+import UploadVedioIcon from './UploadVedioIcon.svg'
+import OptionMenu from './OptionMenu.svg'
+import ArrowLeft from './ArrowLeft.svg'
+import HistoryIcon from './HistoryIcon.svg'
+import ArrowDown from './ArrowDown.svg'
+import Downloard from './Downloard.svg'
+import PlayIcon from './PlayIcon.svg'
 
 // Export all SVGs in a centralized object
 export const Svgs = {
@@ -38,8 +45,14 @@ export const Svgs = {
     AppleIcon,
     ClosedEye,
     OpenEye,
-    Arrows
-
+    Arrows,
+    UploadVedioIcon,
+    OptionMenu,
+    ArrowLeft,
+    HistoryIcon,
+    ArrowDown,
+    Downloard,
+    PlayIcon
 };
 
 // Export individual icons for direct import if needed

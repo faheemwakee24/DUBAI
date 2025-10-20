@@ -9,7 +9,10 @@ export const colors = {
   transparent: 'transparent',
   gradient1: '#9F959300',
   gradient2: '#9F959380',
-  gradient3: '#9F9593'
+  gradient3: '#9F9593',
+  white25:'rgba(255,255,255,0.26)',
+  gradientLine:['#FE2C0B','#FE2C0B80','#FE2C0B00'],
+  white10:'#FFFFFF1A'
 };
 
 // Dark theme colors
@@ -26,7 +29,10 @@ export const darkColors = {
 
   gradien1: '#9F959300',
   gradient2: '#9F959380',
-  gradient3: '#9F9593'
+  gradient3: '#9F9593',
+    white25:'rgba(255,255,255,0.26)',
+    gradientLine:['#FE2C0B','#FE2C0B80','#FE2C0B00'],
+    white10:'#FFFFFF1A'
 };
 
 export default colors;

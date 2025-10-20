@@ -13,14 +13,15 @@ import {
 import { FontFamily } from '../../constants/fonts';
 import colors from '../../constants/colors';
 import { Svgs } from '../../assets/icons';
+import { useNavigation } from '@react-navigation/native';
 
 export default function Onboarding() {
     const [currentStep, setCurrentStep] = useState(0);
-    
-    const steps=[
+    const navigation = useNavigation();
+    const steps = [
         {
-            image:Images.Info1,
-            title:'Upload Your Video',
+            image: Images.Info1,
+            title: 'Upload Your Video',
             description:'Simply upload any video and let our AI detect the language automatically'
         },
         {
@@ -44,6 +45,7 @@ export default function Onboarding() {
     const handleSkip = () => {
         // Handle skip logic - navigate to main app
         console.log('Skip onboarding');
+        navigation.navigate('UploadVedio')
     };
 
     const isLastStep = currentStep === steps.length - 1;
