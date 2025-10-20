@@ -1761,6 +1761,11 @@
   dependencies:
     nanoid "^3.3.11"
 
+"@sbaiahmed1/react-native-blur@^3.2.0":
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/@sbaiahmed1/react-native-blur/-/react-native-blur-3.2.0.tgz#b26b6dde379015522833d03a98b6c1f9cdbefebe"
+  integrity sha512-z3t7WErsufcHSZs13tCppcdWVntTBWOc3fsTzwXQETkMJZCcXdU9ZjNKe0CWmMuBtGJ493Q7xW9IDuVkpjlwlg==
+
 "@shopify/react-native-skia@^2.3.0":
   version "2.3.4"
   resolved "https://registry.yarnpkg.com/@shopify/react-native-skia/-/react-native-skia-2.3.4.tgz#1dd6e2e0fb0dadc6832b8bb817785bf333df48cf"

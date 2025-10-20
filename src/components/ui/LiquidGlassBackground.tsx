@@ -1,6 +1,7 @@
 import React, { PropsWithChildren } from 'react';
-import { StyleProp, ViewStyle, StyleSheet } from 'react-native';
+import { StyleProp, ViewStyle, StyleSheet, View } from 'react-native';
 import { LiquidGlassView, isLiquidGlassSupported } from '@callstack/liquid-glass';
+import { BlurView } from '@sbaiahmed1/react-native-blur';
 
 type LiquidGlassBackgroundProps = PropsWithChildren<{
     style?: StyleProp<ViewStyle>;
@@ -11,32 +12,47 @@ type LiquidGlassBackgroundProps = PropsWithChildren<{
 export default function LiquidGlassBackground({
     children,
     style,
-    interactive = true,
+    interactive = false,
     effect = 'clear',
 }: LiquidGlassBackgroundProps) {
     return (
-        <LiquidGlassView
-            style={[styles.base, style, !isLiquidGlassSupported && styles.fallback]}
-            interactive={interactive}
-            // Ensure only supported effect values are passed
-            effect={
-                effect === 'clear' || effect === 'regular' || effect === 'none'
-                    ? effect
-                    : 'regular'
-            }
-        >
-            {children}
-        </LiquidGlassView>
+        <View style={[styles.container, style]}>
+            {/* Background blur only */}
+            <LiquidGlassView
+                style={StyleSheet.absoluteFill}
+                interactive={interactive}
+                effect={
+                    effect === 'clear' || effect === 'regular' || effect === 'none'
+                        ? effect
+                        : 'regular'
+                }
+            >
+                <BlurView
+                    style={StyleSheet.absoluteFill}
+                    blurType="systemUltraThinMaterial"
+                    blurAmount={20}
+                    reducedTransparencyFallbackColor="#000000"
+                    type="liquidGlass"
+                    glassType="clear"
+
+                    glassTintColor="#000000"
+                    glassOpacity={0.6}
+                />
+            </LiquidGlassView>
+
+            {/* Foreground content */}
+            <View style={styles.childrenContainer}>{children}</View>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    base: {
+    container: {
         borderRadius: 24,
+        overflow: 'hidden',
     },
-    fallback: {
-        backgroundColor: 'rgba(255,255,255,0.3)',
+    childrenContainer: {
+        // flex: 1,
+        zIndex: 1, // Make sure it sits above the blur
     },
 });
-
-
