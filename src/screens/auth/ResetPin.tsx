@@ -10,6 +10,7 @@ import {
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import Input from '../../components/ui/Input';
+import OTPInput from '../../components/ui/OTPInput';
 
 import { FontFamily, Typography } from '../../constants/fonts';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,7 +27,16 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 
 export default function ResetPin() {
     const navigation = useNavigation<LoginScreenNavigationProp>();
+    const [otp, setOtp] = useState('');
 
+    const handleOTPChange = (text: string) => {
+        setOtp(text);
+    };
+
+    const handleOTPComplete = (otpCode: string) => {
+        console.log('OTP completed:', otpCode);
+        // Handle OTP completion logic
+    };
 
     const handleSignIn = () => {
         // Handle sign in logic
@@ -35,7 +45,6 @@ export default function ResetPin() {
 
     return (
         <ScreenBackground style={styles.container}>
-
             <SafeAreaView style={styles.safeArea}>
                 <ScrollView
                     style={styles.scrollView}
@@ -51,10 +60,14 @@ export default function ResetPin() {
                     {/* Input Fields */}
                     <View style={styles.inputSection}>
                         {/* OTP Input */}
-
-
-
-
+                        <OTPInput
+                            length={4}
+                            value={otp}
+                            onChangeText={handleOTPChange}
+                            onComplete={handleOTPComplete}
+                            containerStyle={styles.otpContainer}
+                            keyboardType="number-pad"
+                        />
                     </View>
                     <View style={styles.signUpSection}>
                         <Text style={styles.signUpText}>Didn’t receive the code? </Text>
@@ -208,6 +221,9 @@ const styles = StyleSheet.create({
         fontFamily: FontFamily.spaceGrotesk.medium,
         fontSize: metrics.width(15),
         color: colors.white,
+    },
+    otpContainer: {
+        marginBottom: metrics.width(20),
     },
 });
 

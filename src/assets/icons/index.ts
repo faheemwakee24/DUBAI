@@ -13,6 +13,7 @@ import GooglePLay from './GooglePay.svg';
 import AppleIcon from './AppleIcon.svg'
 import ClosedEye from './ClosedEye.svg';
 import OpenEye from './OpenEye.svg';
+import Arrows from './Arrows.svg'
 
 // Export all SVGs in a centralized object
 export const Svgs = {
@@ -37,6 +38,7 @@ export const Svgs = {
     AppleIcon,
     ClosedEye,
     OpenEye,
+    Arrows
 
 };
 

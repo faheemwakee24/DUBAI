@@ -19,6 +19,7 @@ type PrimaryButtonProps = {
     fullWidth?: boolean;
     icon?: React.ReactNode;
     iconPosition?: 'left' | 'right';
+    extraContainerStyle?:ViewStyle;
 };
 
 export default function PrimaryButton({
@@ -33,6 +34,7 @@ export default function PrimaryButton({
     fullWidth = false,
     icon,
     iconPosition = 'left',
+    extraContainerStyle
 }: PrimaryButtonProps) {
     const getButtonStyle = (): ViewStyle => {
         const baseStyle: ViewStyle[] = [styles.base, styles[size]];
@@ -125,7 +127,7 @@ export default function PrimaryButton({
 
     return (
         <TouchableOpacity
-            style={getButtonStyle()}
+            style={[getButtonStyle(),extraContainerStyle]}
             onPress={onPress}
             disabled={disabled || loading}
             activeOpacity={0.8}

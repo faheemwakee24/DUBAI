@@ -21,7 +21,6 @@ type WelcomeScreenNavigationProp = NativeStackNavigationProp<
   'Welcome'
 >;
 
-
 export default function WelcomeScreen() {
   const navigation = useNavigation<WelcomeScreenNavigationProp>();
 
@@ -45,10 +44,7 @@ export default function WelcomeScreen() {
         {/* Welcome Card */}
         <LiquidGlassBackground style={styles.welcomeCard}>
           <Text style={styles.welcomeTitle}>Welcome to Dub Nxt </Text>
-          <Text
-
-            style={styles.welcomeSubtitle}
-          >
+          <Text style={styles.welcomeSubtitle}>
             Transform videos with AI dubbing and bring characters to life
           </Text>
 
@@ -127,18 +123,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontFamily: FontFamily.spaceGrotesk.bold,
     fontSize: metrics.width(25),
-    color: colors.white
+    color: colors.white,
   },
   welcomeSubtitle: {
-    textAlign: 'center',
-    marginBottom: 30,
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(15),
+    color: colors.subtitle,
+    marginBottom:metrics.width(30)
   },
   buttonSpacing: {
     marginBottom: metrics.width(15),
   },
   welcomeImage: {
     width: metrics.screenWidth,
-    height: metrics.screenHeight * 0.8,
-
+    height: metrics.screenHeight * 0.68,
+    position: 'absolute',
   },
 });

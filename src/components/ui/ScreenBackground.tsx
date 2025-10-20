@@ -9,6 +9,11 @@ type ScreenBackgroundProps = PropsWithChildren<{
 const { width, height } = Dimensions.get('window');
 
 export default function ScreenBackground({ children, style }: ScreenBackgroundProps) {
+    const angle = 90; // degrees clockwise
+const rad = (Math.PI * angle) / 180;
+const start = { x: 0.5 - 0.5 * Math.cos(rad), y: 0.5 - 0.5 * Math.sin(rad) };
+const end = { x: 0.5 + 0.5 * Math.cos(rad), y: 0.5 + 0.5 * Math.sin(rad) };
+
     return (
         <View style={[styles.container, style]}>
             <LinearGradient

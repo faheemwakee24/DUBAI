@@ -20,12 +20,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-type LoginScreenNavigationProp = NativeStackNavigationProp<
-    RootStackParamList,
-    'Signup',
-    'ForgotPasword'
->;
 
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
 
 export default function AuthLoginScreen() {
     const [email, setEmail] = useState('');
@@ -35,6 +31,7 @@ export default function AuthLoginScreen() {
     const handleSignIn = () => {
         // Handle sign in logic
         console.log('Sign in pressed');
+        navigation.navigate('Onboarding')
     };
 
 

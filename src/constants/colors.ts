@@ -1,5 +1,5 @@
 export const colors = {
-  inactiveButton: '#FFFFFF40',
+  inactiveButton: '#FFFFFF50',
   white: '#FFFFFF',
   black: '#000000',
   primary: '#FE2C0B',
