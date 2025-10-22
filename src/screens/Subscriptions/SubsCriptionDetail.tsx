@@ -5,19 +5,15 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Platform,
-  Image,
+  ImageBackground,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
-import Input from '../../components/ui/Input';
-
-import { FontFamily, Typography } from '../../constants/fonts';
+import { FontFamily } from '../../constants/fonts';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { metrics } from '../../constants/metrics';
 import colors from '../../constants/colors';
 import { Svgs } from '../../assets/icons';
-import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -29,103 +25,57 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
   'Signup'
 >;
 
-export default function Dashboard() {
+export default function SubsCriptionDetail() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+
+
 
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.headerContainer}>
-          <View style={styles.headerLeftContainer}>
-            <LiquidGlassBackground style={styles.profileImageBackground}>
-              <Image
-                source={Images.DefaultProfile}
-                style={styles.profileImage}
-              />
-            </LiquidGlassBackground>
-            <View style={styles.headerLeftContainerText}>
-              <Text style={styles.title}>Welcome Back!</Text>
-              <Text style={styles.subTitle}>John Doe</Text>
-            </View>
-          </View>
-          <View style={styles.headerRightContainer}>
-            <LiquidGlassBackground style={styles.headerRightIconBackground}>
-              <Svgs.Notification />
-            </LiquidGlassBackground>
-            <LiquidGlassBackground style={styles.headerRightIconBackground}>
-              <Svgs.Settings />
-            </LiquidGlassBackground>
-            <LiquidGlassBackground style={styles.headerRightIconBackground}>
-              <Svgs.MenuIcon />
-            </LiquidGlassBackground>
-          </View>
-        </View>
+        <Header title="Subscription" showBackButton />
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.dashboardContainer}>
-            <LiquidGlassBackground style={styles.dashboardCard}>
-              <View style={styles.ProPlanIconContainer}>
-                <View style={styles.propPlanIconTextContainer}>
-                  <Image
-                    source={Images.ProPlanIcon}
-                    style={styles.ProPlanIconImage}
-                  />
-                  <View>
-                    <Text style={styles.ProPlanTitle}>Pro Plan</Text>
-                    <Text style={styles.ProPlanSubTitle}>3 of 5 Dubs used</Text>
-                  </View>
+            <Text style={styles.title}>Upgrade your Plan</Text>
+            <Text style={styles.subTitle}>
+              You’re upgrading from free to pro. You’ll be charged $9.99 per
+              month.
+            </Text>
+            <LiquidGlassBackground style={styles.liquidBackgroundContainer}>
+              <View style={styles.liquidBackgroundContentContainer}>
+                <View style={styles.roww}>
+                  <Text style={styles.currentPlanTitle}>Current Plan:</Text>
+                  <Text style={styles.currentPlanValue}>Free</Text>
                 </View>
-                <PrimaryButton
-                  title="Upgrade"
-                  onPress={() => navigation.navigate('Subscription')}
-                  variant="primary"
-                  size="extraSmall"
-                  extraContainerStyle={styles.button}
-                />
+                <View style={styles.roww}>
+                  <Text style={styles.currentPlanTitle}>New Plan:</Text>
+                  <Text style={styles.currentPlanValue}>Pro</Text>
+                </View>
+                <View style={styles.roww}>
+                  <Text style={styles.currentPlanTitle}>Monthly Cost:</Text>
+                  <Text style={styles.currentPlanValue}>$9.99</Text>
+                </View>
               </View>
-            </LiquidGlassBackground>
-            <LiquidGlassBackground style={styles.debugCotainer}>
-              <View>
-                <Text style={styles.debugTitle}>Video {'\n'}Dubbing</Text>
-                <Text style={styles.debuggingSubtitle}>
-                  Translate & Dub Video
-                </Text>
-              </View>
-              <View style={styles.row}>
-                <TouchableOpacity onPress={()=>navigation.navigate('UploadVedio')} style={styles.createButtonContainer}>
-                  <Text style={styles.createButton}>Create</Text>
-                </TouchableOpacity>
-              </View>
-              <Image source={Images.VedioIcon2} style={styles.vedioIcon2} />
-            </LiquidGlassBackground>
-            <LiquidGlassBackground style={styles.CharacterCreationContainer}>
-              <View>
-                <Text style={styles.debugTitle}>Character {'\n'}Reader</Text>
-                <Text style={styles.debuggingSubtitle}>
-                  Create talking avatars
-                </Text>
-              </View>
-              <View style={styles.row}>
-                <TouchableOpacity onPress={()=>navigation.navigate('ChoseCharacter')} style={styles.createButtonContainer}>
-                  <Text style={styles.createButton}>Create</Text>
-                </TouchableOpacity>
-              </View>
-              <Image
-                source={Images.CharacterIcon}
-                style={styles.characherIcon}
-              />
             </LiquidGlassBackground>
           </View>
         </ScrollView>
         <PrimaryButton
-          title="Create Project"
-          onPress={() => navigation.navigate('RecentProjects')}
+          title="Cancel"
+          onPress={() => navigation.navigate('CustomizeAvatar')}
+          variant="secondary"
+          style={{
+            marginBottom: metrics.width(15),
+          }}
+        />
+        <PrimaryButton
+          title="Confirm"
+          onPress={() => {}}
           variant="primary"
           style={{
-            marginHorizontal: metrics.width(25),
             marginBottom: metrics.width(25),
           }}
         />
@@ -140,13 +90,13 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    marginHorizontal: metrics.width(25),
   },
   scrollView: {
     flex: 1,
   },
   contentContainer: {
     flexGrow: 1,
-    paddingHorizontal: 24,
     paddingBottom: 40,
   },
   headerContainer: {
@@ -163,13 +113,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: FontFamily.spaceGrotesk.bold,
-    fontSize: metrics.width(17),
+    fontSize: metrics.width(20),
     color: colors.white,
   },
   subTitle: {
     fontFamily: FontFamily.spaceGrotesk.regular,
-    fontSize: metrics.width(14),
+    fontSize: metrics.width(15),
     color: colors.subtitle,
+    marginBottom: metrics.width(30),
   },
   profileImage: {
     width: metrics.width(48),
@@ -191,7 +142,7 @@ const styles = StyleSheet.create({
   },
   dashboardContainer: {
     flex: 1,
-    marginTop: metrics.width(40),
+    marginTop: metrics.width(30),
   },
   dashboardCard: {
     paddingHorizontal: metrics.width(16),
@@ -298,5 +249,61 @@ const styles = StyleSheet.create({
 
     elevation: 7,
     backgroundColor: colors.primary3,
+  },
+  columnRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: metrics.width(15),
+  },
+  tempCharacherTitle: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(16),
+    color: colors.white,
+    marginTop: metrics.width(10),
+    margin: metrics.width(10),
+  },
+  tempCharacher: {
+    height: metrics.screenWidth * 0.41,
+    borderRadius: 16,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+    flex: 1,
+    borderWidth: 0,
+    borderColor: 'transparent',
+  },
+  tempCharacherImage: {
+    height: '100%',
+    width: '100%',
+    justifyContent: 'flex-end',
+  },
+  selectedCharacter: {
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  tempCharacherContainer: {
+    gap: metrics.width(15),
+  },
+  liquidBackgroundContainer: {
+    borderRadius: 12,
+  },
+  liquidBackgroundContentContainer: {
+    marginHorizontal: metrics.width(12),
+    marginVertical: metrics.width(16),
+    gap: metrics.width(12),
+  },
+  roww: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  currentPlanTitle: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(14),
+    color: colors.subtitle,
+  },
+  currentPlanValue: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(14),
+    color: colors.white,
   },
 });

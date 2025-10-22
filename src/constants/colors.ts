@@ -16,6 +16,7 @@ export const colors = {
   white15: '#FFFFFF26',
   primary40: '#FE2C0B66',
   primary3: '#FE2C0B03',
+  sucessGreen:'#25CE52'
 };
 
 // Dark theme colors
@@ -37,6 +38,7 @@ export const darkColors = {
   white15: '#FFFFFF26',
   primary40: '#FE2C0B66',
   primary3: '#FE2C0B05',
+  sucessGreen:'#25CE52'
 };
 
 export default colors;

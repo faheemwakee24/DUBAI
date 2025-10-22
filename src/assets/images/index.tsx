@@ -14,4 +14,10 @@ export const Images = {
     VedioIcon2:require('./VedioIcon2.png'),
     CharacterIcon:require('./CharacterIcon.png'),
     TempCharacher:require('./TempCharacher.png'),
+    ProjectIcon:require('./ProjectIcon.png'),
+    TempAnchorImage:require('./TempAnchorImage.png'),
+    FreePlanIcon:require('./FreePlanIcon.png'),
+    ProPlanIcon2:require('./ProPlanIcon2.png'),
+    EnterPriseIcon:require('./EnterPriseIcon.png'),
+
 };

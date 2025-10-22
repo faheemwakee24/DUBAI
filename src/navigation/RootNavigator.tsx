@@ -19,6 +19,8 @@ import {
 import Dashboard from '../screens/home/Dashboard';
 import { CharacherReader, ChoseCharacter, CustomizeAvatar } from '../screens/CharacterReader';
 import PreviewCharacherVedio from '../screens/CharacterReader/PreviewCharacherVedio';
+import { NewProject, ProjectVedios, RecentProjects } from '../screens/Projects';
+import { Subscription, SubsCriptionDetail, BillingDetail } from '../screens/Subscriptions';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -39,6 +41,12 @@ export type RootStackParamList = {
   CustomizeAvatar: undefined;
   CharacherReader:undefined;
   PreviewCharacherVedio:undefined;
+  RecentProjects:undefined;
+  ProjectVedios:undefined;
+  NewProject:undefined;
+  Subscription:undefined;
+  SubsCriptionDetail:undefined;
+  BillingDetail:undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -100,6 +108,12 @@ export default function RootNavigator() {
         <Stack.Screen name="CustomizeAvatar" component={CustomizeAvatar} />
         <Stack.Screen name="CharacherReader" component={CharacherReader} />
         <Stack.Screen name="PreviewCharacherVedio" component={PreviewCharacherVedio} />
+        <Stack.Screen name="RecentProjects" component={RecentProjects} />
+        <Stack.Screen name="ProjectVedios" component={ProjectVedios} />
+        <Stack.Screen name="NewProject" component={NewProject} />
+        <Stack.Screen name="Subscription" component={Subscription} />
+        <Stack.Screen name="SubsCriptionDetail" component={SubsCriptionDetail} />
+        <Stack.Screen name="BillingDetail" component={BillingDetail} />
       </Stack.Navigator>
     </NavigationContainer>
   );

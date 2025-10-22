@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { StyleProp, ViewStyle, StyleSheet, View } from 'react-native';
+import { StyleProp, ViewStyle, StyleSheet, View, TouchableOpacity } from 'react-native';
 import {
   LiquidGlassView,
   isLiquidGlassSupported,
@@ -18,6 +18,8 @@ type LiquidGlassBackgroundProps = PropsWithChildren<{
     | 'thin'
     | 'regular'
     | 'thick';
+  onPress?: () => void;
+disabled?: boolean;
 }>;
 
 export default function LiquidGlassBackground({
@@ -25,9 +27,12 @@ export default function LiquidGlassBackground({
   style,
   interactive = false,
   effect = 'clear',
+  onPress,
+  disabled=true,
+
 }: LiquidGlassBackgroundProps) {
   return (
-    <View style={[styles.container, style]}>
+    <TouchableOpacity style={[styles.container, style]}>
       {/* Background blur only */}
       <LiquidGlassView
         style={[
@@ -55,7 +60,7 @@ export default function LiquidGlassBackground({
 
       {/* Foreground content */}
       <View style={styles.childrenContainer}>{children}</View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
