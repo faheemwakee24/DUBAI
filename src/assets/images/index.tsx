@@ -8,5 +8,10 @@ export const Images = {
     Elipse:require('./Elipse.png'),
     VedioIcon:require('./VedioIcon.png'),
     GeneratingVedio:require('./GeneratingVedio.png'),
-    VedioPreviewIcon:require('./VedioPreviewIcon.png')
+    VedioPreviewIcon:require('./VedioPreviewIcon.png'),
+    DefaultProfile:require('./DefaultProfile.png'),
+    ProPlanIcon:require('./ProPlanIcon.png'),
+    VedioIcon2:require('./VedioIcon2.png'),
+    CharacterIcon:require('./CharacterIcon.png'),
+    TempCharacher:require('./TempCharacher.png'),
 };

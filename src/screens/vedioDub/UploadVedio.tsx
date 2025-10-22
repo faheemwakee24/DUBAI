@@ -35,16 +35,21 @@ export default function UploadVedio() {
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-       
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
-           <Header title="Video Dubbing"   showBackButton
-           RigthIcon={<Svgs.HistoryIcon height={metrics.width(20)} width={metrics.width(20)}/>}
-           
-           />
+          <Header
+            title="Video Dubbing"
+            showBackButton
+            RigthIcon={
+              <Svgs.HistoryIcon
+                height={metrics.width(20)}
+                width={metrics.width(20)}
+              />
+            }
+          />
           <LiquidGlassBackground style={styles.liquidCotaier}>
             <View style={styles.imageContainer}>
               <Image source={Images.UploadVedio} />
@@ -58,37 +63,40 @@ export default function UploadVedio() {
                 variant="primary"
                 size="small"
                 extraContainerStyle={styles.button}
-                extraTextStyle={styles.buttonText}
               />
             </View>
+         
           </LiquidGlassBackground>
 
           <Text style={styles.title2}>How it Works</Text>
           <View style={styles.howItWorksContainer}>
             <View style={styles.stepContainer}>
-            <LinearGradient colors={colors.gradientLine} style={styles.gradientLine}/>
+              <LinearGradient
+                colors={colors.gradientLine}
+                style={styles.gradientLine}
+              />
 
               <View style={styles.roww}>
-                <Image source={Images.Elipse} style={styles.elipse}/>
+                <Image source={Images.Elipse} style={styles.elipse} />
                 <Text style={styles.stepText}>
                   Upload your video in any language
                 </Text>
               </View>
               <View style={styles.roww}>
-              <Image source={Images.Elipse} style={styles.elipse}/>
-              <Text style={styles.stepText}>
+                <Image source={Images.Elipse} style={styles.elipse} />
+                <Text style={styles.stepText}>
                   AI detects the original language{' '}
                 </Text>
               </View>
               <View style={styles.roww}>
-              <Image source={Images.Elipse} style={styles.elipse}/>
-              <Text style={styles.stepText}>
+                <Image source={Images.Elipse} style={styles.elipse} />
+                <Text style={styles.stepText}>
                   Select target language and voice{' '}
                 </Text>
               </View>
               <View style={styles.roww}>
-              <Image source={Images.Elipse} style={styles.elipse}/>
-              <Text style={styles.stepText}>
+                <Image source={Images.Elipse} style={styles.elipse} />
+                <Text style={styles.stepText}>
                   Generate dubbed video with lip-sync{' '}
                 </Text>
               </View>
@@ -116,11 +124,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  // Welcome Section
-  welcomeSection: {
-    marginBottom: metrics.width(30),
-  },
-
   liquidCotaier: {},
   title: {
     fontFamily: FontFamily.spaceGrotesk.bold,
@@ -145,7 +148,6 @@ const styles = StyleSheet.create({
     marginTop: metrics.width(25),
     paddingVertical: metrics.width(5),
   },
-  buttonText: {},
   title2: {
     fontFamily: FontFamily.spaceGrotesk.bold,
     fontSize: metrics.width(17),
@@ -153,8 +155,8 @@ const styles = StyleSheet.create({
     marginTop: metrics.width(40),
   },
   howItWorksContainer: {
-    flexDirection:'row',
-    marginTop:metrics.width(20)
+    flexDirection: 'row',
+    marginTop: metrics.width(20),
   },
   roww: {
     flexDirection: 'row',
@@ -172,5 +174,17 @@ const styles = StyleSheet.create({
     width: metrics.width(20),
     height: metrics.width(20),
   },
-  gradientLine: {height:'100%',width:1,zIndex:-1,left:9.5,marginTop:8,position:'absolute'}
+  gradientLine: {
+    height: '100%',
+    width: 1,
+    zIndex: -1,
+    left: 9.5,
+    marginTop: 8,
+    position: 'absolute',
+  },
+  vedioIcon2:{
+    height:metrics.width(100),
+    width:metrics.width(100),
+    resizeMode:'contain'
+  }
 });

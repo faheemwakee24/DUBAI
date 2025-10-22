@@ -197,23 +197,10 @@ const styles = StyleSheet.create({
         marginBottom: metrics.width(30),
 
     },
-    forgotPasswordContainer: {
-        alignSelf: 'flex-end',
-    },
-    forgotPasswordText: {
-        fontFamily: FontFamily.spaceGrotesk.medium,
-        fontSize: metrics.width(15),
-        color: colors.white,
-    },
 
     // Button Section
     buttonSection: {
         marginBottom: metrics.width(30),
-    },
-    signInButton: {
-        backgroundColor: '#ff6b35',
-        borderRadius: 12,
-        paddingVertical: 16,
     },
 
     // Divider
@@ -235,36 +222,6 @@ const styles = StyleSheet.create({
     socialSection: {
         marginBottom: metrics.width(30),
         gap: metrics.width(15),
-    },
-    socialButton: {
-        backgroundColor: '#374151',
-        borderRadius: 12,
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    socialButtonContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    googleIcon: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#4285F4',
-        marginRight: 12,
-    },
-    appleIcon: {
-        fontSize: 20,
-        marginRight: 12,
-    },
-    socialButtonText: {
-        ...Typography.button,
-        fontSize: 16,
-        color: '#FFFFFF',
-        fontWeight: '500',
     },
 
     // Sign Up Section

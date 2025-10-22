@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import AuthLoginScreen from '../screens/auth/LoginScreen';
-import HomeScreen from '../screens/home/HomeScreen';
+import HomeScreen from '../screens/home/Dashboard';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import SignUp from '../screens/auth/Signup';
@@ -11,7 +11,14 @@ import ForgotPasword from '../screens/auth/ForgotPasword';
 import ResetPin from '../screens/auth/ResetPin';
 import Onboarding from '../screens/auth/Onboarding';
 import UploadVedio from '../screens/vedioDub/UploadVedio';
-import { GeneratingVedio, PreViewVedio, SelectVedioDescription } from '../screens/vedioDub';
+import {
+  GeneratingVedio,
+  PreViewVedio,
+  SelectVedioDescription,
+} from '../screens/vedioDub';
+import Dashboard from '../screens/home/Dashboard';
+import { CharacherReader, ChoseCharacter, CustomizeAvatar } from '../screens/CharacterReader';
+import PreviewCharacherVedio from '../screens/CharacterReader/PreviewCharacherVedio';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -25,8 +32,13 @@ export type RootStackParamList = {
   Onboarding: undefined;
   UploadVedio: undefined;
   SelectVedioDescription: undefined;
-  GeneratingVedio:undefined;
-  PreViewVedio:undefined;
+  GeneratingVedio: undefined;
+  PreViewVedio: undefined;
+  Dashboard: undefined;
+  ChoseCharacter: undefined;
+  CustomizeAvatar: undefined;
+  CharacherReader:undefined;
+  PreviewCharacherVedio:undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -37,7 +49,7 @@ export default function RootNavigator() {
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
-          animation: 'slide_from_right',
+          animation: 'none',
         }}
       >
         <Stack.Screen
@@ -75,12 +87,19 @@ export default function RootNavigator() {
           component={UploadVedio}
           options={{ headerShown: false }}
         />
-                <Stack.Screen name="SelectVedioDescription" component={SelectVedioDescription} />
-                <Stack.Screen name="GeneratingVedio" component={GeneratingVedio} />
-        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen
+          name="SelectVedioDescription"
+          component={SelectVedioDescription}
+        />
+        <Stack.Screen name="GeneratingVedio" component={GeneratingVedio} />
+        <Stack.Screen name="Dashboard" component={Dashboard} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="PreViewVedio" component={PreViewVedio} />
+        <Stack.Screen name="ChoseCharacter" component={ChoseCharacter} />
+        <Stack.Screen name="CustomizeAvatar" component={CustomizeAvatar} />
+        <Stack.Screen name="CharacherReader" component={CharacherReader} />
+        <Stack.Screen name="PreviewCharacherVedio" component={PreviewCharacherVedio} />
       </Stack.Navigator>
     </NavigationContainer>
   );

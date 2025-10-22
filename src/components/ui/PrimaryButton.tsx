@@ -5,7 +5,7 @@ import colors from '../../constants/colors';
 import { metrics } from '../../constants/metrics';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
-type ButtonSize = 'small' | 'medium' | 'large';
+type ButtonSize = 'small' | 'extraSmall' | 'medium' | 'large';
 
 type PrimaryButtonProps = {
     title: string;
@@ -150,6 +150,10 @@ const styles = StyleSheet.create({
     // Sizes
     small: {
         paddingVertical: metrics.width(10),
+        paddingHorizontal: 16,
+        minHeight: 36,
+    },
+    extraSmall: {
         paddingHorizontal: 16,
         minHeight: 36,
     },

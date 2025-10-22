@@ -10,14 +10,16 @@ export const colors = {
   gradient1: '#9F959300',
   gradient2: '#9F959380',
   gradient3: '#9F9593',
-  white25:'rgba(255,255,255,0.26)',
-  gradientLine:['#FE2C0B','#FE2C0B80','#FE2C0B00'],
-  white10:'#FFFFFF1A'
+  white25: 'rgba(255,255,255,0.26)',
+  gradientLine: ['#FE2C0B', '#FE2C0B80', '#FE2C0B00'],
+  white10: '#FFFFFF1A',
+  white15: '#FFFFFF26',
+  primary40: '#FE2C0B66',
+  primary3: '#FE2C0B03',
 };
 
 // Dark theme colors
 export const darkColors = {
-
   inactiveButton: '#FFFFFF40',
   transparent: 'transparent',
   white: '#FFFFFF',
@@ -26,13 +28,15 @@ export const darkColors = {
   white5: '#FFFFFF0D',
   subtitle: '#9F9593',
 
-
   gradien1: '#9F959300',
   gradient2: '#9F959380',
   gradient3: '#9F9593',
-    white25:'rgba(255,255,255,0.26)',
-    gradientLine:['#FE2C0B','#FE2C0B80','#FE2C0B00'],
-    white10:'#FFFFFF1A'
+  white25: 'rgba(255,255,255,0.26)',
+  gradientLine: ['#FE2C0B', '#FE2C0B80', '#FE2C0B00'],
+  white10: '#FFFFFF1A',
+  white15: '#FFFFFF26',
+  primary40: '#FE2C0B66',
+  primary3: '#FE2C0B05',
 };
 
 export default colors;

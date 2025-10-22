@@ -21,7 +21,9 @@ import HistoryIcon from './HistoryIcon.svg'
 import ArrowDown from './ArrowDown.svg'
 import Downloard from './Downloard.svg'
 import PlayIcon from './PlayIcon.svg'
-
+import Notification from './Notification.svg'
+import Settings from './Settings.svg'
+import MenuIcon from './MenuIcon.svg'
 // Export all SVGs in a centralized object
 export const Svgs = {
     // Authentication & User
@@ -52,7 +54,10 @@ export const Svgs = {
     HistoryIcon,
     ArrowDown,
     Downloard,
-    PlayIcon
+    PlayIcon,
+    Notification,
+    Settings,
+    MenuIcon
 };
 
 // Export individual icons for direct import if needed

@@ -45,7 +45,7 @@ export default function Onboarding() {
     const handleSkip = () => {
         // Handle skip logic - navigate to main app
         console.log('Skip onboarding');
-        navigation.navigate('UploadVedio')
+        navigation.navigate('Dashboard')
     };
 
     const isLastStep = currentStep === steps.length - 1;
