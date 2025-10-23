@@ -49,13 +49,13 @@ export default function Dashboard() {
             </View>
           </View>
           <View style={styles.headerRightContainer}>
-            <LiquidGlassBackground style={styles.headerRightIconBackground}>
+            <LiquidGlassBackground style={styles.headerRightIconBackground} onPress={()=>{navigation.navigate('Notifications')}} disabled={false}>
               <Svgs.Notification />
             </LiquidGlassBackground>
-            <LiquidGlassBackground style={styles.headerRightIconBackground}>
+            <LiquidGlassBackground style={styles.headerRightIconBackground} onPress={()=>{navigation.navigate('Settings')}} disabled={false}>
               <Svgs.Settings />
             </LiquidGlassBackground>
-            <LiquidGlassBackground style={styles.headerRightIconBackground}>
+            <LiquidGlassBackground style={styles.headerRightIconBackground} onPress={()=>{navigation.navigate('RecentProjects')}} disabled={false}>
               <Svgs.MenuIcon />
             </LiquidGlassBackground>
           </View>
@@ -122,7 +122,7 @@ export default function Dashboard() {
         </ScrollView>
         <PrimaryButton
           title="Create Project"
-          onPress={() => navigation.navigate('RecentProjects')}
+          onPress={() => navigation.navigate('ChoseCharacter')}
           variant="primary"
           style={{
             marginHorizontal: metrics.width(25),

@@ -171,12 +171,12 @@ const styles = StyleSheet.create({
   },
   billingInfoLabel: {
     fontFamily: FontFamily.spaceGrotesk.regular,
-    fontSize: metrics.width(14),
+    fontSize: metrics.width(15),
     color: colors.subtitle,
   },
   billingInfoValue: {
     fontFamily: FontFamily.spaceGrotesk.medium,
-    fontSize: metrics.width(14),
+    fontSize: metrics.width(15),
     color: colors.white,
   },
   updateButton: {
@@ -242,21 +242,21 @@ const styles = StyleSheet.create({
   cellTextFirst: {
     fontFamily: FontFamily.spaceGrotesk.regular,
     fontSize: metrics.width(14),
-    color: colors.white,
+    color: colors.subtitle,
     textAlign: 'left',
     width: '10%',
   },
   cellTextOther: {
     fontFamily: FontFamily.spaceGrotesk.regular,
     fontSize: metrics.width(14),
-    color: colors.white,
+    color: colors.subtitle,
     textAlign: 'left',
     width: '30.67%',
   },
   cellTextAmount: {
     fontFamily: FontFamily.spaceGrotesk.regular,
     fontSize: metrics.width(14),
-    color: colors.white,
+    color: colors.subtitle,
  
     width: '30.67%',
   },

@@ -32,7 +32,7 @@ export default function LiquidGlassBackground({
 
 }: LiquidGlassBackgroundProps) {
   return (
-    <TouchableOpacity style={[styles.container, style]}>
+    <TouchableOpacity style={[styles.container, style]} onPress={onPress} disabled={disabled}>
       {/* Background blur only */}
       <LiquidGlassView
         style={[

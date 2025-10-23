@@ -21,6 +21,8 @@ import { CharacherReader, ChoseCharacter, CustomizeAvatar } from '../screens/Cha
 import PreviewCharacherVedio from '../screens/CharacterReader/PreviewCharacherVedio';
 import { NewProject, ProjectVedios, RecentProjects } from '../screens/Projects';
 import { Subscription, SubsCriptionDetail, BillingDetail } from '../screens/Subscriptions';
+import { Settings, EditAccount, Language } from '../screens/settings';
+import { Notifications } from '../screens/notifications';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -28,6 +30,9 @@ export type RootStackParamList = {
   Home: undefined;
   Profile: undefined;
   Settings: undefined;
+  EditAccount: undefined;
+  Language: undefined;
+  Notifications: undefined;
   Signup: undefined;
   ForgotPasword: undefined;
   ResetPin: undefined;
@@ -102,7 +107,7 @@ export default function RootNavigator() {
         <Stack.Screen name="GeneratingVedio" component={GeneratingVedio} />
         <Stack.Screen name="Dashboard" component={Dashboard} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
-        <Stack.Screen name="Settings" component={SettingsScreen} />
+       
         <Stack.Screen name="PreViewVedio" component={PreViewVedio} />
         <Stack.Screen name="ChoseCharacter" component={ChoseCharacter} />
         <Stack.Screen name="CustomizeAvatar" component={CustomizeAvatar} />
@@ -114,6 +119,10 @@ export default function RootNavigator() {
         <Stack.Screen name="Subscription" component={Subscription} />
         <Stack.Screen name="SubsCriptionDetail" component={SubsCriptionDetail} />
         <Stack.Screen name="BillingDetail" component={BillingDetail} />
+        <Stack.Screen name="Settings" component={Settings} />
+        <Stack.Screen name="EditAccount" component={EditAccount} />
+        <Stack.Screen name="Language" component={Language} />
+        <Stack.Screen name="Notifications" component={Notifications} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -25,6 +25,9 @@ import Notification from './Notification.svg'
 import Settings from './Settings.svg'
 import MenuIcon from './MenuIcon.svg'
 import TickIcon from './TickIcon.svg'
+import WhiteArrowRight from './WhiteArrowRight.svg'
+import LogoutIcon from './LogoutIcon.svg'
+import EditAccountIcon from './EditAccountIcon.svg'
 // Export all SVGs in a centralized object
 export const Svgs = {
     // Authentication & User
@@ -59,7 +62,10 @@ export const Svgs = {
     Notification,
     Settings,
     MenuIcon,
-    TickIcon
+    TickIcon,
+    WhiteArrowRight,
+    LogoutIcon,
+    EditAccountIcon
 };
 
 // Export individual icons for direct import if needed

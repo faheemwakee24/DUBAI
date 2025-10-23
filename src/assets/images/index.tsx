@@ -19,5 +19,9 @@ export const Images = {
     FreePlanIcon:require('./FreePlanIcon.png'),
     ProPlanIcon2:require('./ProPlanIcon2.png'),
     EnterPriseIcon:require('./EnterPriseIcon.png'),
+    TickIcon:require('./TickImage.png'),
+    CrossImage:require('./CrossImage.png'),
+    ProcessingImage:require('./ProcessingImage.png'),
+    LanguageImage:require('./LanguageImage.png')
 
 };
