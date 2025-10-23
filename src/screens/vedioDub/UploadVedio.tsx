@@ -44,10 +44,12 @@ export default function UploadVedio() {
             title="Video Dubbing"
             showBackButton
             RigthIcon={
-              <Svgs.HistoryIcon
-                height={metrics.width(20)}
-                width={metrics.width(20)}
-              />
+              <TouchableOpacity onPress={()=>navigation.navigate('VideoHistory')}>
+                <Svgs.HistoryIcon
+                  height={metrics.width(20)}
+                  width={metrics.width(20)}
+                />
+              </TouchableOpacity>
             }
           />
           <LiquidGlassBackground style={styles.liquidCotaier}>
@@ -65,7 +67,6 @@ export default function UploadVedio() {
                 extraContainerStyle={styles.button}
               />
             </View>
-         
           </LiquidGlassBackground>
 
           <Text style={styles.title2}>How it Works</Text>
@@ -182,9 +183,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
     position: 'absolute',
   },
-  vedioIcon2:{
-    height:metrics.width(100),
-    width:metrics.width(100),
-    resizeMode:'contain'
-  }
+  vedioIcon2: {
+    height: metrics.width(100),
+    width: metrics.width(100),
+    resizeMode: 'contain',
+  },
 });

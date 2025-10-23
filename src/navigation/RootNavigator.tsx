@@ -23,6 +23,7 @@ import { NewProject, ProjectVedios, RecentProjects } from '../screens/Projects';
 import { Subscription, SubsCriptionDetail, BillingDetail } from '../screens/Subscriptions';
 import { Settings, EditAccount, Language } from '../screens/settings';
 import { Notifications } from '../screens/notifications';
+import { VideoHistory } from '../screens/history';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -33,6 +34,7 @@ export type RootStackParamList = {
   EditAccount: undefined;
   Language: undefined;
   Notifications: undefined;
+  VideoHistory: undefined;
   Signup: undefined;
   ForgotPasword: undefined;
   ResetPin: undefined;
@@ -123,6 +125,7 @@ export default function RootNavigator() {
         <Stack.Screen name="EditAccount" component={EditAccount} />
         <Stack.Screen name="Language" component={Language} />
         <Stack.Screen name="Notifications" component={Notifications} />
+        <Stack.Screen name="VideoHistory" component={VideoHistory} />
       </Stack.Navigator>
     </NavigationContainer>
   );
