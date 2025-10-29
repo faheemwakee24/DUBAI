@@ -19,6 +19,7 @@ import colors from '../../constants/colors';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Header } from '../../components/ui';
 type LoginScreenNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
     'Signup'
@@ -51,6 +52,7 @@ export default function ResetPin() {
                     contentContainerStyle={styles.contentContainer}
                     showsVerticalScrollIndicator={false}
                 >
+                    <Header onBackPress={()=>navigation.goBack()} showBackButton/>
                     {/* Welcome Section */}
                     <View style={styles.welcomeSection}>
                         <Text style={styles.welcomeTitle}>Reset Password</Text>
@@ -109,13 +111,13 @@ const styles = StyleSheet.create({
     contentContainer: {
         flexGrow: 1,
         paddingHorizontal: 24,
-        paddingTop: 60,
         paddingBottom: 40,
     },
 
     // Welcome Section
     welcomeSection: {
         marginBottom: metrics.width(30),
+        marginTop: metrics.width(20),
     },
     welcomeTitle: {
         fontSize: metrics.width(30),

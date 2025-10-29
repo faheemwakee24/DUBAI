@@ -298,12 +298,12 @@ const styles = StyleSheet.create({
   },
   currentPlanTitle: {
     fontFamily: FontFamily.spaceGrotesk.regular,
-    fontSize: metrics.width(14),
+    fontSize: metrics.width(15),
     color: colors.subtitle,
   },
   currentPlanValue: {
     fontFamily: FontFamily.spaceGrotesk.medium,
-    fontSize: metrics.width(14),
+    fontSize: metrics.width(15),
     color: colors.white,
   },
 });

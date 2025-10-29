@@ -215,6 +215,9 @@ const styles = StyleSheet.create({
     marginTop: metrics.width(30),
     borderRadius:16,
     borderWidth: 0.8,
+    borderLeftWidth:0.8,
+    borderRightWidth:0.8,
+    borderBottomWidth:0.8,
     borderColor: colors.primary40,
     shadowColor: colors.primary,
     shadowOffset: {

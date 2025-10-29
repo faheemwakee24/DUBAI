@@ -27,6 +27,7 @@ export default function WelcomeScreen() {
   const handleCreateAccount = () => {
     // Navigate to create account screen (to be implemented)
     console.log('Create Account pressed');
+    navigation.navigate('Signup');
   };
 
   const handleSignIn = () => {
@@ -38,7 +39,7 @@ export default function WelcomeScreen() {
       <SafeAreaView style={styles.container}>
         {/* Logo Section */}
         <View style={styles.logoContainer}>
-          <Image source={Images.WelcomeImage} style={styles.welcomeImage} />
+          <Image source={Images.WelcomeImage} style={styles.welcomeImage} resizeMode='contain'/>
         </View>
 
         {/* Welcome Card */}
@@ -119,7 +120,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   welcomeTitle: {
-    textAlign: 'center',
     marginBottom: 12,
     fontFamily: FontFamily.spaceGrotesk.bold,
     fontSize: metrics.width(25),
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   welcomeImage: {
     width: metrics.screenWidth,
-    height: metrics.screenHeight * 0.68,
+    height: metrics.screenHeight * 0.75,
     position: 'absolute',
   },
 });

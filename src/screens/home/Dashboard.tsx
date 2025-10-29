@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: metrics.width(16),
     paddingVertical: metrics.width(22),
     borderRadius: 12,
-    backgroundColor: colors.white15,
+    backgroundColor: 'rgba(255,255,255,0.38)',
   },
   ProPlanIconImage: {
     width: metrics.width(50),
@@ -287,6 +287,9 @@ const styles = StyleSheet.create({
     paddingVertical: metrics.width(20),
     marginTop: metrics.width(9),
     borderWidth: 0.8,
+    borderLeftWidth:0.8,
+    borderRightWidth:0.8,
+    borderBottomWidth:0.8,
     borderColor: colors.primary40,
     shadowColor: colors.primary,
     shadowOffset: {

@@ -1,12 +1,14 @@
 import React, { PropsWithChildren } from 'react';
-import { StyleProp, ViewStyle, StyleSheet, View, TouchableOpacity } from 'react-native';
 import {
-  LiquidGlassView,
-  isLiquidGlassSupported,
-} from '@callstack/liquid-glass';
-import { BlurView } from '@sbaiahmed1/react-native-blur';
+  StyleProp,
+  ViewStyle,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
+import { BlurView } from '@react-native-community/blur';
 import colors from '../../constants/colors';
-
 type LiquidGlassBackgroundProps = PropsWithChildren<{
   style?: StyleProp<ViewStyle>;
   interactive?: boolean;
@@ -19,58 +21,47 @@ type LiquidGlassBackgroundProps = PropsWithChildren<{
     | 'regular'
     | 'thick';
   onPress?: () => void;
-disabled?: boolean;
+  disabled?: boolean;
 }>;
-
 export default function LiquidGlassBackground({
   children,
   style,
   interactive = false,
-  effect = 'clear',
+  effect = 'light',
   onPress,
-  disabled=true,
-
+  disabled = true,
 }: LiquidGlassBackgroundProps) {
   return (
-    <TouchableOpacity style={[styles.container, style]} onPress={onPress} disabled={disabled}>
-      {/* Background blur only */}
-      <LiquidGlassView
-        style={[
-          StyleSheet.absoluteFill,
-          { borderLeftWidth: 0.5, borderWidth: 0.4, borderRightWidth: 0.6,borderColor:colors.white25,borderBottomWidth:0 },
-        ]}
-        interactive={interactive}
-        effect={
-          effect === 'clear' || effect === 'regular' || effect === 'none'
-            ? effect
-            : 'regular'
-        }
-      >
-        <BlurView
-          style={StyleSheet.absoluteFill}
-          blurType="systemUltraThinMaterial"
-          blurAmount={20}
-          reducedTransparencyFallbackColor="#000000"
-          type="liquidGlass"
-          glassType="clear"
-          glassTintColor="#000000"
-          glassOpacity={0.6}
-        />
-      </LiquidGlassView>
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled}
+      activeOpacity={interactive ? 0.8 : 1}
+      style={[styles.container, style]}
+    >
+      <BlurView
+        style={[StyleSheet.absoluteFill,]}
+        blurType={Platform.OS === 'ios' ? 'ultraThinMaterialDark' : 'dark'}
+        blurAmount={5}
+      
 
-      {/* Foreground content */}
+      />
       <View style={styles.childrenContainer}>{children}</View>
     </TouchableOpacity>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     borderRadius: 24,
     overflow: 'hidden',
+    backgroundColor: 'transparent', // no base color
+    borderWidth:0.5,
+    borderColor:colors.white25,
+    borderBottomWidth:0,
+    borderRightWidth:0.1
   },
   childrenContainer: {
-    // flex: 1,
-    zIndex: 1, // Make sure it sits above the blur
+    zIndex: 3,
+    overlayColor:'transparent',
+    backgroundColor:'transparent',
   },
 });

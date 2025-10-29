@@ -169,9 +169,8 @@ const styles = StyleSheet.create({
   },
   image2:{
     width: metrics.screenWidth,
-    height: metrics.screenWidth,
+    height: metrics.screenHeight*0.62,
     resizeMode: 'contain',
-    top: metrics.width(40),
     position: 'absolute',
   }
 });
