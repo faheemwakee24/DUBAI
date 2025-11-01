@@ -8,11 +8,8 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
-linkage = ENV['USE_FRAMEWORKS']
-if linkage != nil
-  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
-end
+# Force static frameworks for Firebase + RN compatibility
+use_frameworks! :linkage => :static
 
 target 'DubAI' do
   config = use_native_modules!
@@ -23,6 +20,10 @@ target 'DubAI' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
+  # Add Firebase pods with modular headers
+  pod 'Firebase/Auth', :modular_headers => true
+  pod 'Firebase/Core', :modular_headers => true
+
   post_install do |installer|
     react_native_post_install(
       installer,
@@ -30,5 +31,34 @@ target 'DubAI' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+    
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        # Force deployment target
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
+        
+        # Disable bitcode
+        config.build_settings['ENABLE_BITCODE'] = 'NO'
+        
+        # Allow non-modular includes for Firebase/Google/React/RN pods
+        if target.name.include?('Firebase') || target.name.include?('Google') || target.name.include?('React') || target.name.include?('RN') || target.name.include?('RCT')
+          config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+          config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+        end
+        
+        # Fix for React Native pods specifically
+        if target.name.include?('RNReanimated') || target.name.include?('RNGestureHandler') || target.name.include?('RNScreens')
+          config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+          config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+          config.build_settings['CLANG_WARN_DOCUMENTATION_COMMENTS'] = 'NO'
+        end
+        
+        # Suppress strict warnings for nanopb
+        if target.name == 'nanopb'
+          config.build_settings['CLANG_WARN_STRICT_PROTOTYPES'] = 'NO'
+          config.build_settings['CLANG_WARN_DOCUMENTATION_COMMENTS'] = 'NO'
+        end
+      end
+    end
   end
 end

@@ -6,6 +6,8 @@ import {
     ScrollView,
     TouchableOpacity,
     Platform,
+    Alert,
+    ActivityIndicator,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -20,6 +22,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import authService from '../../services/authService';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
 
@@ -27,11 +30,56 @@ export default function AuthLoginScreen() {
     const [email, setEmail] = useState('');
     const navigation = useNavigation<LoginScreenNavigationProp>();
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
+    const [appleLoading, setAppleLoading] = useState(false);
 
     const handleSignIn = () => {
         // Handle sign in logic
         console.log('Sign in pressed');
         navigation.navigate('Onboarding')
+    };
+
+    const handleGoogleSignIn = async () => {
+        try {
+            setGoogleLoading(true);
+            const user = await authService.signInWithGoogle();
+            console.log('Google Sign-In Success:', user);
+            // Navigate to onboarding or dashboard after successful sign-in
+            navigation.navigate('Onboarding');
+        } catch (error: any) {
+            console.error('Google Sign-In Error:', error);
+            Alert.alert(
+                'Sign In Error',
+                error?.message || 'Failed to sign in with Google. Please try again.',
+                [{ text: 'OK' }]
+            );
+        } finally {
+            setGoogleLoading(false);
+        }
+    };
+
+    const handleAppleSignIn = async () => {
+        try {
+            if (Platform.OS !== 'ios') {
+                Alert.alert('Not Available', 'Apple Sign-In is only available on iOS devices.');
+                return;
+            }
+            setAppleLoading(true);
+            const user = await authService.signInWithApple();
+            console.log('Apple Sign-In Success:', user);
+            // Navigate to onboarding or dashboard after successful sign-in
+            navigation.navigate('Onboarding');
+        } catch (error: any) {
+            console.error('Apple Sign-In Error:', error);
+            Alert.alert(
+                'Sign In Error',
+                error?.message || 'Failed to sign in with Apple. Please try again.',
+                [{ text: 'OK' }]
+            );
+        } finally {
+            setAppleLoading(false);
+        }
     };
 
 
@@ -128,21 +176,25 @@ export default function AuthLoginScreen() {
                     <View style={styles.socialSection}>
                         <PrimaryButton
                             title="Sign In with Google"
-                            onPress={handleSignIn}
+                            onPress={handleGoogleSignIn}
                             variant="secondary"
                             size="medium"
-                            icon={<Svgs.GooglePLay />}
+                            icon={googleLoading ? <ActivityIndicator size="small" color={colors.white} /> : <Svgs.GooglePLay />}
                             fullWidth={true}
+                            disabled={googleLoading || appleLoading}
                         />
-                        <PrimaryButton
-                            title="Sign In with Apple"
-                            onPress={handleSignIn}
-                            variant="secondary"
-                            size="medium"
-                            iconPosition="left"
-                            icon={<Svgs.AppleIcon />}
-                            fullWidth={true}
-                        />
+                        {Platform.OS === 'ios' && (
+                            <PrimaryButton
+                                title="Sign In with Apple"
+                                onPress={handleAppleSignIn}
+                                variant="secondary"
+                                size="medium"
+                                iconPosition="left"
+                                icon={appleLoading ? <ActivityIndicator size="small" color={colors.white} /> : <Svgs.AppleIcon />}
+                                fullWidth={true}
+                                disabled={googleLoading || appleLoading}
+                            />
+                        )}
                     </View>
 
                     {/* Sign Up Link */}
