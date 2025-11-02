@@ -11,5 +11,6 @@ export { default as ProgressBar } from './ProgressBar';
 export { default as LanguageDropdown } from './LanguageDropdown';
 export { default as CustomDropdown } from './CustomDropdown';
 export { default as CustomToggle } from './CustomToggle';
+export { toastConfig } from './ToastConfig';
 
 

@@ -19,21 +19,42 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header } from '../../components/ui';
+import { useForgotPasswordMutation } from '../../store/api/authApi';
+import { showToast } from '../../utils/toast';
+
 type LoginScreenNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
     'ResetPin'
 >;
 
-
 export default function ForgotPasword() {
     const [email, setEmail] = useState('');
     const navigation = useNavigation<LoginScreenNavigationProp>();
+    const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
 
+    const handleResetPassword = async () => {
+        if (!email || !email.trim()) {
+            showToast.error('Error', 'Please enter your email address');
+            return;
+        }
 
-    const handleSignIn = () => {
-        // Handle sign in logic
-        console.log('Sign in pressed');
-        navigation.navigate('ResetPin');
+        try {
+            const result = await forgotPassword({
+                email: email.trim(),
+            }).unwrap();
+
+            if (result.otpSent) {
+                showToast.success('OTP sent!', result.message || 'A verification code has been sent to your email');
+                // Navigate to ResetPin screen with email
+                navigation.navigate('ResetPin', { email: email.trim() });
+            }
+        } catch (error: any) {
+            console.error('Forgot password error:', error);
+            showToast.error(
+                'Error',
+                error?.data?.message || error?.message || 'Failed to send OTP. Please try again.'
+            );
+        }
     };
 
     return (
@@ -80,11 +101,12 @@ export default function ForgotPasword() {
                 </ScrollView>
                 <View style={styles.signUpSection}>
                     <PrimaryButton
-                        title="Reset Password"
-                        onPress={handleSignIn}
+                        title={isLoading ? 'Sending...' : 'Reset Password'}
+                        onPress={handleResetPassword}
                         variant="primary"
                         size="medium"
                         fullWidth={true}
+                        disabled={isLoading}
                     />
                 </View>
             </SafeAreaView>

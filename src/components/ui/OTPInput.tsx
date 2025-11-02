@@ -45,8 +45,12 @@ const OTPInput: React.FC<OTPInputProps> = ({
         }
     }, [autoFocus]);
 
+    const previousValueRef = useRef<string>('');
+    
     useEffect(() => {
-        if (value.length === length && onComplete) {
+        // Only call onComplete if value changed and reached the length
+        if (value.length === length && onComplete && previousValueRef.current !== value) {
+            previousValueRef.current = value;
             onComplete(value);
         }
     }, [value, length, onComplete]);

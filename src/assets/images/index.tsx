@@ -22,6 +22,6 @@ export const Images = {
     TickIcon:require('./TickImage.png'),
     CrossImage:require('./CrossImage.png'),
     ProcessingImage:require('./ProcessingImage.png'),
-    LanguageImage:require('./LanguageImage.png')
-
+    LanguageImage:require('./LanguageImage.png'),
+    SplashScreenIcon:require('./SplashScreenIcon.png'),
 };

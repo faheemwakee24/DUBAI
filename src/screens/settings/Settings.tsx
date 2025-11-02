@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -17,6 +17,9 @@ import {
 } from '../../components/ui';
 import { Images } from '../../assets/images';
 import { LiquidGlassContainerView } from '@callstack/liquid-glass';
+import { tokenStorage } from '../../utils/tokenStorage';
+import { useGetProfileQuery, useLogoutMutation, User } from '../../store/api/authApi';
+import { showToast } from '../../utils/toast';
 
 type SettingsNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -26,6 +29,66 @@ type SettingsNavigationProp = NativeStackNavigationProp<
 export default function Settings() {
   const navigation = useNavigation<SettingsNavigationProp>();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
+  const [logout, { isLoading: logoutLoading }] = useLogoutMutation();
+
+  useEffect(() => {
+    // Load user from storage on mount
+    const loadUser = async () => {
+      try {
+        const storedUser = await tokenStorage.getUser();
+        if (storedUser) {
+          setUser(storedUser);
+        }
+      } catch (error) {
+        console.error('Error loading user:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  // Update user when profile data is fetched
+  useEffect(() => {
+    if (profileData) {
+      setUser(profileData as any);
+      // Update stored user data
+      tokenStorage.setUser(profileData as any);
+    }
+  }, [profileData]);
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    if (user) {
+      if (user.firstName && user.lastName) {
+        return `${user.firstName} ${user.lastName}`;
+      }
+      if (user.firstName) {
+        return user.firstName;
+      }
+      if (user.email) {
+        return user.email.split('@')[0];
+      }
+    }
+    return 'User'; // Fallback
+  };
+
+  // Get user email
+  const getUserEmail = () => {
+    if (user?.email) {
+      return user.email;
+    }
+    return 'user@example.com'; // Fallback
+  };
+
+  // Get user avatar
+  const getUserAvatar = () => {
+    if (user?.avatar) {
+      return { uri: user.avatar };
+    }
+    return Images.DefaultProfile;
+  };
 
   const handleEditProfile = () => {
     navigation.navigate('EditAccount');
@@ -39,9 +102,30 @@ export default function Settings() {
     navigation.navigate('Language');
   };
 
-  const handleLogout = () => {
-    // Handle logout logic
-    console.log('Logout pressed');
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+      
+      // Clear stored data
+      await tokenStorage.clearAll();
+      
+      showToast.success('Logged out', 'You have been successfully logged out');
+      
+      // Navigate to login screen
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Welcome' }],
+      });
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      // Clear local data even if API call fails
+      await tokenStorage.clearAll();
+      showToast.error('Logout', 'Failed to logout from server, but local session cleared');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Welcome' }],
+      });
+    }
   };
 
   return (
@@ -54,11 +138,15 @@ export default function Settings() {
           <LiquidGlassBackground style={styles.profileCard}>
             <View style={styles.profileContent}>
               <LiquidGlassBackground style={styles.avatarContainer}>
-                <Image source={Images.DefaultProfile} style={styles.avatar} />
+                <Image source={getUserAvatar()} style={styles.avatar} />
               </LiquidGlassBackground>
               <View style={styles.profileInfo}>
-                <Text style={styles.userName}>John Doe</Text>
-                <Text style={styles.userEmail}>john.doe@example.com</Text>
+                <Text style={styles.userName}>
+                  {profileLoading ? 'Loading...' : getUserDisplayName()}
+                </Text>
+                <Text style={styles.userEmail}>
+                  {getUserEmail()}
+                </Text>
               </View>
             </View>
           </LiquidGlassBackground>
@@ -127,12 +215,13 @@ export default function Settings() {
 
           {/* Logout Button */}
           <PrimaryButton
-            title="Logout"
+            title={logoutLoading ? 'Logging out...' : 'Logout'}
             onPress={handleLogout}
             variant="primary"
             style={styles.logoutButton}
             fullWidth
             icon={<Svgs.LogoutIcon/>}
+            disabled={logoutLoading}
           />
         </View>
       </SafeAreaView>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,9 @@ import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground } from '../../components/ui';
 import { Images } from '../../assets/images';
+import { tokenStorage } from '../../utils/tokenStorage';
+import { useGetProfileQuery } from '../../store/api/authApi';
+import { User } from '../../store/api/authApi';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -31,6 +34,55 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 
 export default function Dashboard() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const [user, setUser] = useState<User | null>(null);
+  const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
+
+  useEffect(() => {
+    // Load user from storage on mount
+    const loadUser = async () => {
+      try {
+        const storedUser = await tokenStorage.getUser();
+        if (storedUser) {
+          setUser(storedUser);
+        }
+      } catch (error) {
+        console.error('Error loading user:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  // Update user when profile data is fetched
+  useEffect(() => {
+    if (profileData) {
+      setUser(profileData as any);
+    }
+  }, [profileData]);
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    if (user) {
+      if (user.firstName && user.lastName) {
+        return `${user.firstName} ${user.lastName}`;
+      }
+      if (user.firstName) {
+        return user.firstName;
+      }
+      if (user.email) {
+        return user.email.split('@')[0];
+      }
+    }
+    return 'User'; // Fallback
+  };
+
+  // Get user avatar
+  const getUserAvatar = () => {
+    if (user?.avatar) {
+      return { uri: user.avatar };
+    }
+    return Images.DefaultProfile;
+  };
 
   return (
     <ScreenBackground style={styles.container}>
@@ -39,13 +91,15 @@ export default function Dashboard() {
           <View style={styles.headerLeftContainer}>
             <LiquidGlassBackground style={styles.profileImageBackground}>
               <Image
-                source={Images.DefaultProfile}
+                source={getUserAvatar()}
                 style={styles.profileImage}
               />
             </LiquidGlassBackground>
             <View style={styles.headerLeftContainerText}>
               <Text style={styles.title}>Welcome Back!</Text>
-              <Text style={styles.subTitle}>John Doe</Text>
+              <Text style={styles.subTitle}>
+                {profileLoading ? 'Loading...' : getUserDisplayName()}
+              </Text>
             </View>
           </View>
           <View style={styles.headerRightContainer}>

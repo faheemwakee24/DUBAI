@@ -18,23 +18,141 @@ import colors from '../../constants/colors';
 import { Svgs } from '../../assets/icons';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { RootStackParamList } from '../../navigation/RootNavigator';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRegisterMutation, useSocialAuthMutation } from '../../store/api/authApi';
+import { tokenStorage } from '../../utils/tokenStorage';
+import authService from '../../services/authService';
+import { showToast } from '../../utils/toast';
 
+type SignUpNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
 
 export default function SignUp() {
     const [email, setEmail] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [password, setPassword] = useState('');
-    const navigation = useNavigation();
+    const navigation = useNavigation<SignUpNavigationProp>();
+    
+    const [register, { isLoading: registerLoading }] = useRegisterMutation();
+    const [socialAuth, { isLoading: socialLoading }] = useSocialAuthMutation();
+    const [googleLoading, setGoogleLoading] = useState(false);
+    const [appleLoading, setAppleLoading] = useState(false);
 
-    const handleSignIn = () => {
-        // Handle sign in logic
-        console.log('Sign in pressed');
+    const handleRegister = async () => {
+        if (!email || !firstName || !lastName || !password) {
+            showToast.error('Error', 'Please fill in all fields');
+            return;
+        }
+
+        if (password.length < 6) {
+            showToast.error('Error', 'Password must be at least 6 characters');
+            return;
+        }
+
+        try {
+            const result = await register({
+                email: email.trim(),
+                firstName: firstName.trim(),
+                lastName: lastName.trim(),
+                password,
+            }).unwrap();
+
+            if (result.otpSent) {
+                showToast.success('OTP sent!', 'A verification code has been sent to your email');
+                navigation.navigate('VerifyOtp', { email: email.trim() });
+            }
+        } catch (error: any) {
+            console.error('Register error:', error);
+            showToast.error(
+                'Registration Failed',
+                error?.data?.message || error?.message || 'Failed to register. Please try again.'
+            );
+        }
     };
 
 
+    const handleGoogleSignIn = async () => {
+        try {
+            setGoogleLoading(true);
+            const firebaseUser = await authService.signInWithGoogle();
+            
+            const nameParts = firebaseUser.displayName?.split(' ') || [];
+            const fName = nameParts[0] || '';
+            const lName = nameParts.slice(1).join(' ') || '';
+
+            const result = await socialAuth({
+                email: firebaseUser.email || '',
+                firstName: fName,
+                lastName: lName,
+                authProvider: 'google',
+                providerId: firebaseUser.uid || '',
+                avatar: firebaseUser.photoURL || undefined,
+            }).unwrap();
+
+            await tokenStorage.setAccessToken(result.accessToken);
+            await tokenStorage.setRefreshToken(result.refreshToken);
+            await tokenStorage.setUser(result.user);
+
+            showToast.success('Google Sign-Up successful!', 'Welcome to the app');
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Dashboard' }],
+            });
+        } catch (error: any) {
+            console.error('Google Sign-In Error:', error);
+            showToast.error(
+                'Sign Up Error',
+                error?.data?.message || error?.message || 'Failed to sign up with Google.'
+            );
+        } finally {
+            setGoogleLoading(false);
+        }
+    };
+
+    const handleAppleSignIn = async () => {
+        try {
+            if (Platform.OS !== 'ios') {
+                showToast.error('Not Available', 'Apple Sign-In is only available on iOS devices.');
+                return;
+            }
+            setAppleLoading(true);
+            const firebaseUser = await authService.signInWithApple();
+            
+            const nameParts = firebaseUser.displayName?.split(' ') || [];
+            const fName = nameParts[0] || '';
+            const lName = nameParts.slice(1).join(' ') || '';
+
+            const result = await socialAuth({
+                email: firebaseUser.email || '',
+                firstName: fName,
+                lastName: lName,
+                authProvider: 'apple',
+                providerId: firebaseUser.uid || '',
+                avatar: firebaseUser.photoURL || undefined,
+            }).unwrap();
+
+            await tokenStorage.setAccessToken(result.accessToken);
+            await tokenStorage.setRefreshToken(result.refreshToken);
+            await tokenStorage.setUser(result.user);
+
+            showToast.success('Apple Sign-Up successful!', 'Welcome to the app');
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Dashboard' }],
+            });
+        } catch (error: any) {
+            console.error('Apple Sign-In Error:', error);
+            showToast.error(
+                'Sign Up Error',
+                error?.data?.message || error?.message || 'Failed to sign up with Apple.'
+            );
+        } finally {
+            setAppleLoading(false);
+        }
+    };
 
     const handleSignUp = () => {
-        // Handle sign up navigation
-        console.log('Sign up pressed');
         navigation.goBack();
     };
 
@@ -55,20 +173,26 @@ export default function SignUp() {
 
                     {/* Input Fields */}
                     <View style={styles.inputSection}>
-
-                        {/* Email Input */}
                         <Input
-                            label="Full Name"
-                            placeholder="Enter your Name"
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
+                            label="First Name"
+                            placeholder="Enter your First Name"
+                            value={firstName}
+                            onChangeText={setFirstName}
+                            autoCapitalize="words"
                             autoCorrect={false}
                             fullWidth
                             required
                         />
-                        {/* Email Input */}
+                        <Input
+                            label="Last Name"
+                            placeholder="Enter your Last Name"
+                            value={lastName}
+                            onChangeText={setLastName}
+                            autoCapitalize="words"
+                            autoCorrect={false}
+                            fullWidth
+                            required
+                        />
                         <Input
                             label="Email"
                             placeholder="Enter your Email"
@@ -80,8 +204,6 @@ export default function SignUp() {
                             fullWidth
                             required
                         />
-
-                        {/* Password Input */}
                         <Input
                             label="Password"
                             placeholder="Enter your Password"
@@ -98,11 +220,12 @@ export default function SignUp() {
                     {/* Sign In Button */}
                     <View style={styles.buttonSection}>
                         <PrimaryButton
-                            title="Create"
-                            onPress={handleSignIn}
+                            title={registerLoading ? 'Creating...' : 'Create'}
+                            onPress={handleRegister}
                             variant="primary"
                             size="medium"
                             fullWidth={true}
+                            disabled={registerLoading || googleLoading || appleLoading}
                         />
                     </View>
 
@@ -127,21 +250,25 @@ export default function SignUp() {
                     <View style={styles.socialSection}>
                         <PrimaryButton
                             title="Sign Up with Google"
-                            onPress={handleSignIn}
+                            onPress={handleGoogleSignIn}
                             variant="secondary"
                             size="medium"
                             icon={<Svgs.GooglePLay />}
                             fullWidth={true}
+                            disabled={registerLoading || googleLoading || appleLoading}
                         />
-                        <PrimaryButton
-                            title="Sign Up with Apple"
-                            onPress={handleSignIn}
-                            variant="secondary"
-                            size="medium"
-                            iconPosition="left"
-                            icon={<Svgs.AppleIcon />}
-                            fullWidth={true}
-                        />
+                        {Platform.OS === 'ios' && (
+                            <PrimaryButton
+                                title="Sign Up with Apple"
+                                onPress={handleAppleSignIn}
+                                variant="secondary"
+                                size="medium"
+                                iconPosition="left"
+                                icon={<Svgs.AppleIcon />}
+                                fullWidth={true}
+                                disabled={registerLoading || googleLoading || appleLoading}
+                            />
+                        )}
                     </View>
 
                     {/* Sign Up Link */}
@@ -195,7 +322,6 @@ const styles = StyleSheet.create({
     inputSection: {
         gap: metrics.width(16),
         marginBottom: metrics.width(30),
-
     },
 
     // Button Section

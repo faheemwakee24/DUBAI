@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
@@ -7,6 +7,7 @@ import HomeScreen from '../screens/home/Dashboard';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import SignUp from '../screens/auth/Signup';
+import VerifyOtp from '../screens/auth/VerifyOtp';
 import ForgotPasword from '../screens/auth/ForgotPasword';
 import ResetPin from '../screens/auth/ResetPin';
 import Onboarding from '../screens/auth/Onboarding';
@@ -24,6 +25,9 @@ import { Subscription, SubsCriptionDetail, BillingDetail } from '../screens/Subs
 import { Settings, EditAccount, Language } from '../screens/settings';
 import { Notifications } from '../screens/notifications';
 import { VideoHistory } from '../screens/history';
+import { tokenStorage } from '../utils/tokenStorage';
+import SplashScreen from '../screens/auth/SplashScreen';
+import { StyleSheet } from 'react-native';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -36,8 +40,9 @@ export type RootStackParamList = {
   Notifications: undefined;
   VideoHistory: undefined;
   Signup: undefined;
+  VerifyOtp: { email: string };
   ForgotPasword: undefined;
-  ResetPin: undefined;
+  ResetPin: { email?: string };
   Onboarding: undefined;
   UploadVedio: undefined;
   SelectVedioDescription: undefined;
@@ -59,9 +64,34 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Check if user is logged in on mount
+    const checkAuthStatus = async () => {
+      try {
+        const token = await tokenStorage.getAccessToken();
+        setIsLoggedIn(!!token);
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+        setIsLoggedIn(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
+  // Show loading indicator while checking auth status
+  if (isLoggedIn === null) {
+    return (
+      <SplashScreen />
+    );
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator
+        initialRouteName={isLoggedIn ? 'Dashboard' : 'Welcome'}
         screenOptions={{
           headerShown: false,
           animation: 'none',
@@ -80,6 +110,11 @@ export default function RootNavigator() {
         <Stack.Screen
           name="Signup"
           component={SignUp}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="VerifyOtp"
+          component={VerifyOtp}
           options={{ headerShown: false }}
         />
         <Stack.Screen
@@ -130,3 +165,12 @@ export default function RootNavigator() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000000',
+  },
+});

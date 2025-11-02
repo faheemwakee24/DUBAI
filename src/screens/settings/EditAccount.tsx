@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,10 @@ import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground, Input } from '../../components/ui';
 import { Images } from '../../assets/images';
+import { tokenStorage } from '../../utils/tokenStorage';
+import { useGetProfileQuery } from '../../store/api/authApi';
+import { User } from '../../store/api/authApi';
+import { showToast } from '../../utils/toast';
 
 type EditAccountNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -27,23 +31,71 @@ type EditAccountNavigationProp = NativeStackNavigationProp<
 
 export default function EditAccount() {
   const navigation = useNavigation<EditAccountNavigationProp>();
+  const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
 
   // Form state
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [user, setUser] = useState<User | null>(null);
+
+  // Load user data on mount
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const storedUser = await tokenStorage.getUser();
+        if (storedUser) {
+          setUser(storedUser);
+          setFirstName(storedUser.firstName || '');
+          setLastName(storedUser.lastName || '');
+          setEmail(storedUser.email || '');
+        }
+      } catch (error) {
+        console.error('Error loading user:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  // Update form when profile data is fetched
+  useEffect(() => {
+    if (profileData) {
+      setUser(profileData as any);
+      setFirstName((profileData as any).firstName || '');
+      setLastName((profileData as any).lastName || '');
+      setEmail((profileData as any).email || '');
+      // Update stored user data
+      tokenStorage.setUser(profileData as any);
+    }
+  }, [profileData]);
+
+  // Get user avatar
+  const getUserAvatar = () => {
+    if (user?.avatar) {
+      return { uri: user.avatar };
+    }
+    return Images.DefaultProfile;
+  };
 
   const handleSaveChanges = () => {
     // Handle save changes logic
+    // TODO: Implement update profile API when available
     console.log('Save changes pressed');
-    console.log('Full Name:', fullName);
+    console.log('First Name:', firstName);
+    console.log('Last Name:', lastName);
     console.log('Email:', email);
     console.log('Password:', password);
+    
+    // Show success message
+    showToast.success('Profile updated!', 'Your profile has been updated successfully');
   };
 
   const handleEditProfilePicture = () => {
     // Handle profile picture edit
     console.log('Edit profile picture pressed');
+    showToast.info('Feature coming soon', 'Profile picture editing will be available soon');
   };
 
   return (
@@ -59,11 +111,11 @@ export default function EditAccount() {
           {/* Profile Picture Section */}
           <View style={styles.profilePictureSection}>
             <View style={styles.profilePictureContainer}>
-                <LiquidGlassBackground style={styles.profilePictureContainer}>
-              <Image
-                source={Images.DefaultProfile}
-                style={styles.profilePicture}
-              />
+              <LiquidGlassBackground style={styles.profilePictureContainer}>
+                <Image
+                  source={getUserAvatar()}
+                  style={styles.profilePicture}
+                />
               </LiquidGlassBackground>
               <TouchableOpacity
                 style={styles.editIconContainer}
@@ -76,33 +128,47 @@ export default function EditAccount() {
 
           {/* Input Fields Section */}
           <View style={styles.inputFieldsSection}>
-            {/* Full Name Field */}
-
+            {/* First Name Field */}
             <Input
-              label="Full Name"
-              value={fullName}
-              onChangeText={setFullName}
-              placeholder="Enter your full name"
+              label="First Name"
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder="Enter your first name"
+              autoCapitalize="words"
+              fullWidth
+            />
+
+            {/* Last Name Field */}
+            <Input
+              label="Last Name"
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder="Enter your last name"
+              autoCapitalize="words"
+              fullWidth
             />
 
             {/* Email Field */}
-
             <Input
               value={email}
               onChangeText={setEmail}
               placeholder="Enter your email"
               keyboardType="email-address"
               label="Email"
+              autoCapitalize="none"
+              editable={false} // Email might not be editable
+              fullWidth
             />
 
             {/* Password Field */}
-
             <Input
               value={password}
               onChangeText={setPassword}
-              placeholder="Enter your password"
+              placeholder="Enter new password"
               secureTextEntry
+              showPasswordToggle
               label="Password"
+              fullWidth
             />
           </View>
         </ScrollView>

@@ -6,7 +6,6 @@ import {
     ScrollView,
     TouchableOpacity,
     Platform,
-    Alert,
     ActivityIndicator,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
@@ -23,6 +22,9 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import authService from '../../services/authService';
+import { useLoginMutation, useSocialAuthMutation } from '../../store/api/authApi';
+import { tokenStorage } from '../../utils/tokenStorage';
+import { showToast } from '../../utils/toast';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
 
@@ -30,29 +32,78 @@ export default function AuthLoginScreen() {
     const [email, setEmail] = useState('');
     const navigation = useNavigation<LoginScreenNavigationProp>();
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [login, { isLoading: loginLoading }] = useLoginMutation();
+    const [socialAuth, { isLoading: socialLoading }] = useSocialAuthMutation();
     const [googleLoading, setGoogleLoading] = useState(false);
     const [appleLoading, setAppleLoading] = useState(false);
 
-    const handleSignIn = () => {
-        // Handle sign in logic
-        console.log('Sign in pressed');
-        navigation.navigate('Onboarding')
+    const handleSignIn = async () => {
+        if (!email || !password) {
+            showToast.error('Error', 'Please enter your email and password');
+            return;
+        }
+
+        try {
+            const result = await login({
+                email: email.trim(),
+                password,
+            }).unwrap();
+
+            // Store tokens and user data
+            await tokenStorage.setAccessToken(result.accessToken);
+            await tokenStorage.setRefreshToken(result.refreshToken);
+            await tokenStorage.setUser(result.user);
+
+            showToast.success('Login successful!', 'Welcome back');
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Dashboard' }],
+            });
+        } catch (error: any) {
+            console.error('Login error:', error);
+            showToast.error(
+                'Login Failed',
+                error?.data?.message || error?.message || 'Invalid email or password. Please try again.'
+            );
+        }
     };
 
     const handleGoogleSignIn = async () => {
         try {
             setGoogleLoading(true);
-            const user = await authService.signInWithGoogle();
-            console.log('Google Sign-In Success:', user);
-            // Navigate to onboarding or dashboard after successful sign-in
-            navigation.navigate('Onboarding');
+            // First, authenticate with Firebase/Google
+            const firebaseUser = await authService.signInWithGoogle();
+            
+            // Extract name parts
+            const nameParts = firebaseUser.displayName?.split(' ') || [];
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            // Then authenticate with your backend API
+            const result = await socialAuth({
+                email: firebaseUser.email || '',
+                firstName,
+                lastName,
+                authProvider: 'google',
+                providerId: firebaseUser.uid || '',
+                avatar: firebaseUser.photoURL || undefined,
+            }).unwrap();
+
+            // Store tokens and user data
+            await tokenStorage.setAccessToken(result.accessToken);
+            await tokenStorage.setRefreshToken(result.refreshToken);
+            await tokenStorage.setUser(result.user);
+
+            showToast.success('Google Sign-In successful!', 'Welcome back');
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Dashboard' }],
+            });
         } catch (error: any) {
             console.error('Google Sign-In Error:', error);
-            Alert.alert(
+            showToast.error(
                 'Sign In Error',
-                error?.message || 'Failed to sign in with Google. Please try again.',
-                [{ text: 'OK' }]
+                error?.data?.message || error?.message || 'Failed to sign in with Google. Please try again.'
             );
         } finally {
             setGoogleLoading(false);
@@ -62,20 +113,43 @@ export default function AuthLoginScreen() {
     const handleAppleSignIn = async () => {
         try {
             if (Platform.OS !== 'ios') {
-                Alert.alert('Not Available', 'Apple Sign-In is only available on iOS devices.');
+                showToast.error('Not Available', 'Apple Sign-In is only available on iOS devices.');
                 return;
             }
             setAppleLoading(true);
-            const user = await authService.signInWithApple();
-            console.log('Apple Sign-In Success:', user);
-            // Navigate to onboarding or dashboard after successful sign-in
-            navigation.navigate('Onboarding');
+            // First, authenticate with Firebase/Apple
+            const firebaseUser = await authService.signInWithApple();
+            
+            // Extract name parts
+            const nameParts = firebaseUser.displayName?.split(' ') || [];
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            // Then authenticate with your backend API
+            const result = await socialAuth({
+                email: firebaseUser.email || '',
+                firstName,
+                lastName,
+                authProvider: 'apple',
+                providerId: firebaseUser.uid || '',
+                avatar: firebaseUser.photoURL || undefined,
+            }).unwrap();
+
+            // Store tokens and user data
+            await tokenStorage.setAccessToken(result.accessToken);
+            await tokenStorage.setRefreshToken(result.refreshToken);
+            await tokenStorage.setUser(result.user);
+
+            showToast.success('Apple Sign-In successful!', 'Welcome back');
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Dashboard' }],
+            });
         } catch (error: any) {
             console.error('Apple Sign-In Error:', error);
-            Alert.alert(
+            showToast.error(
                 'Sign In Error',
-                error?.message || 'Failed to sign in with Apple. Please try again.',
-                [{ text: 'OK' }]
+                error?.data?.message || error?.message || 'Failed to sign in with Apple. Please try again.'
             );
         } finally {
             setAppleLoading(false);
@@ -147,11 +221,12 @@ export default function AuthLoginScreen() {
                     {/* Sign In Button */}
                     <View style={styles.buttonSection}>
                         <PrimaryButton
-                            title="Sign In"
+                            title={loginLoading ? 'Signing In...' : 'Sign In'}
                             onPress={handleSignIn}
                             variant="primary"
                             size="medium"
                             fullWidth={true}
+                            disabled={loginLoading || googleLoading || appleLoading}
                         />
                     </View>
 
