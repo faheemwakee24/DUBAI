@@ -33,6 +33,7 @@ export const baseApi = createApi({
     'Project',
     'Video',
     'Subscription',
+    'PaymentMethod',
   ],
   endpoints: () => ({}), // Endpoints will be injected by other API slices
 });

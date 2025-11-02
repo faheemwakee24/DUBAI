@@ -50,11 +50,21 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string) => `/videos/${id}`,
     DELETE: (id: string) => `/videos/${id}`,
   },
-  // Subscription endpoints (add based on your Swagger docs)
+  // Subscription endpoints
   SUBSCRIPTION: {
     LIST: '/subscriptions',
     DETAIL: (id: string) => `/subscriptions/${id}`,
     CREATE: '/subscriptions',
+    UPDATE: (id: string) => `/subscriptions/${id}`,
+    CANCEL: (id: string) => `/subscriptions/${id}/cancel`,
+  },
+  // Payment endpoints
+  PAYMENT: {
+    PAYMENT_METHODS: '/payment-methods',
+    PAYMENT_METHOD: (id: string) => `/payment-methods/${id}`,
+    CREATE_PAYMENT_INTENT: '/payment-intents',
+    CONFIRM_PAYMENT: (id: string) => `/payment-intents/${id}/confirm`,
+    SETUP_INTENT: '/setup-intents',
   },
 } as const;
 

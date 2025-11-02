@@ -98,7 +98,7 @@ export default function BillingDetail() {
             </View>
             <PrimaryButton
               title="Update Payment Method"
-              onPress={() => {}}
+              onPress={() => navigation.navigate('PaymentMethodScreen')}
               variant="primary"
               style={styles.updateButton}
               fullWidth

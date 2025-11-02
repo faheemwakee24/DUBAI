@@ -5,6 +5,7 @@ export {baseApi} from './baseApi';
 export * from './usersApi';
 export * from './authApi';
 export * from './projectsApi';
+export * from './paymentsApi';
 
 // When you create new API slices, add them here:
 // export * from './videoApi';

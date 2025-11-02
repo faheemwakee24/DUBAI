@@ -19,6 +19,14 @@ import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground } from '../../components/ui';
 import { Images } from '../../assets/images';
+import { useStripe } from '@stripe/stripe-react-native';
+import { showToast } from '../../utils/toast';
+import {
+  useCreateSubscriptionMutation,
+  useCreatePaymentIntentMutation,
+  useConfirmPaymentMutation,
+  useGetPaymentMethodsQuery,
+} from '../../store/api/paymentsApi';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -27,8 +35,87 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 
 export default function SubsCriptionDetail() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { createPaymentMethod, confirmPayment } = useStripe();
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  // API hooks
+  const { data: paymentMethods, isLoading: isLoadingPaymentMethods } = useGetPaymentMethodsQuery();
+  const [createSubscription] = useCreateSubscriptionMutation();
+  const [createPaymentIntent] = useCreatePaymentIntentMutation();
+  const [confirmPaymentIntent] = useConfirmPaymentMutation();
 
+  const handleConfirmSubscription = async () => {
+    setIsProcessing(true);
+    try {
+      // Check if user has payment methods
+      const defaultPaymentMethod = paymentMethods?.find((pm) => pm.isDefault) || paymentMethods?.[0];
 
+      if (!defaultPaymentMethod) {
+        // No payment method, redirect to add one
+        showToast.info('Info', 'Please add a payment method first');
+        navigation.navigate('PaymentMethodScreen');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Step 1: Create subscription on backend
+      // The backend will create a Stripe subscription and payment intent
+      const subscriptionResult = await createSubscription({
+        planId: 'pro', // or get from props/navigation
+        paymentMethodId: defaultPaymentMethod.id,
+        trialDays: 0,
+      }).unwrap();
+
+      // Step 2: If payment intent is returned, confirm it
+      if (subscriptionResult.clientSecret || subscriptionResult.paymentIntent) {
+        const clientSecret =
+          subscriptionResult.clientSecret || subscriptionResult.paymentIntent?.clientSecret;
+
+        if (clientSecret) {
+          // Step 3: Confirm payment with Stripe
+          const { error: confirmError } = await confirmPayment(clientSecret, {
+            paymentMethodType: 'Card',
+          });
+
+          if (confirmError) {
+            showToast.error('Error', confirmError.message);
+            return;
+          }
+
+          // Step 4: Confirm payment on backend
+          if (subscriptionResult.paymentIntent?.id) {
+            try {
+              await confirmPaymentIntent({
+                paymentIntentId: subscriptionResult.paymentIntent.id,
+                paymentMethodId: defaultPaymentMethod.id,
+              }).unwrap();
+            } catch (confirmApiError: any) {
+              // Payment confirmed on Stripe, but backend confirmation failed
+              // This is okay, the subscription was created
+              console.warn('Backend confirmation failed:', confirmApiError);
+            }
+          }
+        }
+      }
+
+      // Success!
+      showToast.success('Success', 'Subscription activated successfully!');
+      
+      // Navigate back after success
+      setTimeout(() => {
+        navigation.goBack();
+        // Optionally navigate to subscription management screen
+      }, 1500);
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.message ||
+        'Failed to process subscription. Please try again.';
+      showToast.error('Error', errorMessage);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <ScreenBackground style={styles.container}>
@@ -65,19 +152,21 @@ export default function SubsCriptionDetail() {
         </ScrollView>
         <PrimaryButton
           title="Cancel"
-          onPress={() => navigation.navigate('CustomizeAvatar')}
+          onPress={() => navigation.goBack()}
           variant="secondary"
           style={{
             marginBottom: metrics.width(15),
           }}
         />
         <PrimaryButton
-          title="Confirm"
-          onPress={() => {}}
-          variant="primary"
+          title="Confirm & Pay"
+     //     onPress={handleConfirmSubscription}
+     onPress={()=>{}}  
+     variant="primary"
           style={{
             marginBottom: metrics.width(25),
           }}
+          loading={isProcessing}
         />
       </SafeAreaView>
     </ScreenBackground>

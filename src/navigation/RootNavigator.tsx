@@ -21,7 +21,7 @@ import Dashboard from '../screens/home/Dashboard';
 import { CharacherReader, ChoseCharacter, CustomizeAvatar } from '../screens/CharacterReader';
 import PreviewCharacherVedio from '../screens/CharacterReader/PreviewCharacherVedio';
 import { NewProject, ProjectVedios, RecentProjects } from '../screens/Projects';
-import { Subscription, SubsCriptionDetail, BillingDetail } from '../screens/Subscriptions';
+import { Subscription, SubsCriptionDetail, BillingDetail, PaymentMethodScreen } from '../screens/Subscriptions';
 import { Settings, EditAccount, Language } from '../screens/settings';
 import { Notifications } from '../screens/notifications';
 import { VideoHistory } from '../screens/history';
@@ -59,6 +59,7 @@ export type RootStackParamList = {
   Subscription:undefined;
   SubsCriptionDetail:undefined;
   BillingDetail:undefined;
+  PaymentMethodScreen:undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -156,6 +157,7 @@ export default function RootNavigator() {
         <Stack.Screen name="Subscription" component={Subscription} />
         <Stack.Screen name="SubsCriptionDetail" component={SubsCriptionDetail} />
         <Stack.Screen name="BillingDetail" component={BillingDetail} />
+        <Stack.Screen name="PaymentMethodScreen" component={PaymentMethodScreen} />
         <Stack.Screen name="Settings" component={Settings} />
         <Stack.Screen name="EditAccount" component={EditAccount} />
         <Stack.Screen name="Language" component={Language} />

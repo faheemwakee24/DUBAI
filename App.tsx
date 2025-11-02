@@ -10,10 +10,12 @@ import { StatusBar, View, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import Toast from 'react-native-toast-message';
+import { StripeProvider } from '@stripe/stripe-react-native';
 import { store } from './src/store';
 import RootNavigator from './src/navigation/RootNavigator';
 import { toastConfig } from './src/components/ui/ToastConfig';
 import SplashScreen from './src/screens/auth/SplashScreen';
+import { STRIPE_CONFIG } from './src/constants/stripe';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -29,19 +31,21 @@ function App() {
 
   return (
     <Provider store={store}>
-      <SafeAreaProvider>
-        <StatusBar barStyle="light-content" />
-        <View style={styles.container}>
-          {showSplash ? (
-            <SplashScreen />
-          ) : (
-            <>
-              <AppContent />
-              <Toast config={toastConfig} />
-            </>
-          )}
-        </View>
-      </SafeAreaProvider>
+      <StripeProvider publishableKey={STRIPE_CONFIG.publishableKey}>
+        <SafeAreaProvider>
+          <StatusBar barStyle="light-content" />
+          <View style={styles.container}>
+            {showSplash ? (
+              <SplashScreen />
+            ) : (
+              <>
+                <AppContent />
+                <Toast config={toastConfig} />
+              </>
+            )}
+          </View>
+        </SafeAreaProvider>
+      </StripeProvider>
     </Provider>
   );
 }

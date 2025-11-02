@@ -176,7 +176,7 @@ export default function Dashboard() {
         </ScrollView>
         <PrimaryButton
           title="Create Project"
-          onPress={() => navigation.navigate('ChoseCharacter')}
+          onPress={() => navigation.navigate('NewProject')}
           variant="primary"
           style={{
             marginHorizontal: metrics.width(25),
