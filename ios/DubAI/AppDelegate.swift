@@ -33,6 +33,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       launchOptions: launchOptions
     )
 
+    // Keep splash screen visible until JS hides it
+    // The splash screen will be hidden from App.tsx after initialization
+
     return true
   }
 }

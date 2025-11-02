@@ -5,23 +5,42 @@
  * @format
  */
 
-import { StatusBar } from 'react-native';
+import { useEffect, useState } from 'react';
+import { StatusBar, View, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import Toast from 'react-native-toast-message';
 import { store } from './src/store';
 import RootNavigator from './src/navigation/RootNavigator';
 import { toastConfig } from './src/components/ui/ToastConfig';
+import SplashScreen from './src/screens/auth/SplashScreen';
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    // Show splash screen for minimum duration, then hide it
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2000); // 2 seconds minimum splash screen time
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <Provider store={store}>
       <SafeAreaProvider>
         <StatusBar barStyle="light-content" />
-
-        <AppContent />
-        <Toast config={toastConfig} />
+        <View style={styles.container}>
+          {showSplash ? (
+            <SplashScreen />
+          ) : (
+            <>
+              <AppContent />
+              <Toast config={toastConfig} />
+            </>
+          )}
+        </View>
       </SafeAreaProvider>
     </Provider>
   );
@@ -30,5 +49,11 @@ function App() {
 function AppContent() {
   return <RootNavigator />;
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
 
 export default App;
