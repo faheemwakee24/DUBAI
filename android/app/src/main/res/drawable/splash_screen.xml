@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background color (dark gradient background) - Full screen by default -->
+    <item android:drawable="@color/splash_background"/>
+    
+    <!-- Splash screen icon centered with resize control -->
+    <!-- 
+    Resize mode options:
+    - "center" (default): Shows icon at original size, centered
+    - "fill": Stretches icon to fill available space
+    - "center_vertical|center_horizontal": Centers without scaling
+    - Use scale drawable for percentage-based scaling
+    -->
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/splash_icon"
+            android:tileMode="disabled"
+            android:dither="true"/>
+    </item>
+    
+    <!-- Alternative: Use scaled drawable for custom sizing -->
+    <!-- Uncomment below and comment above to use scaled version -->
+    <!-- 
+    <item android:drawable="@drawable/splash_icon_scaled"/>
+    -->
+</layer-list>
+

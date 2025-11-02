@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash screen background color (dark theme) -->
+    <color name="splash_background">#040102</color>
+    <color name="splash_icon_background">#330904</color>
+</resources>
+

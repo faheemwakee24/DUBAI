@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Contain mode: Scales vertical image to fit within bounds while maintaining aspect ratio
+This ensures the image fits the container without distortion or cropping
+The bitmap with center gravity automatically acts like "contain" - maintains aspect ratio
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Container that will hold the scaled image -->
+    <item>
+        <!-- Bitmap with center gravity - acts like "contain" mode -->
+        <!-- Centers the image and maintains aspect ratio, fitting within bounds -->
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/splash_icon"
+            android:tileMode="disabled"
+            android:dither="true"/>
+    </item>
+</layer-list>
