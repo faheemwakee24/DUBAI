@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
-  ImageBackground,
   Image,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
@@ -14,18 +12,16 @@ import { FontFamily } from '../../constants/fonts';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { metrics } from '../../constants/metrics';
 import colors from '../../constants/colors';
-import { Svgs } from '../../assets/icons';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   Header,
   LiquidGlassBackground,
-  LanguageDropdown,
-  CustomDropdown,
-  Input,
+  Shimmer,
 } from '../../components/ui';
 import { Images } from '../../assets/images';
+import { useGetProjectsQuery, Project } from '../../store/api/projectsApi';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -35,29 +31,63 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 export default function RecentProjects() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
-  // Sample data for FlatList
-  const projectData = [
-    { id: '1', title: 'Project Title 1', platform: 'Facebook', videoCount: '5 Videos' },
-    { id: '2', title: 'Project Title 2', platform: 'Instagram', videoCount: '3 Videos' },
-    { id: '3', title: 'Project Title 3', platform: 'YouTube', videoCount: '8 Videos' },
-    { id: '4', title: 'Project Title 4', platform: 'TikTok', videoCount: '12 Videos' },
-  ];
+  // Fetch projects from API
+  const { data: projects, isLoading, refetch, isFetching } = useGetProjectsQuery();
 
   // Render item function for FlatList
-  const renderProjectItem = ({ item }: { item: typeof projectData[0] }) => (
-    <LiquidGlassBackground style={styles.ProjectOuterContainer} onPress={()=>navigation.navigate('ProjectVedios')} disabled={false}>
+  const renderProjectItem = ({ item }: { item: Project }) => (
+    <LiquidGlassBackground
+      style={styles.ProjectOuterContainer}
+      onPress={() => navigation.navigate('ProjectVedios')}
+      disabled={false}
+    >
       <View style={styles.projectInnerContainer}>
         <Image source={Images.ProjectIcon} style={styles.projectIcon} />
         <View style={styles.projectDataContainer}>
-          <Text style={styles.projectTitle}>{item.title}</Text>
+          <Text style={styles.projectTitle}>{item.name}</Text>
           <View style={styles.projectSubTitleContainer}>
-            <Text style={styles.projectSubTitle}>{item.platform}</Text>
-            <View style={styles.dot}/>
-            <Text style={styles.vediocCout}>{item.videoCount}</Text>
+            <Text style={styles.projectSubTitle}>
+              {item.description}
+            </Text>
+            <View style={styles.dot} />
+            <Text style={styles.vediocCout}>
+              0 videos
+            </Text>
           </View>
         </View>
       </View>
     </LiquidGlassBackground>
+  );
+
+  // Render shimmer placeholder for project item
+  const renderShimmerItem = () => (
+    <LiquidGlassBackground style={styles.ProjectOuterContainer}>
+      <View style={styles.projectInnerContainer}>
+        <Shimmer
+          width={metrics.width(47)}
+          height={metrics.width(47)}
+          borderRadius={12}
+        />
+        <View style={styles.projectDataContainer}>
+          <Shimmer width={metrics.width(150)} height={metrics.width(18)} borderRadius={4} />
+          <View style={styles.projectSubTitleContainer}>
+            <Shimmer width={metrics.width(80)} height={metrics.width(14)} borderRadius={4} />
+            <View style={styles.dot} />
+            <Shimmer width={metrics.width(60)} height={metrics.width(14)} borderRadius={4} />
+          </View>
+        </View>
+      </View>
+    </LiquidGlassBackground>
+  );
+
+  // Render error or empty state
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyText}>No projects found</Text>
+      <Text style={styles.emptySubText}>
+        Create your first project to get started
+      </Text>
+    </View>
   );
 
   // Handler functions for all dropdowns
@@ -66,14 +96,24 @@ export default function RecentProjects() {
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <Header title="Recent Projects" showBackButton />
-        <FlatList
-          data={projectData}
-          renderItem={renderProjectItem}
-          keyExtractor={(item) => item.id}
+        <FlatList<any>
+          data={isLoading ? [1, 2, 3, 4] : (projects || [])}
+          renderItem={({ item, index }) =>
+            isLoading ? renderShimmerItem() : renderProjectItem({ item: item as Project })
+          }
+          keyExtractor={(item, index) =>
+            isLoading ? `shimmer-${index}` : (item as Project).id
+          }
           style={styles.flatList}
-          contentContainerStyle={styles.contentContainer}
+          contentContainerStyle={[
+            styles.contentContainer,
+            (!projects || projects.length === 0) && !isLoading && styles.emptyContentContainer,
+          ]}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ListEmptyComponent={!isLoading ? renderEmptyState : null}
+          refreshing={isFetching}
+          onRefresh={refetch}
         />
 
         <PrimaryButton
@@ -144,9 +184,30 @@ const styles = StyleSheet.create({
     borderRadius:100,
     backgroundColor:colors.subtitle
   },
-  vediocCout:{
-    fontFamily:FontFamily.spaceGrotesk.regular,
-    fontSize:metrics.width(13),
-    color:colors.subtitle
-  }
+  vediocCout: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(13),
+    color: colors.subtitle,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: metrics.width(40),
+  },
+  emptyText: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(18),
+    color: colors.white,
+    marginBottom: metrics.width(8),
+  },
+  emptySubText: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(14),
+    color: colors.subtitle,
+    textAlign: 'center',
+  },
+  emptyContentContainer: {
+    flexGrow: 1,
+  },
 });

@@ -10,6 +10,7 @@ export { default as Header } from './Header';
 export { default as ProgressBar } from './ProgressBar';
 export { default as LanguageDropdown } from './LanguageDropdown';
 export { default as CustomDropdown } from './CustomDropdown';
+export { default as Shimmer } from './Shimmer';
 export { default as CustomToggle } from './CustomToggle';
 export { toastConfig } from './ToastConfig';
 

@@ -23,25 +23,110 @@ import {
   LiquidGlassBackground,
   LanguageDropdown,
   CustomDropdown,
+  Input,
 } from '../../components/ui';
 import { Images } from '../../assets/images';
+import { useCreateProjectMutation } from '../../store/api/projectsApi';
+import { showToast } from '../../utils/toast';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   'Signup'
 >;
 
+// Language mapping: name to code
+const languageMap: { [key: string]: string } = {
+  English: 'en',
+  Spanish: 'es',
+  French: 'fr',
+  German: 'de',
+  Italian: 'it',
+  Portuguese: 'pt',
+  Chinese: 'zh',
+  Japanese: 'ja',
+  Korean: 'ko',
+  Arabic: 'ar',
+  Hindi: 'hi',
+  Russian: 'ru',
+};
+
+const languageOptions = Object.keys(languageMap);
+
 export default function NewProject() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-
+  const [projectName, setProjectName] = useState('');
   // State for all dropdowns
   const [selectedHairStyle, setSelectedHairStyle] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState('enå');
+  const [selectedProjectType, setSelectedProjectType] = useState<
+    'video-dubbing' | 'character-reader'
+  >('video-dubbing');
+
+  // API hook
+  const [createProject, { isLoading }] = useCreateProjectMutation();
 
   // Options for all dropdowns
   const hairStyleOptions = ['Facebook', 'Tiktok', 'Instagram', 'Youtube'];
 
   const handleHairStyleSelect = (hairStyle: string) => {
     setSelectedHairStyle(hairStyle);
+  };
+
+  const handleLanguageSelect = (language: string) => {
+    setSelectedLanguage(language);
+  };
+
+  const handleProjectTypeSelect = (
+    type: 'video-dubbing' | 'character-reader'
+  ) => {
+    setSelectedProjectType(
+      selectedProjectType === type ? 'video-dubbing' : type
+    );
+  };
+
+  const handleCreateProject = async () => {
+    // Validation
+    if (!projectName.trim()) {
+      showToast.error('Error', 'Please enter a project name');
+      return;
+    }
+
+    if (!selectedHairStyle) {
+      showToast.error('Error', 'Please select a project description');
+      return;
+    }
+
+    if (!selectedLanguage) {
+      showToast.error('Error', 'Please select a language');
+      return;
+    }
+
+    // Map category from project type
+    const category = selectedProjectType === 'video-dubbing' ? 'video' : 'character';
+    
+    // Get language code
+    const languageCode = languageMap[selectedLanguage] || selectedLanguage.toLowerCase();
+
+    try {
+      const result = await createProject({
+        name: projectName.trim(),
+        description: selectedHairStyle,
+        metadata: {
+          category,
+          language: languageCode,
+        },
+      }).unwrap();
+
+      showToast.success('Success', 'Project created successfully!');
+      // Navigate back after a short delay
+      setTimeout(() => {
+        navigation.goBack();
+      }, 1500);
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message || error?.message || 'Failed to create project';
+      showToast.error('Error', errorMessage);
+    }
   };
 
   return (
@@ -58,6 +143,16 @@ export default function NewProject() {
             <Text style={styles.subTitle}>
               Start your new project for dubbing and character reading.
             </Text>
+            <Input
+              label="Project Name"
+              placeholder="Enter your Project Name"
+              value={projectName}
+              onChangeText={setProjectName}
+              autoCapitalize="none"
+              autoCorrect={false}
+              fullWidth={true}
+              required
+            />
             <View style={styles.tempCharacherContainer}>
               <CustomDropdown
                 title="Project"
@@ -67,40 +162,60 @@ export default function NewProject() {
                 placeholder="Select Project"
               />
             </View>
-            <LiquidGlassBackground style={styles.debugCotainer}>
-              <View>
-                <Text style={styles.debugTitle}>Video {'\n'}Dubbing</Text>
-                <Text style={styles.debuggingSubtitle}>
-                  Translate & Dub Video
-                </Text>
-              </View>
-              <View style={styles.row}>
-               
-              </View>
-              <Image source={Images.VedioIcon2} style={styles.vedioIcon2} />
-            </LiquidGlassBackground>
-            <LiquidGlassBackground style={styles.CharacterCreationContainer}>
-              <View>
-                <Text style={styles.debugTitle}>Character {'\n'}Reader</Text>
-                <Text style={styles.debuggingSubtitle}>
-                  Create talking avatars
-                </Text>
-              </View>
-              <View style={styles.row}>
-           
-              </View>
-              <Image
-                source={Images.CharacterIcon}
-                style={styles.characherIcon}
-              />
-            </LiquidGlassBackground>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => handleProjectTypeSelect('video-dubbing')}
+            >
+              <LiquidGlassBackground
+                style={[
+                  styles.CharacterCreationContainer,
+                  selectedProjectType === 'video-dubbing' &&
+                    styles.debugCotainer,
+                ]}
+              >
+                <View>
+                  <Text style={styles.debugTitle}>Video {'\n'}Dubbing</Text>
+                  <Text style={styles.debuggingSubtitle}>
+                    Translate & Dub Video
+                  </Text>
+                </View>
+                <View style={styles.row}></View>
+                <Image source={Images.VedioIcon2} style={styles.vedioIcon2} />
+              </LiquidGlassBackground>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => handleProjectTypeSelect('character-reader')}
+            >
+              <LiquidGlassBackground
+                style={[
+                  styles.CharacterCreationContainer,
+                  selectedProjectType === 'character-reader' &&
+                    styles.debugCotainer,
+                ]}
+              >
+                <View>
+                  <Text style={styles.debugTitle}>Character {'\n'}Reader</Text>
+                  <Text style={styles.debuggingSubtitle}>
+                    Create talking avatars
+                  </Text>
+                </View>
+                <View style={styles.row}></View>
+                <Image
+                  source={Images.CharacterIcon}
+                  style={styles.characherIcon}
+                />
+              </LiquidGlassBackground>
+            </TouchableOpacity>
           </View>
         </ScrollView>
-      
+
         <PrimaryButton
-          title="Create Project"
-          onPress={() => {}}
+          title={isLoading ? 'Creating...' : 'Create Project'}
+          onPress={handleCreateProject}
           variant="primary"
+          disabled={isLoading}
           style={{
             marginBottom: metrics.width(25),
           }}
@@ -210,14 +325,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: metrics.width(15),
   },
   debugCotainer: {
-    paddingHorizontal: metrics.width(17),
-    paddingVertical: metrics.width(20),
-    marginTop: metrics.width(30),
-    borderRadius:16,
-    borderWidth: 0.8,
-    borderLeftWidth:0.8,
-    borderRightWidth:0.8,
-    borderBottomWidth:0.8,
     borderColor: colors.primary40,
     shadowColor: colors.primary,
     shadowOffset: {
@@ -278,10 +385,9 @@ const styles = StyleSheet.create({
   CharacterCreationContainer: {
     paddingHorizontal: metrics.width(17),
     paddingVertical: metrics.width(20),
-    borderRadius:16,
+    borderRadius: 16,
     marginTop: metrics.width(9),
     borderWidth: 0.8,
-    
   },
   columnRow: {
     flexDirection: 'row',
@@ -326,5 +432,10 @@ const styles = StyleSheet.create({
     width: metrics.width(5),
     borderRadius: 100,
     backgroundColor: colors.subtitle,
+  },
+  selectedContainer: {
+    borderColor: colors.primary,
+    borderWidth: 2,
+    backgroundColor: colors.primary40,
   },
 });
