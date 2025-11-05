@@ -1,27 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
   Image,
   ScrollView,
   Text,
+  Platform,
+  Share,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { metrics } from '../../constants/metrics';
 import colors from '../../constants/colors';
 import { FontFamily } from '../../constants/fonts';
-import { Header, LiquidGlassBackground, Checkbox } from '../../components/ui';
+import { Header, LiquidGlassBackground, Checkbox, PrimaryButton } from '../../components/ui';
 import { Images } from '../../assets/images';
+import { showToast } from '../../utils/toast';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import ViewShot from 'react-native-view-shot';
 
 export default function AvatarCustomization() {
   const [beard, setBeard] = useState(false);
+  const [beard2, setBeard2] = useState(false);
   const [lips, setLips] = useState(false);
+  const [smileLips, setSmileLips] = useState(false);
   const [eyes, setEyes] = useState(false);
+  const [nose, setNose] = useState(false);
   const [cap, setCap] = useState(false);
   const [cap2, setCap2] = useState(false);
   const [glasses, setGlasses] = useState(false);
   const [glasses2, setGlasses2] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const viewShotRef = useRef<ViewShot>(null);
 
   // Handle Cap selection - mutually exclusive with Cap 2
   const handleCapChange = (value: boolean) => {
@@ -55,6 +66,93 @@ export default function AvatarCustomization() {
     }
   };
 
+  // Handle Beard selection - mutually exclusive with Beard 2
+  const handleBeardChange = (value: boolean) => {
+    setBeard(value);
+    if (value) {
+      setBeard2(false); // Deselect Beard 2 if Beard is selected
+    }
+  };
+
+  // Handle Beard 2 selection - mutually exclusive with Beard
+  const handleBeard2Change = (value: boolean) => {
+    setBeard2(value);
+    if (value) {
+      setBeard(false); // Deselect Beard if Beard 2 is selected
+    }
+  };
+
+  // Handle Lips selection - mutually exclusive with Smile Lips
+  const handleLipsChange = (value: boolean) => {
+    setLips(value);
+    if (value) {
+      setSmileLips(false); // Deselect Smile Lips if Lips is selected
+    }
+  };
+
+  // Handle Smile Lips selection - mutually exclusive with Lips
+  const handleSmileLipsChange = (value: boolean) => {
+    setSmileLips(value);
+    if (value) {
+      setLips(false); // Deselect Lips if Smile Lips is selected
+    }
+  };
+
+  // Save avatar configuration to AsyncStorage
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const avatarConfig = {
+        beard,
+        beard2,
+        lips,
+        smileLips,
+        eyes,
+        nose,
+        cap,
+        cap2,
+        glasses,
+        glasses2,
+      };
+      await AsyncStorage.setItem('avatarConfig', JSON.stringify(avatarConfig));
+      showToast.success('Saved', 'Avatar configuration saved successfully!');
+    } catch (error) {
+      console.error('Error saving avatar config:', error);
+      showToast.error('Error', 'Failed to save avatar configuration');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Download avatar as image
+  const handleDownload = async () => {
+    if (!viewShotRef.current || !viewShotRef.current.capture) {
+      showToast.error('Error', 'Unable to capture avatar');
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      const uri = await viewShotRef.current.capture();
+      
+      // Share the image (works on both iOS and Android)
+      const result = await Share.share({
+        url: uri,
+        message: Platform.OS === 'android' ? 'Check out my custom avatar!' : undefined,
+        title: 'Avatar Image',
+      });
+
+      if (result.action === Share.sharedAction) {
+        showToast.success('Downloaded', 'Avatar image saved successfully!');
+      }
+    } catch (error) {
+      console.error('Error downloading avatar:', error);
+      showToast.error('Error', 'Failed to download avatar image');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -68,7 +166,12 @@ export default function AvatarCustomization() {
           {/* Avatar Display Section */}
           <View style={styles.avatarContainer}>
             <LiquidGlassBackground style={styles.avatarBackground}>
-              <View style={styles.avatarWrapper}>
+              <ViewShot
+                ref={viewShotRef}
+                options={{ format: 'png', quality: 1.0 }}
+                style={styles.viewShot}
+              >
+                <View style={styles.avatarWrapper}>
                 {/* Body Image */}
                 <Image
                   source={Images.CharacterBody}
@@ -84,6 +187,13 @@ export default function AvatarCustomization() {
                     resizeMode="contain"
                   />
                 )}
+                {nose && (
+                  <Image
+                    source={Images.CharacterNose}
+                    style={[styles.overlayImage, styles.noseOverlay]}
+                    resizeMode="contain"
+                  />
+                )}
                 {lips && (
                   <Image
                     source={Images.CharacterLips}
@@ -91,10 +201,24 @@ export default function AvatarCustomization() {
                     resizeMode="contain"
                   />
                 )}
+                {smileLips && (
+                  <Image
+                    source={Images.CharacterSmileLips}
+                    style={[styles.overlayImage, styles.smileLipsOverlay]}
+                    resizeMode="contain"
+                  />
+                )}
                 {beard && (
                   <Image
                     source={Images.CharacterBeard}
                     style={[styles.overlayImage, styles.beardOverlay]}
+                    resizeMode="contain"
+                  />
+                )}
+                {beard2 && (
+                  <Image
+                    source={Images.CharacterBeard2}
+                    style={[styles.overlayImage, styles.beard2Overlay]}
                     resizeMode="contain"
                   />
                 )}
@@ -127,6 +251,7 @@ export default function AvatarCustomization() {
                   />
                 )}
               </View>
+              </ViewShot>
             </LiquidGlassBackground>
           </View>
 
@@ -138,20 +263,51 @@ export default function AvatarCustomization() {
                 
                 <View style={styles.checkboxesList}>
                   <Checkbox
-                    label="Beard"
-                    value={beard}
-                    onValueChange={setBeard}
-                  />
-                  <Checkbox
-                    label="Lips"
-                    value={lips}
-                    onValueChange={setLips}
-                  />
-                  <Checkbox
                     label="Eyes"
                     value={eyes}
                     onValueChange={setEyes}
                   />
+                  <Checkbox
+                    label="Nose"
+                    value={nose}
+                    onValueChange={setNose}
+                  />
+                  
+                  {/* Beard Row */}
+                  <View style={styles.checkboxRow}>
+                    <View style={styles.checkboxItem}>
+                      <Checkbox
+                        label="Beard"
+                        value={beard}
+                        onValueChange={handleBeardChange}
+                      />
+                    </View>
+                    <View style={styles.checkboxItem}>
+                      <Checkbox
+                        label="Beard 2"
+                        value={beard2}
+                        onValueChange={handleBeard2Change}
+                      />
+                    </View>
+                  </View>
+                  
+                  {/* Lips Row */}
+                  <View style={styles.checkboxRow}>
+                    <View style={styles.checkboxItem}>
+                      <Checkbox
+                        label="Lips"
+                        value={lips}
+                        onValueChange={handleLipsChange}
+                      />
+                    </View>
+                    <View style={styles.checkboxItem}>
+                      <Checkbox
+                        label="Smile Lips"
+                        value={smileLips}
+                        onValueChange={handleSmileLipsChange}
+                      />
+                    </View>
+                  </View>
                   
                   {/* Cap Row */}
                   <View style={styles.checkboxRow}>
@@ -193,6 +349,26 @@ export default function AvatarCustomization() {
             </LiquidGlassBackground>
           </View>
         </ScrollView>
+
+        {/* Action Buttons */}
+        <View style={styles.buttonsContainer}>
+          <PrimaryButton
+            title={isSaving ? 'Saving...' : 'Save'}
+            onPress={handleSave}
+            variant="secondary"
+            style={styles.saveButton}
+            loading={isSaving}
+            disabled={isSaving || isDownloading}
+          />
+          <PrimaryButton
+            title={isDownloading ? 'Downloading...' : 'Download'}
+            onPress={handleDownload}
+            variant="primary"
+            style={styles.downloadButton}
+            loading={isDownloading}
+            disabled={isSaving || isDownloading}
+          />
+        </View>
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -234,7 +410,7 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     position: 'absolute',
-    marginTop:50
+
   },
   overlayImage: {
     position: 'absolute',
@@ -243,12 +419,21 @@ const styles = StyleSheet.create({
     
   },
   eyesOverlay: {
+    zIndex: 4,
+  },
+  noseOverlay: {
     zIndex: 3,
   },
   lipsOverlay: {
     zIndex: 2,
   },
+  smileLipsOverlay: {
+    zIndex: 2,
+  },
   beardOverlay: {
+    zIndex: 1,
+  },
+  beard2Overlay: {
     zIndex: 1,
   },
   glassesOverlay: {
@@ -287,6 +472,23 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   checkboxItem: {
+    flex: 1,
+  },
+  viewShot: {
+    width: '100%',
+    height: metrics.width(400),
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    gap: metrics.width(15),
+    paddingHorizontal: metrics.width(25),
+    paddingBottom: metrics.width(25),
+    paddingTop: metrics.width(15),
+  },
+  saveButton: {
+    flex: 1,
+  },
+  downloadButton: {
     flex: 1,
   },
 });

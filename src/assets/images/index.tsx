@@ -27,8 +27,11 @@ export const Images = {
     // Character images
     CharacterBody:require('./charcheter/Body.png'),
     CharacterBeard:require('./charcheter/beard.png'),
+    CharacterBeard2:require('./charcheter/beard2.png'),
     CharacterLips:require('./charcheter/lips.png'),
+    CharacterSmileLips:require('./charcheter/smilelips.png'),
     CharacterEye:require('./charcheter/eye.png'),
+    CharacterNose:require('./charcheter/nose.png'),
     CharacterCap:require('./charcheter/cap.png'),
     CharacterCap2:require('./charcheter/cap2.png'),
     CharacterGlasses:require('./charcheter/Glasses.png'),
