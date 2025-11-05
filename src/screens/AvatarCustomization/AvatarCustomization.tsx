@@ -19,7 +19,41 @@ export default function AvatarCustomization() {
   const [lips, setLips] = useState(false);
   const [eyes, setEyes] = useState(false);
   const [cap, setCap] = useState(false);
+  const [cap2, setCap2] = useState(false);
   const [glasses, setGlasses] = useState(false);
+  const [glasses2, setGlasses2] = useState(false);
+
+  // Handle Cap selection - mutually exclusive with Cap 2
+  const handleCapChange = (value: boolean) => {
+    setCap(value);
+    if (value) {
+      setCap2(false); // Deselect Cap 2 if Cap is selected
+    }
+  };
+
+  // Handle Cap 2 selection - mutually exclusive with Cap
+  const handleCap2Change = (value: boolean) => {
+    setCap2(value);
+    if (value) {
+      setCap(false); // Deselect Cap if Cap 2 is selected
+    }
+  };
+
+  // Handle Glasses selection - mutually exclusive with Glasses 2
+  const handleGlassesChange = (value: boolean) => {
+    setGlasses(value);
+    if (value) {
+      setGlasses2(false); // Deselect Glasses 2 if Glasses is selected
+    }
+  };
+
+  // Handle Glasses 2 selection - mutually exclusive with Glasses
+  const handleGlasses2Change = (value: boolean) => {
+    setGlasses2(value);
+    if (value) {
+      setGlasses(false); // Deselect Glasses if Glasses 2 is selected
+    }
+  };
 
   return (
     <ScreenBackground style={styles.container}>
@@ -71,10 +105,24 @@ export default function AvatarCustomization() {
                     resizeMode="contain"
                   />
                 )}
+                {glasses2 && (
+                  <Image
+                    source={Images.CharacterGlasses2}
+                    style={[styles.overlayImage, styles.glassesOverlay]}
+                    resizeMode="contain"
+                  />
+                )}
                 {cap && (
                   <Image
                     source={Images.CharacterCap}
                     style={[styles.overlayImage, styles.capOverlay]}
+                    resizeMode="contain"
+                  />
+                )}
+                {cap2 && (
+                  <Image
+                    source={Images.CharacterCap2}
+                    style={[styles.overlayImage, styles.cap2Overlay]}
                     resizeMode="contain"
                   />
                 )}
@@ -104,16 +152,42 @@ export default function AvatarCustomization() {
                     value={eyes}
                     onValueChange={setEyes}
                   />
-                  <Checkbox
-                    label="Cap"
-                    value={cap}
-                    onValueChange={setCap}
-                  />
-                  <Checkbox
-                    label="Glasses"
-                    value={glasses}
-                    onValueChange={setGlasses}
-                  />
+                  
+                  {/* Cap Row */}
+                  <View style={styles.checkboxRow}>
+                    <View style={styles.checkboxItem}>
+                      <Checkbox
+                        label="Cap"
+                        value={cap}
+                        onValueChange={handleCapChange}
+                      />
+                    </View>
+                    <View style={styles.checkboxItem}>
+                      <Checkbox
+                        label="Cap 2"
+                        value={cap2}
+                        onValueChange={handleCap2Change}
+                      />
+                    </View>
+                  </View>
+                  
+                  {/* Glasses Row */}
+                  <View style={styles.checkboxRow}>
+                    <View style={styles.checkboxItem}>
+                      <Checkbox
+                        label="Glasses"
+                        value={glasses}
+                        onValueChange={handleGlassesChange}
+                      />
+                    </View>
+                    <View style={styles.checkboxItem}>
+                      <Checkbox
+                        label="Glasses 2"
+                        value={glasses2}
+                        onValueChange={handleGlasses2Change}
+                      />
+                    </View>
+                  </View>
                 </View>
               </View>
             </LiquidGlassBackground>
@@ -180,7 +254,13 @@ const styles = StyleSheet.create({
   glassesOverlay: {
     zIndex: 5,
   },
+  glasses2Overlay: {
+    zIndex: 5,
+  },
   capOverlay: {
+    zIndex: 6,
+  },
+  cap2Overlay: {
     zIndex: 6,
   },
   checkboxesContainer: {
@@ -200,6 +280,14 @@ const styles = StyleSheet.create({
   },
   checkboxesList: {
     gap: metrics.width(20),
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    gap: metrics.width(20),
+    width: '100%',
+  },
+  checkboxItem: {
+    flex: 1,
   },
 });
 

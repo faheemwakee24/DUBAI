@@ -204,7 +204,7 @@ export default function Settings() {
                 style={styles.optionRow}
                 onPress={()=>navigation.navigate('AvatarCustomization')}
               >
-                <Text style={styles.optionText}>Language</Text>
+                <Text style={styles.optionText}>Avatar</Text>
                 <Svgs.WhiteArrowRight
                   
                 />

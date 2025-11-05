@@ -30,5 +30,7 @@ export const Images = {
     CharacterLips:require('./charcheter/lips.png'),
     CharacterEye:require('./charcheter/eye.png'),
     CharacterCap:require('./charcheter/cap.png'),
+    CharacterCap2:require('./charcheter/cap2.png'),
     CharacterGlasses:require('./charcheter/Glasses.png'),
+    CharacterGlasses2:require('./charcheter/glasses2.png'),
 };
