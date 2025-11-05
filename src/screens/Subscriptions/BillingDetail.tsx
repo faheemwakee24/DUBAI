@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -18,6 +19,9 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground } from '../../components/ui';
+import { useGetMySubscriptionQuery } from '../../store/api/subscriptionsApi';
+import { useCancelSubscriptionMutation } from '../../store/api/subscriptionsApi';
+import { showToast } from '../../utils/toast';
 
 type BillingDetailNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -26,12 +30,103 @@ type BillingDetailNavigationProp = NativeStackNavigationProp<
 
 export default function BillingDetail() {
   const navigation = useNavigation<BillingDetailNavigationProp>();
+  const [isCanceling, setIsCanceling] = useState(false);
+  
+  // API hooks
+  const { data: mySubscription, isLoading: isLoadingSubscription, refetch: refetchSubscription } = useGetMySubscriptionQuery();
+  const [cancelSubscription] = useCancelSubscriptionMutation();
 
-  // Current billing information
+  // Format date helper
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  // Current billing information from API
   const currentBillingInfo = {
-    paymentMethod: 'VISA',
-    nextBillingDate: 'Nov 15, 2025',
-    payment: '$9.99',
+    paymentMethod: 'VISA', // TODO: Get from payment methods
+    nextBillingDate: mySubscription?.currentPeriodEnd ? formatDate(mySubscription.currentPeriodEnd) : 'N/A',
+    payment: mySubscription?.amount ? `$${(mySubscription.amount / 100).toFixed(2)}` : '$0',
+  };
+
+  // Handle cancel/resume subscription
+  const handleCancelSubscription = () => {
+    if (!mySubscription) {
+      showToast.error('Error', 'No active subscription found');
+      return;
+    }
+
+    // If subscription is already set to cancel, show resume option
+    if (mySubscription.cancelAtPeriodEnd) {
+      Alert.alert(
+        'Resume Subscription',
+        'Your subscription is set to cancel at the end of the current period. Would you like to resume it?',
+        [
+          {
+            text: 'No, Keep Canceling',
+            style: 'cancel',
+          },
+          {
+            text: 'Resume Subscription',
+            onPress: () => cancelSubscriptionFlow(false), // Setting immediate: false to resume
+            style: 'default',
+          },
+        ],
+        { cancelable: true }
+      );
+      return;
+    }
+
+    // Cancel subscription flow
+    Alert.alert(
+      'Cancel Subscription',
+      'Are you sure you want to cancel your subscription? You will have access until the end of your current billing period.',
+      [
+        {
+          text: 'No, Keep Subscription',
+          style: 'cancel',
+        },
+        {
+          text: 'Cancel at Period End',
+          onPress: () => cancelSubscriptionFlow(false),
+          style: 'default',
+        },
+        {
+          text: 'Cancel Immediately',
+          onPress: () => cancelSubscriptionFlow(true),
+          style: 'destructive',
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const cancelSubscriptionFlow = async (immediate: boolean) => {
+    setIsCanceling(true);
+    try {
+      await cancelSubscription({
+        immediate,
+      }).unwrap();
+      
+      showToast.success(
+        'Success',
+        immediate
+          ? 'Subscription canceled immediately'
+          : 'Subscription will be canceled at the end of the billing period'
+      );
+      
+      // Refetch subscription data
+      refetchSubscription();
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.message ||
+        'Failed to cancel subscription. Please try again.';
+      showToast.error('Error', errorMessage);
+    } finally {
+      setIsCanceling(false);
+    }
   };
 
   // Billing history data
@@ -96,13 +191,26 @@ export default function BillingDetail() {
                 <Text style={styles.billingInfoValue}>{currentBillingInfo.payment}</Text>
               </View>
             </View>
-            <PrimaryButton
-              title="Update Payment Method"
-              onPress={() => navigation.navigate('PaymentMethodScreen')}
-              variant="primary"
-              style={styles.updateButton}
-              fullWidth
-            />
+            <View style={styles.buttonContainer}>
+              <PrimaryButton
+                title="Update Payment Method"
+                onPress={() => navigation.navigate('PaymentMethodScreen')}
+                variant="primary"
+                style={styles.updateButton}
+                fullWidth
+              />
+              {mySubscription && mySubscription.status === 'active' && (
+                <PrimaryButton
+                  title={mySubscription.cancelAtPeriodEnd ? 'Resume Subscription' : 'Cancel Subscription'}
+                  onPress={handleCancelSubscription}
+                  variant="secondary"
+                  style={styles.cancelButton}
+                  fullWidth
+                  loading={isCanceling}
+                  disabled={isCanceling}
+                />
+              )}
+            </View>
           </LiquidGlassBackground>
 
           {/* Billing History */}
@@ -179,7 +287,15 @@ const styles = StyleSheet.create({
     fontSize: metrics.width(15),
     color: colors.white,
   },
+  buttonContainer: {
+    gap: metrics.width(15),
+  },
   updateButton: {
+    alignSelf: 'center',
+    paddingHorizontal: metrics.width(20),
+    paddingVertical: metrics.width(12),
+  },
+  cancelButton: {
     alignSelf: 'center',
     paddingHorizontal: metrics.width(20),
     paddingVertical: metrics.width(12),

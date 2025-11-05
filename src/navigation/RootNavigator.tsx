@@ -28,6 +28,7 @@ import { VideoHistory } from '../screens/history';
 import { tokenStorage } from '../utils/tokenStorage';
 import SplashScreen from '../screens/auth/SplashScreen';
 import { StyleSheet } from 'react-native';
+import { SubscriptionPlan } from '../store/api/subscriptionsApi';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -57,7 +58,7 @@ export type RootStackParamList = {
   ProjectVedios:undefined;
   NewProject:undefined;
   Subscription:undefined;
-  SubsCriptionDetail:undefined;
+  SubsCriptionDetail:{ plan: SubscriptionPlan };
   BillingDetail:undefined;
   PaymentMethodScreen:undefined;
 };

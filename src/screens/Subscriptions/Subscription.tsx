@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, FlatList, Image, Text, TouchableOpacity } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,10 +11,12 @@ import {
   Header,
   LiquidGlassBackground,
   PrimaryButton,
+  Shimmer,
 } from '../../components/ui';
 import { Images } from '../../assets/images';
 import { FontFamily } from '../../constants/fonts';
 import colors from '../../constants/colors';
+import { useGetSubscriptionPlansQuery, useGetMySubscriptionQuery } from '../../store/api/subscriptionsApi';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -24,63 +26,56 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 export default function Subscription() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
-  // Subscription plans data
-  const subscriptionData = [
-    {
-      id: '1',
-      name: 'Free Plan',
-      price: '$0',
-      period: '/month',
-      icon: Images.FreePlanIcon,
-      buttonTitle: 'Current Plan',
-      buttonVariant: 'secondary' as const,
-      isPopular: false,
-      features: [
-        '5 video dubs per month',
-        '3 character videos per month',
-        'Up to 2 min video length',
-        'Standard processing speed',
-        'Watermark on exports',
-      ],
-    },
-    {
-      id: '2',
-      name: 'Pro',
-      price: '$9.99',
-      period: '/month',
-      icon: Images.FreePlanIcon,
-      buttonTitle: 'Upgrade Now',
-      buttonVariant: 'primary' as const,
-      isPopular: true,
-      features: [
-        'Unlimited video dubbing',
-        'Up to 30 min video length',
-        'Priority processing (3x faster)',
-        'No watermarks',
-        '50+ languages & voices',
-        'HD export quality',
-      ],
-    },
-    {
-      id: '3',
-      name: 'Enterprise',
-      price: 'Custom',
-      period: '',
-      icon: Images.FreePlanIcon,
-      buttonTitle: 'Upgrade Now',
-      buttonVariant: 'secondary' as const,
-      isPopular: false,
-      features: [
-        'Everything in Pro',
-        'Unlimited video length',
-        'Custom voice cloning',
-        'API access',
-        'Dedicated support',
-        'Team collaboration',
-        'Custom branding',
-      ],
-    },
-  ];
+  // Fetch subscription plans and current user subscription
+  const { data: plans, isLoading: isLoadingPlans } = useGetSubscriptionPlansQuery();
+  const { data: mySubscription, isLoading: isLoadingSubscription } = useGetMySubscriptionQuery();
+
+  // Transform API data to match UI structure
+  const subscriptionData = useMemo(() => {
+    if (!plans) return [];
+
+    // Get current plan key from user's subscription
+    // Handle both new structure (with plan object) and old structure (with planId)
+    const currentPlanKey = mySubscription?.plan?.key 
+      || (mySubscription?.planId 
+        ? plans.find(p => p._id === mySubscription.planId)?.key 
+        : 'free');
+
+    return plans.map((plan, index) => {
+      const isCurrentPlan = plan.key === currentPlanKey;
+      const isPopular = plan.key === 'plus' || plan.key === 'premium';
+
+      // Build features array from plan data
+      const features = [
+        `${plan.videosPerWeek === 99999 ? 'Unlimited' : plan.videosPerWeek} videos per week`,
+        `Resolution: ${plan.resolution}`,
+        plan.watermark ? 'Watermark on exports' : 'No watermarks',
+        plan.notes,
+      ];
+
+      // Format price (amount is in cents, so divide by 100)
+      const price = plan.amount === 0 ? '$0' : `$${(plan.amount / 100).toFixed(2)}`;
+      const period = plan.interval ? `/${plan.interval}` : '';
+
+      const buttonVariant: 'primary' | 'secondary' = isCurrentPlan 
+        ? 'secondary' 
+        : isPopular 
+        ? 'primary' 
+        : 'secondary';
+
+      return {
+        id: plan._id,
+        name: plan.name,
+        price,
+        period,
+        icon: Images.FreePlanIcon,
+        buttonTitle: isCurrentPlan ? 'Current Plan' : 'Upgrade Now',
+        buttonVariant,
+        isPopular: isPopular && !isCurrentPlan,
+        features,
+      };
+    });
+  }, [plans, mySubscription]);
 
   // Render subscription item function for FlatList
   const renderSubscriptionItem = ({ item }: { item: typeof subscriptionData[0] }) => (
@@ -101,7 +96,13 @@ export default function Subscription() {
         </Text>
         <PrimaryButton
           title={item.buttonTitle}
-          onPress={() => navigation.navigate('SubsCriptionDetail')}
+          onPress={() => {
+            // Find the original plan data from the plans array
+            const selectedPlan = plans?.find(p => p._id === item.id);
+            if (selectedPlan) {
+              navigation.navigate('SubsCriptionDetail', { plan: selectedPlan });
+            }
+          }}
           extraContainerStyle={
             item.buttonVariant === 'primary' ? styles.buttonContainer2 : styles.buttonContainer
           }
@@ -115,6 +116,60 @@ export default function Subscription() {
                 width={metrics.width(16)}
               />
               <Text style={styles.includeItemTitle}>{feature}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    </LiquidGlassBackground>
+  );
+
+  // Render shimmer placeholder for subscription item
+  const renderShimmerItem = () => (
+    <LiquidGlassBackground style={styles.debugCotainer}>
+      <View style={styles.planContainer}>
+        <View style={styles.row1}>
+          <Shimmer
+            width={metrics.width(24)}
+            height={metrics.width(24)}
+            borderRadius={4}
+          />
+          <Shimmer
+            width={metrics.width(120)}
+            height={metrics.width(18)}
+            borderRadius={4}
+          />
+          <Shimmer
+            width={metrics.width(60)}
+            height={metrics.width(16)}
+            borderRadius={8}
+            style={styles.popularContainer}
+          />
+        </View>
+        <Shimmer
+          width={metrics.width(100)}
+          height={metrics.width(30)}
+          borderRadius={4}
+          style={{ marginTop: metrics.width(15) }}
+        />
+        <Shimmer
+          width="100%"
+          height={metrics.width(48)}
+          borderRadius={12}
+          style={{ marginTop: metrics.width(20) }}
+        />
+        <View style={styles.includesCotainer}>
+          {[1, 2, 3, 4].map((_, index) => (
+            <View key={index} style={styles.includeItem}>
+              <Shimmer
+                width={metrics.width(16)}
+                height={metrics.width(16)}
+                borderRadius={8}
+              />
+              <Shimmer
+                width={metrics.width(200)}
+                height={metrics.width(14)}
+                borderRadius={4}
+              />
             </View>
           ))}
         </View>
@@ -137,10 +192,18 @@ export default function Subscription() {
             </TouchableOpacity>
           }
         />
-        <FlatList
-          data={subscriptionData}
-          renderItem={renderSubscriptionItem}
-          keyExtractor={(item) => item.id}
+        <FlatList<any>
+          data={isLoadingPlans || isLoadingSubscription ? [1, 2, 3] : subscriptionData}
+          renderItem={({ item, index }) =>
+            isLoadingPlans || isLoadingSubscription
+              ? renderShimmerItem()
+              : renderSubscriptionItem({ item: item as typeof subscriptionData[0] })
+          }
+          keyExtractor={(item, index) =>
+            isLoadingPlans || isLoadingSubscription
+              ? `shimmer-${index}`
+              : (item as typeof subscriptionData[0]).id
+          }
           style={styles.flatList}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
@@ -234,5 +297,5 @@ const styles = StyleSheet.create({
     position:'absolute',
     right:20,
     borderRadius:8
-  }
+  },
 });

@@ -22,6 +22,7 @@ import { Images } from '../../assets/images';
 import { tokenStorage } from '../../utils/tokenStorage';
 import { useGetProfileQuery } from '../../store/api/authApi';
 import { User } from '../../store/api/authApi';
+import { useUpdateProfileMutation } from '../../store/api/usersApi';
 import { showToast } from '../../utils/toast';
 
 type EditAccountNavigationProp = NativeStackNavigationProp<
@@ -32,6 +33,7 @@ type EditAccountNavigationProp = NativeStackNavigationProp<
 export default function EditAccount() {
   const navigation = useNavigation<EditAccountNavigationProp>();
   const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
+  const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
 
   // Form state
   const [firstName, setFirstName] = useState('');
@@ -79,17 +81,30 @@ export default function EditAccount() {
     return Images.DefaultProfile;
   };
 
-  const handleSaveChanges = () => {
-    // Handle save changes logic
-    // TODO: Implement update profile API when available
-    console.log('Save changes pressed');
-    console.log('First Name:', firstName);
-    console.log('Last Name:', lastName);
-    console.log('Email:', email);
-    console.log('Password:', password);
-    
-    // Show success message
-    showToast.success('Profile updated!', 'Your profile has been updated successfully');
+  const handleSaveChanges = async () => {
+    // Validate input
+    if (!firstName.trim() || !lastName.trim()) {
+      showToast.error('Validation Error', 'First name and last name are required');
+      return;
+    }
+
+    try {
+      const result = await updateProfile({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+      }).unwrap();
+
+      // Update local state with the response
+      if (result) {
+        setUser(result as any);
+        tokenStorage.setUser(result as any);
+        showToast.success('Profile updated!', 'Your profile has been updated successfully');
+      }
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      const errorMessage = error?.data?.message || error?.message || 'Failed to update profile';
+      showToast.error('Update Failed', errorMessage);
+    }
   };
 
   const handleEditProfilePicture = () => {
@@ -161,7 +176,7 @@ export default function EditAccount() {
             />
 
             {/* Password Field */}
-            <Input
+            {/* <Input
               value={password}
               onChangeText={setPassword}
               placeholder="Enter new password"
@@ -169,17 +184,18 @@ export default function EditAccount() {
               showPasswordToggle
               label="Password"
               fullWidth
-            />
+            /> */}
           </View>
         </ScrollView>
 
         {/* Save Changes Button */}
         <PrimaryButton
-          title="Save Changes"
+          title={isUpdating ? 'Saving...' : 'Save Changes'}
           onPress={handleSaveChanges}
           variant="primary"
           style={styles.saveButton}
           fullWidth
+          disabled={isUpdating}
         />
       </SafeAreaView>
     </ScreenBackground>

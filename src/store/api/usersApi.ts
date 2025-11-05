@@ -26,6 +26,21 @@ export interface UpdateUserDto {
   name?: string;
 }
 
+// Update Profile Request/Response
+export interface UpdateProfileRequest {
+  firstName: string;
+  lastName: string;
+}
+
+export interface UpdateProfileResponse {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  isEmailVerified?: boolean;
+  authProvider?: string;
+}
+
 export interface UsersResponse {
   data: User[];
   total?: number;
@@ -97,6 +112,16 @@ export const usersApi = baseApi.injectEndpoints({
         {type: 'User', id: 'LIST'},
       ],
     }),
+
+    // Update Profile
+    updateProfile: builder.mutation<UpdateProfileResponse, UpdateProfileRequest>({
+      query: body => ({
+        url: API_ENDPOINTS.USER.UPDATE_PROFILE,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['User'],
+    }),
   }),
 });
 
@@ -107,5 +132,6 @@ export const {
   useCreateUserMutation,
   useUpdateUserMutation,
   useDeleteUserMutation,
+  useUpdateProfileMutation,
 } = usersApi;
 

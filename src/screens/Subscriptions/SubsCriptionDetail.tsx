@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   ImageBackground,
+  Linking,
+  Alert,
+  AppState,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -14,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { metrics } from '../../constants/metrics';
 import colors from '../../constants/colors';
 import { Svgs } from '../../assets/icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground } from '../../components/ui';
@@ -22,97 +25,242 @@ import { Images } from '../../assets/images';
 import { useStripe } from '@stripe/stripe-react-native';
 import { showToast } from '../../utils/toast';
 import {
-  useCreateSubscriptionMutation,
   useCreatePaymentIntentMutation,
   useConfirmPaymentMutation,
   useGetPaymentMethodsQuery,
 } from '../../store/api/paymentsApi';
+import {
+  useGetMySubscriptionQuery,
+  useGetSubscriptionPlansQuery,
+  useCheckoutSubscriptionMutation,
+  useCancelSubscriptionMutation,
+  useConfirmSubscriptionMutation,
+} from '../../store/api/subscriptionsApi';
 
+type SubsCriptionDetailRouteProp = RouteProp<
+  RootStackParamList,
+  'SubsCriptionDetail'
+>;
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  'Signup'
+  'SubsCriptionDetail'
 >;
 
 export default function SubsCriptionDetail() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const route = useRoute<SubsCriptionDetailRouteProp>();
   const { createPaymentMethod, confirmPayment } = useStripe();
   const [isProcessing, setIsProcessing] = useState(false);
-  
+  const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
+  const appState = useRef(AppState.currentState);
+
+  // Get plan from route params
+  const selectedPlan = route.params?.plan;
+  console.log('selectedPlan', JSON.stringify(selectedPlan));
+
   // API hooks
-  const { data: paymentMethods, isLoading: isLoadingPaymentMethods } = useGetPaymentMethodsQuery();
-  const [createSubscription] = useCreateSubscriptionMutation();
+  const { data: paymentMethods, isLoading: isLoadingPaymentMethods } =
+    useGetPaymentMethodsQuery();
+  const { data: mySubscription, isLoading: isLoadingSubscription } =
+    useGetMySubscriptionQuery();
+  const { data: plans, isLoading: isLoadingPlans } =
+    useGetSubscriptionPlansQuery();
+  const [checkoutSubscription] = useCheckoutSubscriptionMutation();
+  const [cancelSubscription] = useCancelSubscriptionMutation();
+  const [confirmSubscription] = useConfirmSubscriptionMutation();
   const [createPaymentIntent] = useCreatePaymentIntentMutation();
   const [confirmPaymentIntent] = useConfirmPaymentMutation();
+  console.log('mySubscription', JSON.stringify(mySubscription));
 
-  const handleConfirmSubscription = async () => {
+  // Confirm subscription after returning from URL
+  const handleConfirmSubscriptionAfterReturn = useCallback(async () => {
+    if (!pendingSessionId) {
+      return;
+    }
+
     setIsProcessing(true);
     try {
-      // Check if user has payment methods
-      const defaultPaymentMethod = paymentMethods?.find((pm) => pm.isDefault) || paymentMethods?.[0];
-
-      if (!defaultPaymentMethod) {
-        // No payment method, redirect to add one
-        showToast.info('Info', 'Please add a payment method first');
-        navigation.navigate('PaymentMethodScreen');
-        setIsProcessing(false);
-        return;
-      }
-
-      // Step 1: Create subscription on backend
-      // The backend will create a Stripe subscription and payment intent
-      const subscriptionResult = await createSubscription({
-        planId: 'pro', // or get from props/navigation
-        paymentMethodId: defaultPaymentMethod.id,
-        trialDays: 0,
+      const result = await confirmSubscription({
+        sessionId: pendingSessionId,
       }).unwrap();
+      
+      console.log('Confirm subscription result:', JSON.stringify(result));
 
-      // Step 2: If payment intent is returned, confirm it
-      if (subscriptionResult.clientSecret || subscriptionResult.paymentIntent) {
-        const clientSecret =
-          subscriptionResult.clientSecret || subscriptionResult.paymentIntent?.clientSecret;
-
-        if (clientSecret) {
-          // Step 3: Confirm payment with Stripe
-          const { error: confirmError } = await confirmPayment(clientSecret, {
-            paymentMethodType: 'Card',
-          });
-
-          if (confirmError) {
-            showToast.error('Error', confirmError.message);
-            return;
-          }
-
-          // Step 4: Confirm payment on backend
-          if (subscriptionResult.paymentIntent?.id) {
-            try {
-              await confirmPaymentIntent({
-                paymentIntentId: subscriptionResult.paymentIntent.id,
-                paymentMethodId: defaultPaymentMethod.id,
-              }).unwrap();
-            } catch (confirmApiError: any) {
-              // Payment confirmed on Stripe, but backend confirmation failed
-              // This is okay, the subscription was created
-              console.warn('Backend confirmation failed:', confirmApiError);
-            }
-          }
-        }
-      }
-
-      // Success!
-      showToast.success('Success', 'Subscription activated successfully!');
+      // Show success message with subscription details
+      const planName = result.plan?.name || 'Subscription';
+      showToast.success('Success', `${planName} activated successfully!`);
+      
+      // Clear pending session ID
+      setPendingSessionId(null);
       
       // Navigate back after success
       setTimeout(() => {
         navigation.goBack();
-        // Optionally navigate to subscription management screen
       }, 1500);
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.message ||
+        'Failed to confirm subscription. Please try again.';
+      showToast.error('Error', errorMessage);
+      // Clear pending session ID on error so user can try again
+      setPendingSessionId(null);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [pendingSessionId, confirmSubscription, navigation]);
+
+  // Handle app state changes to detect when returning from URL
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === 'active' &&
+        pendingSessionId
+      ) {
+        // App has come to the foreground, call confirm API
+        handleConfirmSubscriptionAfterReturn();
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [pendingSessionId, handleConfirmSubscriptionAfterReturn]);
+  // Get current plan data
+  const currentPlan = useMemo(() => {
+    if (mySubscription?.plan) {
+      return mySubscription.plan.key;
+    }
+    if (mySubscription?.planId) {
+      return plans?.find(p => p._id === mySubscription.planId)?.key || 'free';
+    }
+    return 'free';
+  }, [mySubscription, plans]);
+
+  // Check if selected plan is the current plan
+  const isCurrentPlan = useMemo(() => {
+    if (!selectedPlan || !currentPlan) return false;
+    return selectedPlan._id === currentPlan || selectedPlan.key === currentPlan;
+  }, [selectedPlan, currentPlan]);
+
+  // Calculate subscription info
+  const subscriptionInfo = useMemo(() => {
+    if (!selectedPlan) return null;
+
+    const currentPlanName = currentPlan || 'Free';
+    const newPlanName = selectedPlan.name;
+    const monthlyCost =
+      selectedPlan.amount === 0
+        ? '$0'
+        : `$${(selectedPlan.amount / 100).toFixed(2)}`;
+
+    return {
+      currentPlanName,
+      newPlanName,
+      monthlyCost,
+      isUpgrade:
+        (typeof selectedPlan.amount === 'number' ? selectedPlan.amount : 0) >
+        (typeof currentPlan === 'number' ? currentPlan : 0),
+    };
+  }, [selectedPlan, currentPlan]);
+
+  // Handle cancel subscription for current paid plan
+  const handleCancelSubscription = () => {
+    if (!selectedPlan || selectedPlan.amount === 0) {
+      return;
+    }
+
+    Alert.alert(
+      'Cancel Subscription',
+      'Are you sure you want to cancel your subscription? You will have access until the end of your current billing period.',
+      [
+        {
+          text: 'No, Keep Subscription',
+          style: 'cancel',
+        },
+        {
+          text: 'Cancel at Period End',
+          onPress: () => cancelSubscriptionFlow(false),
+          style: 'default',
+        },
+        {
+          text: 'Cancel Immediately',
+          onPress: () => cancelSubscriptionFlow(true),
+          style: 'destructive',
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const cancelSubscriptionFlow = async (immediate: boolean) => {
+    setIsProcessing(true);
+    try {
+      await cancelSubscription({
+        immediate,
+      }).unwrap();
+
+      showToast.success(
+        'Success',
+        immediate
+          ? 'Subscription canceled immediately'
+          : 'Subscription will be canceled at the end of the billing period'
+      );
+
+      // Navigate back after success
+      setTimeout(() => {
+        navigation.goBack();
+      }, 1500);
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.message ||
+        'Failed to cancel subscription. Please try again.';
+      showToast.error('Error', errorMessage);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleConfirmSubscription = async () => {
+    if (!selectedPlan) {
+      showToast.error('Error', 'No plan selected');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // Step 1: Checkout subscription using planKey
+      const checkoutResult = await checkoutSubscription({
+        planKey: selectedPlan.key,
+      }).unwrap();
+      console.log('checkoutResult', JSON.stringify(checkoutResult));
+      console.log('id', checkoutResult.id);
+
+      // Store sessionId for confirmation after returning from URL
+      setPendingSessionId(checkoutResult.id);
+
+      // Open the checkout URL
+      const canOpen = await Linking.canOpenURL(checkoutResult.url);
+      if (canOpen) {
+        await Linking.openURL(checkoutResult.url);
+        // Don't set processing to false here - wait for app to return
+        // The confirm API will be called when app returns to foreground
+        // Processing state will be managed by handleConfirmSubscriptionAfterReturn
+      } else {
+        showToast.error('Error', 'Unable to open checkout URL');
+        setPendingSessionId(null);
+        setIsProcessing(false);
+      }
     } catch (error: any) {
       const errorMessage =
         error?.data?.message ||
         error?.message ||
         'Failed to process subscription. Please try again.';
       showToast.error('Error', errorMessage);
-    } finally {
+      setPendingSessionId(null);
       setIsProcessing(false);
     }
   };
@@ -126,48 +274,91 @@ export default function SubsCriptionDetail() {
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.dashboardContainer}>
-            <Text style={styles.title}>Upgrade your Plan</Text>
-            <Text style={styles.subTitle}>
-              You’re upgrading from free to pro. You’ll be charged $9.99 per
-              month.
-            </Text>
-            <LiquidGlassBackground style={styles.liquidBackgroundContainer}>
-              <View style={styles.liquidBackgroundContentContainer}>
-                <View style={styles.roww}>
-                  <Text style={styles.currentPlanTitle}>Current Plan:</Text>
-                  <Text style={styles.currentPlanValue}>Free</Text>
+          {subscriptionInfo && selectedPlan ? (
+            <View style={styles.dashboardContainer}>
+              <Text style={styles.title}>
+                {subscriptionInfo.isUpgrade
+                  ? 'Upgrade your Plan'
+                  : 'Change your Plan'}
+              </Text>
+              <Text style={styles.subTitle}>
+                {subscriptionInfo.isUpgrade
+                  ? `You're upgrading from ${subscriptionInfo.currentPlanName} to ${subscriptionInfo.newPlanName}. You'll be charged ${subscriptionInfo.monthlyCost} per ${selectedPlan.interval}.`
+                  : `You're changing from ${subscriptionInfo.currentPlanName} to ${subscriptionInfo.newPlanName}.`}
+              </Text>
+              <LiquidGlassBackground style={styles.liquidBackgroundContainer}>
+                <View style={styles.liquidBackgroundContentContainer}>
+                  <View style={styles.roww}>
+                    <Text style={styles.currentPlanTitle}>Current Plan:</Text>
+                    <Text style={styles.currentPlanValue}>
+                      {subscriptionInfo.currentPlanName}
+                    </Text>
+                  </View>
+                  <View style={styles.roww}>
+                    <Text style={styles.currentPlanTitle}>New Plan:</Text>
+                    <Text style={styles.currentPlanValue}>
+                      {subscriptionInfo.newPlanName}
+                    </Text>
+                  </View>
+                  <View style={styles.roww}>
+                    <Text style={styles.currentPlanTitle}>Monthly Cost:</Text>
+                    <Text style={styles.currentPlanValue}>
+                      {subscriptionInfo.monthlyCost}
+                    </Text>
+                  </View>
+                  {selectedPlan.notes && (
+                    <View style={styles.notesContainer}>
+                      <Text style={styles.notesText}>{selectedPlan.notes}</Text>
+                    </View>
+                  )}
                 </View>
-                <View style={styles.roww}>
-                  <Text style={styles.currentPlanTitle}>New Plan:</Text>
-                  <Text style={styles.currentPlanValue}>Pro</Text>
-                </View>
-                <View style={styles.roww}>
-                  <Text style={styles.currentPlanTitle}>Monthly Cost:</Text>
-                  <Text style={styles.currentPlanValue}>$9.99</Text>
-                </View>
-              </View>
-            </LiquidGlassBackground>
-          </View>
+              </LiquidGlassBackground>
+            </View>
+          ) : (
+            <View style={styles.dashboardContainer}>
+              <Text style={styles.title}>Loading...</Text>
+            </View>
+          )}
         </ScrollView>
-        <PrimaryButton
-          title="Cancel"
-          onPress={() => navigation.goBack()}
-          variant="secondary"
-          style={{
-            marginBottom: metrics.width(15),
-          }}
-        />
-        <PrimaryButton
-          title="Confirm & Pay"
-     //     onPress={handleConfirmSubscription}
-     onPress={()=>{}}  
-     variant="primary"
-          style={{
-            marginBottom: metrics.width(25),
-          }}
-          loading={isProcessing}
-        />
+
+        {!isCurrentPlan ? (
+          // Only show button if plan is not free
+          selectedPlan?.amount !== 0 && (
+            <PrimaryButton
+              title="Confirm & Pay"
+              onPress={handleConfirmSubscription}
+              variant="primary"
+              style={{
+                marginBottom: metrics.width(25),
+              }}
+              loading={isProcessing}
+              disabled={!selectedPlan || isProcessing}
+            />
+          )
+        ) : (
+          <>
+            {selectedPlan && selectedPlan.amount > 0 && (
+              <PrimaryButton
+                title="Cancel Subscription"
+                onPress={handleCancelSubscription}
+                variant="secondary"
+                style={{
+                  marginBottom: metrics.width(15),
+                }}
+                loading={isProcessing}
+                disabled={isProcessing}
+              />
+            )}
+            <PrimaryButton
+              title="Back"
+              onPress={() => navigation.goBack()}
+              variant="secondary"
+              style={{
+                marginBottom: metrics.width(25),
+              }}
+            />
+          </>
+        )}
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -394,5 +585,17 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.spaceGrotesk.medium,
     fontSize: metrics.width(15),
     color: colors.white,
+  },
+  notesContainer: {
+    marginTop: metrics.width(12),
+    paddingTop: metrics.width(12),
+    borderTopWidth: 1,
+    borderTopColor: colors.white15,
+  },
+  notesText: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(13),
+    color: colors.subtitle,
+    lineHeight: metrics.width(18),
   },
 });

@@ -53,10 +53,15 @@ export const API_ENDPOINTS = {
   // Subscription endpoints
   SUBSCRIPTION: {
     LIST: '/subscriptions',
+    PLANS: '/subscriptions/plans',
+    ME: '/subscriptions/me',
+    CHECKOUT: '/subscriptions/checkout',
+    CONFIRM: '/subscriptions/confirm',
+    CANCEL: '/subscriptions/cancel',
     DETAIL: (id: string) => `/subscriptions/${id}`,
     CREATE: '/subscriptions',
     UPDATE: (id: string) => `/subscriptions/${id}`,
-    CANCEL: (id: string) => `/subscriptions/${id}/cancel`,
+    CANCEL_BY_ID: (id: string) => `/subscriptions/${id}/cancel`,
   },
   // Payment endpoints
   PAYMENT: {
