@@ -12,6 +12,7 @@ export { default as LanguageDropdown } from './LanguageDropdown';
 export { default as CustomDropdown } from './CustomDropdown';
 export { default as Shimmer } from './Shimmer';
 export { default as CustomToggle } from './CustomToggle';
+export { default as Checkbox } from './Checkbox';
 export { toastConfig } from './ToastConfig';
 
 

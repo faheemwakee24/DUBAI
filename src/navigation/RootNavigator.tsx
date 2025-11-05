@@ -25,6 +25,7 @@ import { Subscription, SubsCriptionDetail, BillingDetail, PaymentMethodScreen } 
 import { Settings, EditAccount, Language } from '../screens/settings';
 import { Notifications } from '../screens/notifications';
 import { VideoHistory } from '../screens/history';
+import { AvatarCustomization } from '../screens/AvatarCustomization';
 import { tokenStorage } from '../utils/tokenStorage';
 import SplashScreen from '../screens/auth/SplashScreen';
 import { StyleSheet } from 'react-native';
@@ -61,6 +62,7 @@ export type RootStackParamList = {
   SubsCriptionDetail:{ plan: SubscriptionPlan };
   BillingDetail:undefined;
   PaymentMethodScreen:undefined;
+  AvatarCustomization:undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -164,6 +166,7 @@ export default function RootNavigator() {
         <Stack.Screen name="Language" component={Language} />
         <Stack.Screen name="Notifications" component={Notifications} />
         <Stack.Screen name="VideoHistory" component={VideoHistory} />
+        <Stack.Screen name="AvatarCustomization" component={AvatarCustomization} />
       </Stack.Navigator>
     </NavigationContainer>
   );

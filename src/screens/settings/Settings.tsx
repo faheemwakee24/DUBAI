@@ -199,6 +199,17 @@ export default function Settings() {
                 />
               </TouchableOpacity>
             </LiquidGlassBackground>
+            <LiquidGlassBackground style={styles.optionCard}>
+              <TouchableOpacity
+                style={styles.optionRow}
+                onPress={()=>navigation.navigate('AvatarCustomization')}
+              >
+                <Text style={styles.optionText}>Language</Text>
+                <Svgs.WhiteArrowRight
+                  
+                />
+              </TouchableOpacity>
+            </LiquidGlassBackground>
 
             {/* Notifications Option */}
             <LiquidGlassBackground style={styles.optionCard}>
@@ -212,7 +223,7 @@ export default function Settings() {
               </View>
             </LiquidGlassBackground>
           </View>
-
+       
           {/* Logout Button */}
           <PrimaryButton
             title={logoutLoading ? 'Logging out...' : 'Logout'}

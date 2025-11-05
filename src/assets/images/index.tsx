@@ -24,4 +24,11 @@ export const Images = {
     ProcessingImage:require('./ProcessingImage.png'),
     LanguageImage:require('./LanguageImage.png'),
     SplashScreenIcon:require('./SplashScreenIcon.png'),
+    // Character images
+    CharacterBody:require('./charcheter/Body.png'),
+    CharacterBeard:require('./charcheter/beard.png'),
+    CharacterLips:require('./charcheter/lips.png'),
+    CharacterEye:require('./charcheter/eye.png'),
+    CharacterCap:require('./charcheter/cap.png'),
+    CharacterGlasses:require('./charcheter/Glasses.png'),
 };
