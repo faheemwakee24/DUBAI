@@ -6,7 +6,6 @@ import {
   ScrollView,
   Text,
   Platform,
-  Share,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +17,8 @@ import { Images } from '../../assets/images';
 import { showToast } from '../../utils/toast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ViewShot from 'react-native-view-shot';
+import { CameraRoll } from '@react-native-camera-roll/camera-roll';
+import { PermissionsAndroid } from 'react-native';
 
 export default function AvatarCustomization() {
   const [beard, setBeard] = useState(false);
@@ -32,7 +33,7 @@ export default function AvatarCustomization() {
   const [glasses2, setGlasses2] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const viewShotRef = useRef<ViewShot>(null);
+  const viewShotRef = useRef<ViewShot | null>(null);
 
   // Handle Cap selection - mutually exclusive with Cap 2
   const handleCapChange = (value: boolean) => {
@@ -114,40 +115,112 @@ export default function AvatarCustomization() {
         glasses,
         glasses2,
       };
+      
+      console.log('Saving avatar config:', avatarConfig);
       await AsyncStorage.setItem('avatarConfig', JSON.stringify(avatarConfig));
-      showToast.success('Saved', 'Avatar configuration saved successfully!');
-    } catch (error) {
+      
+      // Verify it was saved
+      const saved = await AsyncStorage.getItem('avatarConfig');
+      if (saved) {
+        console.log('Avatar config saved successfully');
+        showToast.success('Saved', 'Avatar configuration saved successfully!');
+      } else {
+        throw new Error('Failed to verify save');
+      }
+    } catch (error: any) {
       console.error('Error saving avatar config:', error);
-      showToast.error('Error', 'Failed to save avatar configuration');
+      const errorMessage = error?.message || 'Failed to save avatar configuration';
+      showToast.error('Error', errorMessage);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Download avatar as image
+  // Request Android permissions for saving to gallery
+  const requestAndroidPermission = async () => {
+    if (Platform.OS !== 'android') {
+      return true;
+    }
+
+    try {
+      // For Android 13+ (API 33+), we need different permissions
+      if (Platform.Version >= 33) {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+          {
+            title: 'Photo Library Permission',
+            message: 'App needs access to your photo library to save images',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } else {
+        // For Android < 13, use WRITE_EXTERNAL_STORAGE
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: 'Storage Permission',
+            message: 'App needs access to storage to save images',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      }
+    } catch (err) {
+      console.warn('Permission error:', err);
+      return false;
+    }
+  };
+
+  // Download avatar as image and save to gallery
   const handleDownload = async () => {
-    if (!viewShotRef.current || !viewShotRef.current.capture) {
+    if (!viewShotRef.current) {
+      console.error('ViewShot ref is null');
       showToast.error('Error', 'Unable to capture avatar');
       return;
     }
 
     setIsDownloading(true);
     try {
-      const uri = await viewShotRef.current.capture();
+      console.log('Capturing avatar...');
       
-      // Share the image (works on both iOS and Android)
-      const result = await Share.share({
-        url: uri,
-        message: Platform.OS === 'android' ? 'Check out my custom avatar!' : undefined,
-        title: 'Avatar Image',
-      });
-
-      if (result.action === Share.sharedAction) {
-        showToast.success('Downloaded', 'Avatar image saved successfully!');
+      // Request permissions for Android
+      if (Platform.OS === 'android') {
+        const hasPermission = await requestAndroidPermission();
+        if (!hasPermission) {
+          showToast.error('Permission Denied', 'Please grant storage permission to save images');
+          setIsDownloading(false);
+          return;
+        }
       }
-    } catch (error) {
+      
+      // Add a small delay to ensure the view is rendered
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 100));
+      
+      if (!viewShotRef.current?.capture) {
+        throw new Error('ViewShot capture method not available');
+      }
+      
+      const uri = await viewShotRef.current.capture();
+      console.log('Avatar captured at:', uri);
+      
+      if (!uri) {
+        throw new Error('Failed to capture image');
+      }
+      
+      // Save to gallery using CameraRoll
+      const savedUri = await CameraRoll.save(uri, { type: 'photo' });
+      console.log('Image saved to gallery:', savedUri);
+      
+      showToast.success('Downloaded', 'Avatar image saved to gallery successfully!');
+    } catch (error: any) {
       console.error('Error downloading avatar:', error);
-      showToast.error('Error', 'Failed to download avatar image');
+      const errorMessage = error?.message || 'Failed to download avatar image';
+      showToast.error('Error', errorMessage);
     } finally {
       setIsDownloading(false);
     }
