@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, CustomDropdown } from '../../components/ui';
 import { characters_data } from '../../utils/characters';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -27,6 +28,7 @@ export default function CustomizeAvatar() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'CustomizeAvatar'>>();
   const { character } = route.params;
+  const { t } = useTranslation();
   
   // Map character ID to character key
   const getCharacterKey = (id: number): keyof typeof characters_data | null => {
@@ -48,45 +50,107 @@ export default function CustomizeAvatar() {
   const [selectedBackground, setSelectedBackground] = useState('');
   
   // Options for all dropdowns based on character data
-  const hairStyleOptions = characterData 
-    ? Object.keys(characterData.hair).map(key => {
-        const labels: Record<string, string> = {
-          short: 'Short',
-          long: 'Long',
-          curly: 'Curly',
-          spiky: 'Spiky',
-        };
-        return labels[key] || key;
-      })
-    : ['Short', 'Long', 'Curly', 'Spiky'];
+  const hairStyleOptions = useMemo<string[]>(() => {
+    const defaultLabels: Record<string, string> = {
+      short: 'Short',
+      long: 'Long',
+      curly: 'Curly',
+      spiky: 'Spiky',
+    };
+    const translated = t('customizeAvatar.dropdowns.hairStyle.options', {
+      returnObjects: true,
+    });
+    const hairLabels =
+      translated && typeof translated === 'object'
+        ? (translated as Record<string, string>)
+        : defaultLabels;
+
+    if (characterData) {
+      return Object.keys(characterData.hair).map(key => hairLabels[key] || key);
+    }
+    return Object.values(hairLabels);
+  }, [characterData, t]);
     
-  const outfitOptions = characterData
-    ? Object.keys(characterData.body).map(key => {
-        const labels: Record<string, string> = {
-          casual: 'Casual',
-          formal: 'Formal',
-          semiFormal: 'Semi Formal',
-          sporty: 'Sporty',
-          superHero: 'Super Hero',
-        };
-        return labels[key] || key;
-      })
-    : ['Casual', 'Formal', 'Semi Formal', 'Sporty', 'Super Hero'];
+  const outfitOptions = useMemo<string[]>(() => {
+    const defaultLabels: Record<string, string> = {
+      casual: 'Casual',
+      formal: 'Formal',
+      semiFormal: 'Semi Formal',
+      sporty: 'Sporty',
+      superHero: 'Super Hero',
+    };
+    const translated = t('customizeAvatar.dropdowns.outfit.options', {
+      returnObjects: true,
+    });
+    const outfitLabels =
+      translated && typeof translated === 'object'
+        ? (translated as Record<string, string>)
+        : defaultLabels;
+
+    if (characterData) {
+      return Object.keys(characterData.body).map(key => outfitLabels[key] || key);
+    }
+    return Object.values(outfitLabels);
+  }, [characterData, t]);
     
-  const accessoriesOptions = ['Cap', 'Glasses', 'Watch', 'None'];
-  const emotionOptions = ['Happy 😊', 'Excited 🤩', 'Neutral 😐', 'Thoughtful 🧐', 'Surprised 😲'];
+  const accessoriesOptions = useMemo<string[]>(() => {
+    const fallback = ['Cap', 'Glasses', 'Watch', 'None'];
+    const translated = t('customizeAvatar.dropdowns.accessories.options', {
+      returnObjects: true,
+    });
+    if (Array.isArray(translated)) {
+      return translated.length ? translated : fallback;
+    }
+    if (translated && typeof translated === 'object') {
+      const values = Object.values(translated as Record<string, string>);
+      return values.length ? values : fallback;
+    }
+    return fallback;
+  }, [t]);
+
+  const emotionOptions = useMemo<string[]>(() => {
+    const fallback = ['Happy 😊', 'Excited 🤩', 'Neutral 😐', 'Thoughtful 🧐', 'Surprised 😲'];
+    const translated = t('customizeAvatar.dropdowns.emotion.options', {
+      returnObjects: true,
+    });
+    if (Array.isArray(translated)) {
+      return translated.length ? translated : fallback;
+    }
+    if (translated && typeof translated === 'object') {
+      const values = Object.values(translated as Record<string, string>);
+      return values.length ? values : fallback;
+    }
+    return fallback;
+  }, [t]);
   
-  const backgroundOptions = characterData
-    ? Object.keys(characterData.background).map(key => {
-        const labels: Record<string, string> = {
-          dubai_red: 'Dub AI Red',
-          gradient_blue: 'Gradient Blue',
-          gradient_orange: 'Gradient Orange',
-          pattern: 'Pattern',
-        };
-        return labels[key] || key;
-      })
-    : ['Dub AI Red', 'Gradient Blue', 'Gradient Orange', 'Pattern'];
+  const backgroundOptions = useMemo<string[]>(() => {
+    const fallback = ['Dub AI Red', 'Gradient Blue', 'Gradient Orange', 'Pattern'];
+    const translated = t('customizeAvatar.dropdowns.background.options', {
+      returnObjects: true,
+    });
+    const backgroundLabels =
+      translated && typeof translated === 'object'
+        ? (translated as Record<string, string>)
+        : undefined;
+
+    if (characterData) {
+      if (backgroundLabels) {
+        return Object.keys(characterData.background).map(key => backgroundLabels[key] || key);
+      }
+      return Object.keys(characterData.background);
+    }
+
+    if (Array.isArray(translated)) {
+      return translated.length ? translated : fallback;
+    }
+
+    if (backgroundLabels) {
+      const values = Object.values(backgroundLabels);
+      return values.length ? values : fallback;
+    }
+
+    return fallback;
+  }, [characterData, t]);
   
   // Handler functions for all dropdowns
   const handleHairStyleSelect = (hairStyle: string) => {
@@ -113,7 +177,7 @@ export default function CustomizeAvatar() {
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <Header
-          title="Character Reader"
+          title={t('customizeAvatar.headerTitle')}
           showBackButton
           RigthIcon={
             <Svgs.HistoryIcon
@@ -128,55 +192,55 @@ export default function CustomizeAvatar() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.dashboardContainer}>
-            <Text style={styles.title}>Customize your Avatar</Text>
+            <Text style={styles.title}>{t('customizeAvatar.title')}</Text>
             <Text style={styles.subTitle}>
-              Personal your Character's Appearance{' '}
+              {t('customizeAvatar.subtitle')}
             </Text>
             <View style={styles.tempCharacherContainer}>
               <CustomDropdown
-                title="Hair Style"
+                title={t('customizeAvatar.dropdowns.hairStyle.title')}
                 options={hairStyleOptions}
                 selectedValue={selectedHairStyle}
                 onSelect={handleHairStyleSelect}
-                placeholder="Select Style"
+                placeholder={t('customizeAvatar.dropdowns.hairStyle.placeholder')}
               />
               
               <CustomDropdown
-                title="Outfit"
+                title={t('customizeAvatar.dropdowns.outfit.title')}
                 options={outfitOptions}
                 selectedValue={selectedOutfit}
                 onSelect={handleOutfitSelect}
-                placeholder="Select Outfit"
+                placeholder={t('customizeAvatar.dropdowns.outfit.placeholder')}
               />
               
               <CustomDropdown
-                title="Accessories"
+                title={t('customizeAvatar.dropdowns.accessories.title')}
                 options={accessoriesOptions}
                 selectedValue={selectedAccessories}
                 onSelect={handleAccessoriesSelect}
-                placeholder="Select Accessories"
+                placeholder={t('customizeAvatar.dropdowns.accessories.placeholder')}
               />
               
               <CustomDropdown
-                title="Emotion"
+                title={t('customizeAvatar.dropdowns.emotion.title')}
                 options={emotionOptions}
                 selectedValue={selectedEmotion}
                 onSelect={handleEmotionSelect}
-                placeholder="Select Emotion"
+                placeholder={t('customizeAvatar.dropdowns.emotion.placeholder')}
               />
               
               <CustomDropdown
-                title="Background"
+                title={t('customizeAvatar.dropdowns.background.title')}
                 options={backgroundOptions}
                 selectedValue={selectedBackground}
                 onSelect={handleBackgroundSelect}
-                placeholder="Select Background"
+                placeholder={t('customizeAvatar.dropdowns.background.placeholder')}
               />
             </View>
           </View>
         </ScrollView>
         <PrimaryButton
-          title="Customize Avatar"
+          title={t('customizeAvatar.buttonCustomize')}
           onPress={() => navigation.navigate('CharacherReader', {
             character: character,
             body: selectedOutfit,
@@ -191,7 +255,7 @@ export default function CustomizeAvatar() {
           }}
         />
         <PrimaryButton
-          title="Next"
+          title={t('customizeAvatar.buttonNext')}
           onPress={() => {}}
           variant="primary"
           style={{

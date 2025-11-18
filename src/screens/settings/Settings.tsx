@@ -20,6 +20,7 @@ import { LiquidGlassContainerView } from '@callstack/liquid-glass';
 import { tokenStorage } from '../../utils/tokenStorage';
 import { useGetProfileQuery, useLogoutMutation, User } from '../../store/api/authApi';
 import { showToast } from '../../utils/toast';
+import { useTranslation } from 'react-i18next';
 
 type SettingsNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -32,6 +33,7 @@ export default function Settings() {
   const [user, setUser] = useState<User | null>(null);
   const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
   const [logout, { isLoading: logoutLoading }] = useLogoutMutation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Load user from storage on mount
@@ -71,7 +73,7 @@ export default function Settings() {
         return user.email.split('@')[0];
       }
     }
-    return 'User'; // Fallback
+    return t('settings.profile.fallbackName'); // Fallback
   };
 
   // Get user email
@@ -79,7 +81,7 @@ export default function Settings() {
     if (user?.email) {
       return user.email;
     }
-    return 'user@example.com'; // Fallback
+    return t('settings.profile.fallbackEmail'); // Fallback
   };
 
   // Get user avatar
@@ -105,12 +107,12 @@ export default function Settings() {
   const handleLogout = async () => {
     try {
       await logout().unwrap();
-      
+
       // Clear stored data
       await tokenStorage.clearAll();
-      
-      showToast.success('Logged out', 'You have been successfully logged out');
-      
+
+      showToast.success(t('settings.logout.successTitle'), t('settings.logout.successBody'));
+
       // Navigate to login screen
       navigation.reset({
         index: 0,
@@ -120,7 +122,7 @@ export default function Settings() {
       console.error('Logout error:', error);
       // Clear local data even if API call fails
       await tokenStorage.clearAll();
-      showToast.error('Logout', 'Failed to logout from server, but local session cleared');
+      showToast.error(t('settings.logout.failureTitle'), t('settings.logout.failureBody'));
       navigation.reset({
         index: 0,
         routes: [{ name: 'Welcome' }],
@@ -131,7 +133,7 @@ export default function Settings() {
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header title="Settings" showBackButton />
+        <Header title={t('settings.headerTitle')} showBackButton />
 
         <View style={styles.contentContainer}>
           {/* User Profile Section */}
@@ -142,7 +144,7 @@ export default function Settings() {
               </LiquidGlassBackground>
               <View style={styles.profileInfo}>
                 <Text style={styles.userName}>
-                  {profileLoading ? 'Loading...' : getUserDisplayName()}
+                  {profileLoading ? t('settings.profile.loading') : getUserDisplayName()}
                 </Text>
                 <Text style={styles.userEmail}>
                   {getUserEmail()}
@@ -153,13 +155,13 @@ export default function Settings() {
 
           {/* Account Section */}
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Account</Text>
+            <Text style={styles.sectionTitle}>{t('settings.sections.account')}</Text>
             <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={handleEditProfile}
               >
-                <Text style={styles.optionText}>Edit Profile</Text>
+                <Text style={styles.optionText}>{t('settings.options.editProfile')}</Text>
                 <Svgs.WhiteArrowRight
                   
                 />
@@ -169,13 +171,13 @@ export default function Settings() {
 
           {/* Subscription Section */}
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Subscription</Text>
+            <Text style={styles.sectionTitle}>{t('settings.sections.subscription')}</Text>
             <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={handleManageSubscription}
               >
-                <Text style={styles.optionText}>Manage Subscription</Text>
+                <Text style={styles.optionText}>{t('settings.options.manageSubscription')}</Text>
                 <Svgs.WhiteArrowRight
                   
                 />
@@ -185,7 +187,7 @@ export default function Settings() {
 
           {/* Preferences Section */}
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Preferences</Text>
+            <Text style={styles.sectionTitle}>{t('settings.sections.preferences')}</Text>
 
             {/* Language Option */}
             <LiquidGlassBackground style={styles.optionCard}>
@@ -193,7 +195,7 @@ export default function Settings() {
                 style={styles.optionRow}
                 onPress={handleLanguage}
               >
-                <Text style={styles.optionText}>Language</Text>
+                <Text style={styles.optionText}>{t('settings.options.language')}</Text>
                 <Svgs.WhiteArrowRight
                   
                 />
@@ -221,7 +223,7 @@ export default function Settings() {
                   //'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
                   })}
               >
-                <Text style={styles.optionText}>vedio preview </Text>
+                <Text style={styles.optionText}>{t('settings.options.videoPreview')}</Text>
                 <Svgs.WhiteArrowRight
                   
                 />
@@ -231,7 +233,7 @@ export default function Settings() {
             {/* Notifications Option */}
             <LiquidGlassBackground style={styles.optionCard}>
               <View style={styles.optionRow}>
-                <Text style={styles.optionText}>Notifications</Text>
+                <Text style={styles.optionText}>{t('settings.options.notifications')}</Text>
                 <CustomToggle
                   value={notificationsEnabled}
                   onValueChange={setNotificationsEnabled}
@@ -243,7 +245,7 @@ export default function Settings() {
        
           {/* Logout Button */}
           <PrimaryButton
-            title={logoutLoading ? 'Logging out...' : 'Logout'}
+            title={logoutLoading ? t('settings.logout.loading') : t('settings.logout.button')}
             onPress={handleLogout}
             variant="primary"
             style={styles.logoutButton}

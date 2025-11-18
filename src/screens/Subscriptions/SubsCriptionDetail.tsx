@@ -36,6 +36,7 @@ import {
   useCancelSubscriptionMutation,
   useConfirmSubscriptionMutation,
 } from '../../store/api/subscriptionsApi';
+import { useTranslation } from 'react-i18next';
 
 type SubsCriptionDetailRouteProp = RouteProp<
   RootStackParamList,
@@ -71,6 +72,7 @@ export default function SubsCriptionDetail() {
   const [createPaymentIntent] = useCreatePaymentIntentMutation();
   const [confirmPaymentIntent] = useConfirmPaymentMutation();
   console.log('mySubscription', JSON.stringify(mySubscription));
+  const { t } = useTranslation();
 
   // Confirm subscription after returning from URL
   const handleConfirmSubscriptionAfterReturn = useCallback(async () => {
@@ -87,8 +89,8 @@ export default function SubsCriptionDetail() {
       console.log('Confirm subscription result:', JSON.stringify(result));
 
       // Show success message with subscription details
-      const planName = result.plan?.name || 'Subscription';
-      showToast.success('Success', `${planName} activated successfully!`);
+      const planName = result.plan?.name || t('subscriptionDetail.headerTitle');
+      showToast.success(t('subscriptionDetail.success.activated', { plan: planName }));
       
       // Clear pending session ID
       setPendingSessionId(null);
@@ -173,20 +175,20 @@ export default function SubsCriptionDetail() {
     }
 
     Alert.alert(
-      'Cancel Subscription',
-      'Are you sure you want to cancel your subscription? You will have access until the end of your current billing period.',
+      t('subscriptionDetail.cancelDialog.title'),
+      t('subscriptionDetail.cancelDialog.message'),
       [
         {
-          text: 'No, Keep Subscription',
+          text: t('subscriptionDetail.cancelDialog.keep'),
           style: 'cancel',
         },
         {
-          text: 'Cancel at Period End',
+          text: t('subscriptionDetail.cancelDialog.periodEnd'),
           onPress: () => cancelSubscriptionFlow(false),
           style: 'default',
         },
         {
-          text: 'Cancel Immediately',
+          text: t('subscriptionDetail.cancelDialog.immediate'),
           onPress: () => cancelSubscriptionFlow(true),
           style: 'destructive',
         },
@@ -205,8 +207,8 @@ export default function SubsCriptionDetail() {
       showToast.success(
         'Success',
         immediate
-          ? 'Subscription canceled immediately'
-          : 'Subscription will be canceled at the end of the billing period'
+          ? t('subscriptionDetail.success.cancelImmediate')
+          : t('subscriptionDetail.success.cancelPeriodEnd'),
       );
 
       // Navigate back after success
@@ -217,7 +219,7 @@ export default function SubsCriptionDetail() {
       const errorMessage =
         error?.data?.message ||
         error?.message ||
-        'Failed to cancel subscription. Please try again.';
+        t('subscriptionDetail.errors.cancelFailed');
       showToast.error('Error', errorMessage);
     } finally {
       setIsProcessing(false);
@@ -226,7 +228,7 @@ export default function SubsCriptionDetail() {
 
   const handleConfirmSubscription = async () => {
     if (!selectedPlan) {
-      showToast.error('Error', 'No plan selected');
+      showToast.error('Error', t('subscriptionDetail.errors.noPlanSelected'));
       return;
     }
 
@@ -258,7 +260,7 @@ export default function SubsCriptionDetail() {
       const errorMessage =
         error?.data?.message ||
         error?.message ||
-        'Failed to process subscription. Please try again.';
+        t('subscriptionDetail.errors.confirmFailed');
       showToast.error('Error', errorMessage);
       setPendingSessionId(null);
       setIsProcessing(false);
@@ -268,7 +270,7 @@ export default function SubsCriptionDetail() {
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header title="Subscription" showBackButton />
+        <Header title={t('subscriptionDetail.headerTitle')} showBackButton />
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
@@ -278,30 +280,44 @@ export default function SubsCriptionDetail() {
             <View style={styles.dashboardContainer}>
               <Text style={styles.title}>
                 {subscriptionInfo.isUpgrade
-                  ? 'Upgrade your Plan'
-                  : 'Change your Plan'}
+                  ? t('subscriptionDetail.upgradeTitle')
+                  : t('subscriptionDetail.changeTitle')}
               </Text>
               <Text style={styles.subTitle}>
                 {subscriptionInfo.isUpgrade
-                  ? `You're upgrading from ${subscriptionInfo.currentPlanName} to ${subscriptionInfo.newPlanName}. You'll be charged ${subscriptionInfo.monthlyCost} per ${selectedPlan.interval}.`
-                  : `You're changing from ${subscriptionInfo.currentPlanName} to ${subscriptionInfo.newPlanName}.`}
+                  ? t('subscriptionDetail.upgradeSubtitle', {
+                      current: subscriptionInfo.currentPlanName,
+                      next: subscriptionInfo.newPlanName,
+                      price: subscriptionInfo.monthlyCost,
+                      interval: selectedPlan.interval,
+                    })
+                  : t('subscriptionDetail.changeSubtitle', {
+                      current: subscriptionInfo.currentPlanName,
+                      next: subscriptionInfo.newPlanName,
+                    })}
               </Text>
               <LiquidGlassBackground style={styles.liquidBackgroundContainer}>
                 <View style={styles.liquidBackgroundContentContainer}>
                   <View style={styles.roww}>
-                    <Text style={styles.currentPlanTitle}>Current Plan:</Text>
+                    <Text style={styles.currentPlanTitle}>
+                      {t('subscriptionDetail.currentPlan')}
+                    </Text>
                     <Text style={styles.currentPlanValue}>
                       {subscriptionInfo.currentPlanName}
                     </Text>
                   </View>
                   <View style={styles.roww}>
-                    <Text style={styles.currentPlanTitle}>New Plan:</Text>
+                    <Text style={styles.currentPlanTitle}>
+                      {t('subscriptionDetail.newPlan')}
+                    </Text>
                     <Text style={styles.currentPlanValue}>
                       {subscriptionInfo.newPlanName}
                     </Text>
                   </View>
                   <View style={styles.roww}>
-                    <Text style={styles.currentPlanTitle}>Monthly Cost:</Text>
+                    <Text style={styles.currentPlanTitle}>
+                      {t('subscriptionDetail.monthlyCost')}
+                    </Text>
                     <Text style={styles.currentPlanValue}>
                       {subscriptionInfo.monthlyCost}
                     </Text>
@@ -325,7 +341,7 @@ export default function SubsCriptionDetail() {
           // Only show button if plan is not free
           selectedPlan?.amount !== 0 && (
             <PrimaryButton
-              title="Confirm & Pay"
+              title={t('subscriptionDetail.buttons.confirmAndPay')}
               onPress={handleConfirmSubscription}
               variant="primary"
               style={{
@@ -339,7 +355,7 @@ export default function SubsCriptionDetail() {
           <>
             {selectedPlan && selectedPlan.amount > 0 && (
               <PrimaryButton
-                title="Cancel Subscription"
+                title={t('subscriptionDetail.buttons.cancelSubscription')}
                 onPress={handleCancelSubscription}
                 variant="secondary"
                 style={{
@@ -350,7 +366,7 @@ export default function SubsCriptionDetail() {
               />
             )}
             <PrimaryButton
-              title="Back"
+              title={t('subscriptionDetail.buttons.back')}
               onPress={() => navigation.goBack()}
               variant="secondary"
               style={{

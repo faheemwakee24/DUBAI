@@ -15,6 +15,7 @@ import {
   useLazyGetVideoDubbingStatusQuery,
 } from '../../store/api/videoDubbingApi';
 import { showToast } from '../../utils/toast';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -25,6 +26,7 @@ export default function GeneratingClone() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'GeneratingClone'>>();
   const { video, language, voiceStyle } = route.params;
+  const { t } = useTranslation();
 
   const [uploadVideo, { isLoading: isUploading }] = useUploadVideoDubbingMutation();
   const [getVideoStatus] = useLazyGetVideoDubbingStatusQuery();
@@ -55,7 +57,7 @@ export default function GeneratingClone() {
     const uploadAndPoll = async () => {
       if (!video || !language) {
         console.error('[GeneratingClone] ❌ Video or language is missing');
-        showToast.error('Error', 'Video or language is missing');
+        showToast.error('Error', t('generatingClone.errors.missingVideo'));
         navigation.goBack();
         return;
       }
@@ -81,7 +83,7 @@ export default function GeneratingClone() {
         const uploadedJobId = uploadResult.jobId || uploadResult.job_id || uploadResult.id;
         if (!uploadedJobId) {
           console.error('[GeneratingClone] ❌ Job ID not found in upload response');
-          showToast.error('Error', 'Failed to get job ID from upload response');
+          showToast.error('Error', t('generatingClone.errors.jobIdMissing'));
           setStatus('failed');
           setProgress(0);
           setTimeout(() => {
@@ -163,7 +165,7 @@ export default function GeneratingClone() {
                 }, 1000);
               } else if (statusLower === 'failed' || result.error) {
                 console.error('[GeneratingClone] ❌ Status: failed');
-                const errorMessage = result.error || 'Video dubbing failed';
+                const errorMessage = result.error || t('generatingClone.errors.pollFailed');
                 console.error('[GeneratingClone] Error message:', errorMessage);
                 setProgress(0);
                 if (pollIntervalRef.current) {
@@ -225,7 +227,10 @@ export default function GeneratingClone() {
         console.error('[GeneratingClone] ❌ Upload error:', error);
         setStatus('failed');
         setProgress(0);
-        showToast.error('Error', error?.data?.message || error?.message || 'Failed to upload video');
+        showToast.error(
+          'Error',
+          error?.data?.message || error?.message || t('generatingClone.errors.uploadFailed'),
+        );
         setTimeout(() => {
           navigation.goBack();
         }, 2000);
@@ -252,15 +257,15 @@ export default function GeneratingClone() {
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.contentContainer}>
-          <Header title="Dubbing Video" showBackButton />
+          <Header title={t('generatingClone.headerTitle')} showBackButton />
           <View style={styles.bodyContainer}>
             <Image
               source={Images.GeneratingVedio}
               style={styles.generatingVedioImage}
             />
-            <Text style={styles.title2}>Generating your Dub</Text>
+            <Text style={styles.title2}>{t('generatingClone.title')}</Text>
             <Text style={styles.valueText}>
-              Our AI is translating and syncing the audio
+              {t('generatingClone.subtitle')}
             </Text>
 
             {/* Custom Progress Bar */}

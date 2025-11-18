@@ -20,6 +20,7 @@ import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground } from '../../components/ui';
 import { Images } from '../../assets/images';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -46,18 +47,23 @@ export default function SelectVedioDescription() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'SelectVedioDescription'>>();
   const { video } = route.params || {};
+  const { t } = useTranslation();
 
   // State for dropdowns
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [isVoiceDropdownOpen, setIsVoiceDropdownOpen] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('Select Language');
-  const [selectedVoice, setSelectedVoice] = useState('Select Style');
+  const [selectedLanguage, setSelectedLanguage] = useState(t('selectVideo.placeholders.language'));
+  const [selectedVoice, setSelectedVoice] = useState(t('selectVideo.placeholders.voice'));
 
   // Language options
-  const languageOptions = ['Urdu', 'Spanish', 'Japanese', 'German', 'French', 'Hindi', 'Arabic'];
+  const languageOptions = t('selectVideo.languageOptions', {
+    returnObjects: true,
+  }) as string[];
 
   // Voice style options
-  const voiceOptions = ['Female', 'Male'];
+  const voiceOptions = t('selectVideo.voiceOptions', {
+    returnObjects: true,
+  }) as string[];
 
   useEffect(() => {
     if (!video) {
@@ -113,13 +119,13 @@ export default function SelectVedioDescription() {
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
-          <Header title="Video Dubbing" showBackButton />
+          <Header title={t('selectVideo.headerTitle')} showBackButton />
           <LiquidGlassBackground style={styles.liquidCotaier}>
             <View style={styles.imageContainer}>
               <Image source={Images.VedioIcon} style={styles.vedioIcon} />
               <View style={styles.textContainer}>
                 <Text style={styles.title} numberOfLines={1}>
-                  {video?.name || 'video.mp4'}
+                  {video?.name || t('selectVideo.videoTitlePlaceholder')}
                 </Text>
                 <View style={styles.roww}>
                   <Text style={styles.subtitle}>
@@ -135,8 +141,8 @@ export default function SelectVedioDescription() {
           </LiquidGlassBackground>
           <LiquidGlassBackground style={styles.liquidCotaier2}>
             <View style={styles.descriptionContainer}>
-              <Text style={styles.title2}>Detected Language</Text>
-              <Text style={styles.value1}>English (US)</Text>
+              <Text style={styles.title2}>{t('selectVideo.detectedLanguage')}</Text>
+              <Text style={styles.value1}>{t('selectVideo.detectedValue')}</Text>
             </View>
           </LiquidGlassBackground>
           <LiquidGlassBackground style={styles.liquidCotaier2}>
@@ -144,7 +150,7 @@ export default function SelectVedioDescription() {
               style={styles.descriptionContainer}
               onPress={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
             >
-              <Text style={styles.title2}>Target Language *</Text>
+              <Text style={styles.title2}>{t('selectVideo.targetLanguage')}</Text>
               <View style={styles.roww2}>
                 <Text style={styles.value1}>{selectedLanguage}</Text>
                 <Svgs.ArrowDown
@@ -183,7 +189,7 @@ export default function SelectVedioDescription() {
               style={styles.descriptionContainer}
               onPress={() => setIsVoiceDropdownOpen(!isVoiceDropdownOpen)}
             >
-              <Text style={styles.title2}>Voice Style *</Text>
+              <Text style={styles.title2}>{t('selectVideo.voiceStyle')}</Text>
               <View style={styles.roww2}>
                 <Text style={styles.value1}>{selectedVoice}</Text>
                 <Svgs.ArrowDown
@@ -219,7 +225,7 @@ export default function SelectVedioDescription() {
           )}
         </ScrollView>
         <PrimaryButton
-          title="Generate Dub"
+          title={t('selectVideo.buttons.generate')}
           onPress={handleGenerateDub}
         />
       </SafeAreaView>

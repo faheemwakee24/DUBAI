@@ -12,6 +12,7 @@ import { Header, ProgressBar } from '../../components/ui';
 import { Images } from '../../assets/images';
 import { useLazyGetVideoStatusQuery } from '../../store/api/characterApi';
 import { showToast } from '../../utils/toast';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -23,6 +24,7 @@ export default function GeneratingVedio() {
   const route = useRoute<RouteProp<RootStackParamList, 'GeneratingVedio'>>();
   const { talkId } = route.params;
   const [getVideoStatus] = useLazyGetVideoStatusQuery();
+  const { t } = useTranslation();
 
   // Progress state
   const [progress, setProgress] = useState(0);
@@ -43,7 +45,7 @@ export default function GeneratingVedio() {
     
     if (!talkId) {
       console.error('[GeneratingVedio] ❌ Talk ID is missing');
-      showToast.error('Error', 'Talk ID is missing');
+      showToast.error('Error', t('generating.errors.missingTalkId'));
       navigation.goBack();
       return;
     }
@@ -105,7 +107,7 @@ export default function GeneratingVedio() {
               console.log('[GeneratingVedio] Clearing progress interval due to failure');
               clearInterval(progressInterval);
             }
-            showToast.error('Error', result.message || 'Video generation failed');
+            showToast.error('Error', result.message || t('generating.errors.videoFailed'));
             setTimeout(() => {
               console.log('[GeneratingVedio] Navigating back due to failure');
               navigation.goBack();
@@ -158,15 +160,15 @@ export default function GeneratingVedio() {
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.contentContainer}>
-          <Header title="Video Dubbing" showBackButton />
+          <Header title={t('generating.headerTitle')} showBackButton />
           <View style={styles.bodyContainer}>
             <Image
               source={Images.GeneratingVedio}
               style={styles.generatingVedioImage}
             />
-            <Text style={styles.title2}>Generating your Dub</Text>
+            <Text style={styles.title2}>{t('generating.title')}</Text>
             <Text style={styles.valueText}>
-              Our AI is translating and syncing the audio
+              {t('generating.subtitle')}
             </Text>
 
             {/* Custom Progress Bar */}

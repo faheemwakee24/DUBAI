@@ -30,6 +30,7 @@ import { Svgs } from '../../assets/icons';
 import Video, { OnLoadData, OnProgressData, VideoRef } from 'react-native-video';
 import { downloadVideo, DownloadProgress } from '../../utils/videoDownloader';
 import { showToast } from '../../utils/toast';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -41,6 +42,7 @@ export default function PreViewVideo() {
   const route = useRoute<RouteProp<RootStackParamList, 'PreViewVedio'>>();
   const { video_url } = route.params || {};
   const videoRef = useRef<VideoRef | null>(null);
+  const { t } = useTranslation();
 
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -248,8 +250,8 @@ export default function PreViewVideo() {
 
   // Handle video download
   const handleDownloadVideo = async () => {
-    if (!video_url) {
-      showToast.error('Error', 'No video URL available');
+      if (!video_url) {
+      showToast.error('Error', t('previewVideo.toasts.noUrl'));
       return;
     }
 
@@ -272,15 +274,15 @@ export default function PreViewVideo() {
       );
 
       if (result.success && result.filePath) {
-        showToast.success('Success', 'Video downloaded successfully!');
+        showToast.success('Success', t('previewVideo.toasts.downloadSuccess'));
         console.log('[PreViewVedio] Video saved to:', result.filePath);
       } else {
-        showToast.error('Error', result.error || 'Failed to download video');
+        showToast.error('Error', result.error || t('previewVideo.toasts.downloadFailed'));
         console.error('[PreViewVedio] Download failed:', result.error);
       }
     } catch (error: any) {
       console.error('[PreViewVedio] Download error:', error);
-      showToast.error('Error', error?.message || 'Failed to download video');
+      showToast.error('Error', error?.message || t('previewVideo.toasts.downloadFailed'));
     } finally {
       setIsDownloading(false);
       setDownloadProgress(0);
@@ -291,8 +293,8 @@ export default function PreViewVideo() {
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.contentContainer}>
-          <Header title="Character Video" showBackButton />
-          <Text style={styles.title}>Preview Character Video</Text>
+          <Header title={t('previewVideo.headerTitle')} showBackButton />
+          <Text style={styles.title}>{t('previewVideo.title')}</Text>
           <View style={styles.videoContainer}>
             {video_url ? (
               <>
@@ -331,14 +333,14 @@ export default function PreViewVideo() {
                 {isLoading && (
                   <View style={styles.loadingOverlay}>
                     <ActivityIndicator size="large" color={colors.primary} />
-                    <Text style={styles.loadingText}>Loading video...</Text>
+                    <Text style={styles.loadingText}>{t('previewVideo.loading')}</Text>
                   </View>
                 )}
 
                 {/* Error overlay */}
                 {hasError && (
                   <View style={styles.errorOverlay}>
-                    <Text style={styles.errorText}>Failed to load video</Text>
+                    <Text style={styles.errorText}>{t('previewVideo.error')}</Text>
                     <Text style={styles.videoUrlText} numberOfLines={2}>
                       {video_url}
                     </Text>
@@ -448,16 +450,24 @@ export default function PreViewVideo() {
               </>
             ) : (
               <View style={styles.noVideoContainer}>
-                <Text style={styles.noVideoText}>No video available</Text>
+                <Text style={styles.noVideoText}>{t('previewVideo.noVideo')}</Text>
               </View>
             )}
           </View>
         </View>
 
         <View style={styles.buttonContainer}>
-          <PrimaryButton title="Create New Dub" variant="secondary" onPress={() => {}} />
           <PrimaryButton
-            title={isDownloading ? `Downloading ${downloadProgress}%` : 'Download Video'}
+            title={t('previewVideo.buttons.createNew')}
+            variant="secondary"
+            onPress={() => {}}
+          />
+          <PrimaryButton
+            title={
+              isDownloading
+                ? t('previewVideo.buttons.downloading', { progress: downloadProgress })
+                : t('previewVideo.buttons.download')
+            }
             onPress={handleDownloadVideo}
             icon={isDownloading ? undefined : <Svgs.Downloard />}
             disabled={isDownloading || !video_url}

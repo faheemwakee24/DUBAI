@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ import { Header, LiquidGlassBackground } from '../../components/ui';
 import { useGetMySubscriptionQuery } from '../../store/api/subscriptionsApi';
 import { useCancelSubscriptionMutation } from '../../store/api/subscriptionsApi';
 import { showToast } from '../../utils/toast';
+import { useTranslation } from 'react-i18next';
 
 type BillingDetailNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -33,8 +34,10 @@ export default function BillingDetail() {
   const [isCanceling, setIsCanceling] = useState(false);
   
   // API hooks
-  const { data: mySubscription, isLoading: isLoadingSubscription, refetch: refetchSubscription } = useGetMySubscriptionQuery();
+  const { data: mySubscription, isLoading: isLoadingSubscription, refetch: refetchSubscription } =
+    useGetMySubscriptionQuery();
   const [cancelSubscription] = useCancelSubscriptionMutation();
+  const { t } = useTranslation();
 
   // Format date helper
   const formatDate = (dateString: string) => {
@@ -53,52 +56,52 @@ export default function BillingDetail() {
   // Handle cancel/resume subscription
   const handleCancelSubscription = () => {
     if (!mySubscription) {
-      showToast.error('Error', 'No active subscription found');
+      showToast.error('Error', t('billingDetail.subscription.errorNoSubscription'));
       return;
     }
 
     // If subscription is already set to cancel, show resume option
     if (mySubscription.cancelAtPeriodEnd) {
       Alert.alert(
-        'Resume Subscription',
-        'Your subscription is set to cancel at the end of the current period. Would you like to resume it?',
+        t('billingDetail.subscription.resumeTitle'),
+        t('billingDetail.subscription.resumeBody'),
         [
           {
-            text: 'No, Keep Canceling',
+            text: t('billingDetail.subscription.keepCanceling'),
             style: 'cancel',
           },
           {
-            text: 'Resume Subscription',
+            text: t('billingDetail.subscription.resumeButton'),
             onPress: () => cancelSubscriptionFlow(false), // Setting immediate: false to resume
             style: 'default',
           },
         ],
-        { cancelable: true }
+        { cancelable: true },
       );
       return;
     }
 
     // Cancel subscription flow
     Alert.alert(
-      'Cancel Subscription',
-      'Are you sure you want to cancel your subscription? You will have access until the end of your current billing period.',
+      t('billingDetail.subscription.cancelTitle'),
+      t('billingDetail.subscription.cancelBody'),
       [
         {
-          text: 'No, Keep Subscription',
+          text: t('billingDetail.subscription.cancelKeep'),
           style: 'cancel',
         },
         {
-          text: 'Cancel at Period End',
+          text: t('billingDetail.subscription.cancelPeriodEnd'),
           onPress: () => cancelSubscriptionFlow(false),
           style: 'default',
         },
         {
-          text: 'Cancel Immediately',
+          text: t('billingDetail.subscription.cancelImmediate'),
           onPress: () => cancelSubscriptionFlow(true),
           style: 'destructive',
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
@@ -112,17 +115,15 @@ export default function BillingDetail() {
       showToast.success(
         'Success',
         immediate
-          ? 'Subscription canceled immediately'
-          : 'Subscription will be canceled at the end of the billing period'
+          ? t('billingDetail.subscription.successImmediate')
+          : t('billingDetail.subscription.successPeriodEnd'),
       );
       
       // Refetch subscription data
       refetchSubscription();
     } catch (error: any) {
       const errorMessage =
-        error?.data?.message ||
-        error?.message ||
-        'Failed to cancel subscription. Please try again.';
+        error?.data?.message || error?.message || t('billingDetail.subscription.errorGeneric');
       showToast.error('Error', errorMessage);
     } finally {
       setIsCanceling(false);
@@ -130,70 +131,79 @@ export default function BillingDetail() {
   };
 
   // Billing history data
-  const billingHistoryData = [
-    {
-      id: '1',
-      number: '1',
-      date: '9/10/25',
-      subscription: 'Pro Plan',
-      amount: '$9.99',
-    },
-    {
-      id: '2',
-      number: '2',
-      date: '9/10/25',
-      subscription: 'Pro Plan',
-      amount: '$9.99',
-    },
-    {
-      id: '3',
-      number: '3',
-      date: '9/10/25',
-      subscription: 'Pro Plan',
-      amount: '$9.99',
-    },
-    {
-      id: '4',
-      number: '4',
-      date: '9/10/25',
-      subscription: 'Pro Plan',
-      amount: '$9.99',
-    },
-    {
-      id: '5',
-      number: '4',
-      date: '9/10/25',
-      subscription: 'Pro Plan',
-      amount: '$9.99',
-    },
-  ];
+  const billingHistoryData = useMemo(
+    () => [
+      {
+        id: '1',
+        number: '1',
+        date: '9/10/25',
+        subscription: 'Pro Plan',
+        amount: '$9.99',
+      },
+      {
+        id: '2',
+        number: '2',
+        date: '9/10/25',
+        subscription: 'Pro Plan',
+        amount: '$9.99',
+      },
+      {
+        id: '3',
+        number: '3',
+        date: '9/10/25',
+        subscription: 'Pro Plan',
+        amount: '$9.99',
+      },
+      {
+        id: '4',
+        number: '4',
+        date: '9/10/25',
+        subscription: 'Pro Plan',
+        amount: '$9.99',
+      },
+      {
+        id: '5',
+        number: '5',
+        date: '9/10/25',
+        subscription: 'Pro Plan',
+        amount: '$9.99',
+      },
+    ],
+    [],
+  );
 
 
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header title="Billing History" showBackButton />
+        <Header title={t('billingDetail.headerTitle')} showBackButton />
         
         <ScrollView style={styles.contentContainer}>
           {/* Current Billing Information */}
           <LiquidGlassBackground style={styles.billingInfoCard}>
             <View style={styles.billingInfoContent}>
               <View style={styles.billingInfoRow}>
-                <Text style={styles.billingInfoLabel}>Payment Method</Text>
+                <Text style={styles.billingInfoLabel}>
+                  {t('billingDetail.billingInfo.paymentMethod')}
+                </Text>
                 <Text style={styles.billingInfoValue}>{currentBillingInfo.paymentMethod}</Text>
               </View>
               <View style={styles.billingInfoRow}>
-                <Text style={styles.billingInfoLabel}>Next Billing Date</Text>
+                <Text style={styles.billingInfoLabel}>
+                  {t('billingDetail.billingInfo.nextBillingDate')}
+                </Text>
                 <Text style={styles.billingInfoValue}>{currentBillingInfo.nextBillingDate}</Text>
               </View>
               <View style={styles.billingInfoRow}>
-                <Text style={styles.billingInfoLabel}>Payment</Text>
+                <Text style={styles.billingInfoLabel}>
+                  {t('billingDetail.billingInfo.payment')}
+                </Text>
                 <Text style={styles.billingInfoValue}>{currentBillingInfo.payment}</Text>
               </View>
             </View>
             <View style={styles.buttonContainer}>
               <PrimaryButton
-                title="Update Payment Method"
+                title={t('billingDetail.billingInfo.updateButton')}
                 onPress={() => navigation.navigate('PaymentMethodScreen')}
                 variant="primary"
                 style={styles.updateButton}
@@ -201,7 +211,11 @@ export default function BillingDetail() {
               />
               {mySubscription && mySubscription.status === 'active' && (
                 <PrimaryButton
-                  title={mySubscription.cancelAtPeriodEnd ? 'Resume Subscription' : 'Cancel Subscription'}
+                  title={
+                    mySubscription.cancelAtPeriodEnd
+                      ? t('billingDetail.subscription.resumeButton')
+                      : t('billingDetail.subscription.cancelButton')
+                  }
                   onPress={handleCancelSubscription}
                   variant="secondary"
                   style={styles.cancelButton}
@@ -218,10 +232,12 @@ export default function BillingDetail() {
             {/* Table Header with separate background */}
             <LiquidGlassBackground style={styles.tableHeaderCard}>
               <View style={styles.tableHeader}>
-                <Text style={styles.headerTextFirst}>#</Text>
-                <Text style={styles.headerTextOther}>Date</Text>
-                <Text style={[styles.headerTextOther]}>Subscription</Text>
-                <Text style={styles.headerTextOther}>Amount</Text>
+                <Text style={styles.headerTextFirst}>{t('billingDetail.table.number')}</Text>
+                <Text style={styles.headerTextOther}>{t('billingDetail.table.date')}</Text>
+                <Text style={[styles.headerTextOther]}>
+                  {t('billingDetail.table.subscription')}
+                </Text>
+                <Text style={styles.headerTextOther}>{t('billingDetail.table.amount')}</Text>
               </View>
             </LiquidGlassBackground>
             

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,7 @@ import {
 } from '../../components/ui';
 import { Images } from '../../assets/images';
 import { SelectVedioDescription } from '../vedioDub';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -37,6 +38,7 @@ export default function CharacherReader() {
   const route = useRoute<RouteProp<RootStackParamList, 'CharacherReader'>>();
   const { character, body, hair, accessories, background, emotion } = route.params;
   // State for all dropdowns
+  const { t } = useTranslation();
 
   const [selectedVoiceTone, setSelectedVoiceTone] = useState('');
 
@@ -45,18 +47,23 @@ export default function CharacherReader() {
 
   // Options for all dropdowns
 
-  const voiceToneOptions = [
-    'Friendly',
-    'Professional',
-    'Casual',
-    'Energetic',
-    'Calm & Soothing',
-  ];
-  const speedOptions = [
-    '1x',
-    '1.5x',
-    '2x'
-  ];
+  const voiceToneOptions = useMemo(
+    () => [
+      t('characterReader.voiceTones.friendly'),
+      t('characterReader.voiceTones.professional'),
+      t('characterReader.voiceTones.casual'),
+      t('characterReader.voiceTones.energetic'),
+      t('characterReader.voiceTones.calm'),
+    ],
+    [t],
+  );
+  const speedOptions = useMemo(
+    () =>
+      (t('characterReader.speedOptions', {
+        returnObjects: true,
+      }) as string[]) ?? ['1x', '1.5x', '2x'],
+    [t],
+  );
 
   // Handler functions for all dropdowns
 
@@ -71,7 +78,7 @@ export default function CharacherReader() {
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <Header
-          title="Character Reader"
+          title={t('characterReader.headerTitle')}
           showBackButton
           RigthIcon={
             <Svgs.HistoryIcon
@@ -86,38 +93,38 @@ export default function CharacherReader() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.dashboardContainer}>
-            <Text style={styles.title}>Customize your Avatar</Text>
+            <Text style={styles.title}>{t('characterReader.title')}</Text>
             <Text style={styles.subTitle}>
-              Personal your Character’s Appearance{' '}
+              {t('characterReader.subtitle')}
             </Text>
             <View style={styles.tempCharacherContainer}>
               <Input
-                label="Message"
+                label={t('characterReader.messageLabel')}
                 value={messsage}
                 onChangeText={setMessage}
-                placeholder="Your Message"
+                placeholder={t('characterReader.messagePlaceholder')}
                 containerStyle={{height: metrics.width(120),alignItems:'flex-start'}}
               />
               <CustomDropdown
-                title="Voice Tone"
+                title={t('characterReader.dropdowns.voiceToneTitle')}
                 options={voiceToneOptions}
                 selectedValue={selectedVoiceTone}
                 onSelect={handleVoiceToneSelect}
-                placeholder="Select Tune"
+                placeholder={t('characterReader.dropdowns.voiceTonePlaceholder')}
               />
               <CustomDropdown
-                title="Voice Speed"
+                title={t('characterReader.dropdowns.voiceSpeedTitle')}
                 options={speedOptions}
                 selectedValue={speed}
                 onSelect={handlSpeed}
-                placeholder="Select Speed"
+                placeholder={t('characterReader.dropdowns.voiceSpeedPlaceholder')}
               />
             </View>
           </View>
         </ScrollView>
         
         <PrimaryButton
-          title="Preview"
+          title={t('characterReader.buttonPreview')}
           onPress={() => navigation.navigate('PreviewCharacherVedio',{character: character,body: body,hair: hair,accessories: accessories,background: background,emotion: emotion,message: messsage,speed: speed,voiceTone: selectedVoiceTone})}
           variant="primary"
           style={{

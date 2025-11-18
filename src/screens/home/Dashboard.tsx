@@ -26,6 +26,7 @@ import { Images } from '../../assets/images';
 import { tokenStorage } from '../../utils/tokenStorage';
 import { useGetProfileQuery } from '../../store/api/authApi';
 import { User } from '../../store/api/authApi';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -36,6 +37,7 @@ export default function Dashboard() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const [user, setUser] = useState<User | null>(null);
   const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Load user from storage on mount
@@ -96,9 +98,9 @@ export default function Dashboard() {
               />
             </LiquidGlassBackground>
             <View style={styles.headerLeftContainerText}>
-              <Text style={styles.title}>Welcome Back!</Text>
+              <Text style={styles.title}>{t('dashboard.welcomeTitle')}</Text>
               <Text style={styles.subTitle}>
-                {profileLoading ? 'Loading...' : getUserDisplayName()}
+                {profileLoading ? t('dashboard.loading') : getUserDisplayName()}
               </Text>
             </View>
           </View>
@@ -128,12 +130,12 @@ export default function Dashboard() {
                     style={styles.ProPlanIconImage}
                   />
                   <View>
-                    <Text style={styles.ProPlanTitle}>Pro Plan</Text>
-                    <Text style={styles.ProPlanSubTitle}>3 of 5 Dubs used</Text>
+                    <Text style={styles.ProPlanTitle}>{t('dashboard.proPlanTitle')}</Text>
+                    <Text style={styles.ProPlanSubTitle}>{t('dashboard.proPlanUsage')}</Text>
                   </View>
                 </View>
                 <PrimaryButton
-                  title="Upgrade"
+                  title={t('dashboard.upgradeButton')}
                   onPress={() => navigation.navigate('Subscription')}
                   variant="primary"
                   size="extraSmall"
@@ -143,28 +145,28 @@ export default function Dashboard() {
             </LiquidGlassBackground>
             <LiquidGlassBackground style={styles.debugCotainer}>
               <View>
-                <Text style={styles.debugTitle}>Video {'\n'}Dubbing</Text>
+                <Text style={styles.debugTitle}>{t('dashboard.videoDubbingTitle')}</Text>
                 <Text style={styles.debuggingSubtitle}>
-                  Translate & Dub Video
+                  {t('dashboard.videoDubbingSubtitle')}
                 </Text>
               </View>
               <View style={styles.row}>
                 <TouchableOpacity onPress={()=>navigation.navigate('UploadVedio')} style={styles.createButtonContainer}>
-                  <Text style={styles.createButton}>Create</Text>
+                  <Text style={styles.createButton}>{t('dashboard.createButton')}</Text>
                 </TouchableOpacity>
               </View>
               <Image source={Images.VedioIcon2} style={styles.vedioIcon2} />
             </LiquidGlassBackground>
             <LiquidGlassBackground style={styles.CharacterCreationContainer}>
               <View>
-                <Text style={styles.debugTitle}>Character {'\n'}Reader</Text>
+                <Text style={styles.debugTitle}>{t('dashboard.characterReaderTitle')}</Text>
                 <Text style={styles.debuggingSubtitle}>
-                  Create talking avatars
+                  {t('dashboard.characterReaderSubtitle')}
                 </Text>
               </View>
               <View style={styles.row}>
                 <TouchableOpacity onPress={()=>navigation.navigate('ChoseCharacter')} style={styles.createButtonContainer}>
-                  <Text style={styles.createButton}>Create</Text>
+                  <Text style={styles.createButton}>{t('dashboard.createButton')}</Text>
                 </TouchableOpacity>
               </View>
               <Image
@@ -175,7 +177,7 @@ export default function Dashboard() {
           </View>
         </ScrollView>
         <PrimaryButton
-          title="Create Project"
+          title={t('dashboard.createProjectButton')}
           onPress={() => navigation.navigate('NewProject')}
           variant="primary"
           style={{

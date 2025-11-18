@@ -16,7 +16,11 @@ import {
 import { Images } from '../../assets/images';
 import { FontFamily } from '../../constants/fonts';
 import colors from '../../constants/colors';
-import { useGetSubscriptionPlansQuery, useGetMySubscriptionQuery } from '../../store/api/subscriptionsApi';
+import {
+  useGetSubscriptionPlansQuery,
+  useGetMySubscriptionQuery,
+} from '../../store/api/subscriptionsApi';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -25,6 +29,7 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 
 export default function Subscription() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { t } = useTranslation();
 
   // Fetch subscription plans and current user subscription
   const { data: plans, isLoading: isLoadingPlans } = useGetSubscriptionPlansQuery();
@@ -47,9 +52,13 @@ export default function Subscription() {
 
       // Build features array from plan data
       const features = [
-        `${plan.videosPerWeek === 99999 ? 'Unlimited' : plan.videosPerWeek} videos per week`,
-        `Resolution: ${plan.resolution}`,
-        plan.watermark ? 'Watermark on exports' : 'No watermarks',
+        plan.videosPerWeek === 99999
+          ? t('subscription.features.videosUnlimited')
+          : t('subscription.features.videosPerWeek', { count: plan.videosPerWeek }),
+        t('subscription.features.resolution', { resolution: plan.resolution }),
+        plan.watermark
+          ? t('subscription.features.watermark')
+          : t('subscription.features.noWatermark'),
         plan.notes,
       ];
 
@@ -69,7 +78,9 @@ export default function Subscription() {
         price,
         period,
         icon: Images.FreePlanIcon,
-        buttonTitle: isCurrentPlan ? 'Current Plan' : 'Upgrade Now',
+        buttonTitle: isCurrentPlan
+          ? t('subscription.currentPlan')
+          : t('subscription.upgradeButton'),
         buttonVariant,
         isPopular: isPopular && !isCurrentPlan,
         features,
@@ -86,7 +97,7 @@ export default function Subscription() {
           <Text style={styles.freePlanTitle}>{item.name}</Text>
           {item.isPopular && (
             <LiquidGlassBackground style={styles.popularContainer}>
-              <Text style={styles.freePlanTitle2}>Popular</Text>
+              <Text style={styles.freePlanTitle2}>{t('subscription.popularBadge')}</Text>
             </LiquidGlassBackground>
           )}
         </View>
@@ -181,7 +192,7 @@ export default function Subscription() {
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <Header
-          title="Subscription"
+          title={t('subscription.headerTitle')}
           showBackButton
           RigthIcon={
             <TouchableOpacity onPress={() => navigation.navigate('BillingDetail')}>

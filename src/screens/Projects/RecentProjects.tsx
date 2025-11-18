@@ -22,6 +22,7 @@ import {
 } from '../../components/ui';
 import { Images } from '../../assets/images';
 import { useGetProjectsQuery, Project } from '../../store/api/projectsApi';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -30,6 +31,7 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 
 export default function RecentProjects() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { t } = useTranslation();
 
   // Fetch projects from API
   const { data: projects, isLoading, refetch, isFetching } = useGetProjectsQuery();
@@ -51,7 +53,7 @@ export default function RecentProjects() {
             </Text>
             <View style={styles.dot} />
             <Text style={styles.vediocCout}>
-              0 videos
+              {t('recentProjects.videoCount', { count: 0 })}
             </Text>
           </View>
         </View>
@@ -83,9 +85,9 @@ export default function RecentProjects() {
   // Render error or empty state
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>No projects found</Text>
+      <Text style={styles.emptyText}>{t('recentProjects.emptyTitle')}</Text>
       <Text style={styles.emptySubText}>
-        Create your first project to get started
+        {t('recentProjects.emptySubtitle')}
       </Text>
     </View>
   );
@@ -95,7 +97,7 @@ export default function RecentProjects() {
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header title="Recent Projects" showBackButton />
+        <Header title={t('recentProjects.headerTitle')} showBackButton />
         <FlatList<any>
           data={isLoading ? [1, 2, 3, 4] : (projects || [])}
           renderItem={({ item, index }) =>
@@ -117,7 +119,7 @@ export default function RecentProjects() {
         />
 
         <PrimaryButton
-          title="Create Project"
+          title={t('recentProjects.buttons.create')}
           onPress={() => navigation.navigate('NewProject')}
           variant="primary"
           style={{

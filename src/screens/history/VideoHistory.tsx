@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground } from '../../components/ui';
+import { useTranslation } from 'react-i18next';
 
 type VideoHistoryNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -38,65 +39,25 @@ interface VideoSection {
 export default function VideoHistory() {
   const navigation = useNavigation<VideoHistoryNavigationProp>();
   const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
+  const { t } = useTranslation();
 
   // Video data organized by sections
-  const videoSections: VideoSection[] = [
-    {
-      title: 'Today',
-      videos: [
-        {
-          id: '1',
-          title: 'Marketing Video',
-          duration: '2:34 min',
-          fileSize: '8.5 MB',
-          status: 'processing',
-          time: '10:00 pm',
-        },
-        {
-          id: '2',
-          title: 'Marketing Video',
-          duration: '2:34 min',
-          fileSize: '8.5 MB',
-          status: 'completed',
-          time: '10:00 am',
-        },
-      ],
-    },
-    {
-      title: 'This Week',
-      videos: [
-        {
-          id: '3',
-          title: 'Marketing Video',
-          duration: '2:34 min',
-          fileSize: '8.5 MB',
-          status: 'processing',
-          time: '10:00 pm',
-        },
-        {
-          id: '4',
-          title: 'Marketing Video',
-          duration: '2:34 min',
-          fileSize: '8.5 MB',
-          status: 'completed',
-          time: '10:00 am',
-        },
-      ],
-    },
-    {
-        title: 'This Week',
+  const videoSections: VideoSection[] = useMemo(
+    () => [
+      {
+        title: t('videoHistory.sections.today'),
         videos: [
           {
-            id: '3',
-            title: 'Marketing Video',
+            id: '1',
+            title: t('videoHistory.sampleTitle'),
             duration: '2:34 min',
             fileSize: '8.5 MB',
             status: 'processing',
             time: '10:00 pm',
           },
           {
-            id: '4',
-            title: 'Marketing Video',
+            id: '2',
+            title: t('videoHistory.sampleTitle'),
             duration: '2:34 min',
             fileSize: '8.5 MB',
             status: 'completed',
@@ -104,7 +65,43 @@ export default function VideoHistory() {
           },
         ],
       },
-  ];
+      {
+        title: t('videoHistory.sections.thisWeek'),
+        videos: [
+          {
+            id: '3',
+            title: t('videoHistory.sampleTitle'),
+            duration: '2:34 min',
+            fileSize: '8.5 MB',
+            status: 'failed',
+            time: '09:45 am',
+          },
+          {
+            id: '4',
+            title: t('videoHistory.sampleTitle'),
+            duration: '2:34 min',
+            fileSize: '8.5 MB',
+            status: 'completed',
+            time: '08:10 am',
+          },
+        ],
+      },
+      {
+        title: t('videoHistory.sections.earlier'),
+        videos: [
+          {
+            id: '5',
+            title: t('videoHistory.sampleTitle'),
+            duration: '2:34 min',
+            fileSize: '8.5 MB',
+            status: 'processing',
+            time: 'Yesterday',
+          },
+        ],
+      },
+    ],
+    [t],
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -149,7 +146,7 @@ export default function VideoHistory() {
         </View>
         <View style={styles.videoRight}>
           <Text style={[styles.videoStatus, { color: getStatusColor(video.status) }]}>
-            {video.status.charAt(0).toUpperCase() + video.status.slice(1)}
+            {t(`videoHistory.statusLabels.${video.status}`)}
           </Text>
           <Text style={styles.videoTime}>{video.time}</Text>
         </View>
@@ -169,7 +166,7 @@ export default function VideoHistory() {
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header title="Video History" showBackButton />
+        <Header title={t('videoHistory.headerTitle')} showBackButton />
         
         <ScrollView 
           style={styles.scrollView}

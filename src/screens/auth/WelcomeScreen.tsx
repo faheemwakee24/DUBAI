@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions, Image, Text } from 'react-native';
+import { View, StyleSheet, Image, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
@@ -15,6 +15,7 @@ import { metrics } from '../../constants/metrics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontFamily } from '../../constants/fonts';
 import colors from '../../constants/colors';
+import { useTranslation } from 'react-i18next';
 
 type WelcomeScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -23,6 +24,7 @@ type WelcomeScreenNavigationProp = NativeStackNavigationProp<
 
 export default function WelcomeScreen() {
   const navigation = useNavigation<WelcomeScreenNavigationProp>();
+  const { t } = useTranslation();
 
   const handleCreateAccount = () => {
     // Navigate to create account screen (to be implemented)
@@ -44,14 +46,14 @@ export default function WelcomeScreen() {
 
         {/* Welcome Card */}
         <LiquidGlassBackground style={styles.welcomeCard}>
-          <Text style={styles.welcomeTitle}>Welcome to Dub Nxt </Text>
+          <Text style={styles.welcomeTitle}>{t('welcome.title')}</Text>
           <Text style={styles.welcomeSubtitle}>
-            Transform videos with AI dubbing and bring characters to life
+            {t('welcome.subtitle')}
           </Text>
 
           {/* Buttons */}
           <PrimaryButton
-            title="Create an Account"
+            title={t('welcome.createAccount')}
             onPress={handleCreateAccount}
             variant="secondary"
             size="medium"
@@ -60,7 +62,7 @@ export default function WelcomeScreen() {
           />
 
           <PrimaryButton
-            title="Sign In"
+            title={t('welcome.signIn')}
             onPress={handleSignIn}
             variant="primary"
             size="medium"

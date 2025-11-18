@@ -25,6 +25,7 @@ import authService from '../../services/authService';
 import { useLoginMutation, useSocialAuthMutation } from '../../store/api/authApi';
 import { tokenStorage } from '../../utils/tokenStorage';
 import { showToast } from '../../utils/toast';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
 
@@ -36,10 +37,14 @@ export default function AuthLoginScreen() {
     const [socialAuth, { isLoading: socialLoading }] = useSocialAuthMutation();
     const [googleLoading, setGoogleLoading] = useState(false);
     const [appleLoading, setAppleLoading] = useState(false);
+    const { t } = useTranslation();
 
     const handleSignIn = async () => {
         if (!email || !password) {
-            showToast.error('Error', 'Please enter your email and password');
+            showToast.error(
+                t('login.toast.errorTitle'),
+                t('login.toast.missingFields')
+            );
             return;
         }
 
@@ -54,7 +59,10 @@ export default function AuthLoginScreen() {
             await tokenStorage.setRefreshToken(result.refreshToken);
             await tokenStorage.setUser(result.user);
 
-            showToast.success('Login successful!', 'Welcome back');
+            showToast.success(
+                t('login.toast.successTitle'),
+                t('login.toast.successBody')
+            );
             navigation.reset({
               index: 0,
               routes: [{ name: 'Dashboard' }],
@@ -62,8 +70,8 @@ export default function AuthLoginScreen() {
         } catch (error: any) {
             console.error('Login error:', error);
             showToast.error(
-                'Login Failed',
-                error?.data?.message || error?.message || 'Invalid email or password. Please try again.'
+                t('login.toast.failureTitle'),
+                error?.data?.message || error?.message || t('login.toast.failureBody')
             );
         }
     };
@@ -94,7 +102,10 @@ export default function AuthLoginScreen() {
             await tokenStorage.setRefreshToken(result.refreshToken);
             await tokenStorage.setUser(result.user);
 
-            showToast.success('Google Sign-In successful!', 'Welcome back');
+            showToast.success(
+                t('login.toast.googleSuccessTitle'),
+                t('login.toast.successBody')
+            );
             navigation.reset({
               index: 0,
               routes: [{ name: 'Dashboard' }],
@@ -102,8 +113,8 @@ export default function AuthLoginScreen() {
         } catch (error: any) {
             console.error('Google Sign-In Error:', error);
             showToast.error(
-                'Sign In Error',
-                error?.data?.message || error?.message || 'Failed to sign in with Google. Please try again.'
+                t('login.toast.socialErrorTitle'),
+                error?.data?.message || error?.message || t('login.toast.socialErrorBody')
             );
         } finally {
             setGoogleLoading(false);
@@ -113,7 +124,10 @@ export default function AuthLoginScreen() {
     const handleAppleSignIn = async () => {
         try {
             if (Platform.OS !== 'ios') {
-                showToast.error('Not Available', 'Apple Sign-In is only available on iOS devices.');
+                showToast.error(
+                    t('login.toast.appleUnavailableTitle'),
+                    t('login.toast.appleUnavailableBody')
+                );
                 return;
             }
             setAppleLoading(true);
@@ -140,7 +154,10 @@ export default function AuthLoginScreen() {
             await tokenStorage.setRefreshToken(result.refreshToken);
             await tokenStorage.setUser(result.user);
 
-            showToast.success('Apple Sign-In successful!', 'Welcome back');
+            showToast.success(
+                t('login.toast.appleSuccessTitle'),
+                t('login.toast.successBody')
+            );
             navigation.reset({
               index: 0,
               routes: [{ name: 'Dashboard' }],
@@ -148,8 +165,8 @@ export default function AuthLoginScreen() {
         } catch (error: any) {
             console.error('Apple Sign-In Error:', error);
             showToast.error(
-                'Sign In Error',
-                error?.data?.message || error?.message || 'Failed to sign in with Apple. Please try again.'
+                t('login.toast.socialErrorTitle'),
+                error?.data?.message || error?.message || t('login.toast.socialErrorBody')
             );
         } finally {
             setAppleLoading(false);
@@ -180,16 +197,16 @@ export default function AuthLoginScreen() {
                 >
                     {/* Welcome Section */}
                     <View style={styles.welcomeSection}>
-                        <Text style={styles.welcomeTitle}>Welcome Back!</Text>
-                        <Text style={styles.welcomeSubtitle}>Sign in to continue your journey.</Text>
+                        <Text style={styles.welcomeTitle}>{t('login.title')}</Text>
+                        <Text style={styles.welcomeSubtitle}>{t('login.subtitle')}</Text>
                     </View>
 
                     {/* Input Fields */}
                     <View style={styles.inputSection}>
                         {/* Email Input */}
                         <Input
-                            label="Email"
-                            placeholder="Enter your Email"
+                            label={t('login.emailLabel')}
+                            placeholder={t('login.emailPlaceholder')}
                             value={email}
                             onChangeText={setEmail}
                             keyboardType="email-address"
@@ -201,8 +218,8 @@ export default function AuthLoginScreen() {
 
                         {/* Password Input */}
                         <Input
-                            label="Password"
-                            placeholder="Enter your Password"
+                            label={t('login.passwordLabel')}
+                            placeholder={t('login.passwordPlaceholder')}
                             value={password}
                             onChangeText={setPassword}
                             showPasswordToggle
@@ -214,14 +231,14 @@ export default function AuthLoginScreen() {
 
                         {/* Forgot Password */}
                         <TouchableOpacity style={styles.forgotPasswordContainer} onPress={handleForgotPassword}>
-                            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                            <Text style={styles.forgotPasswordText}>{t('login.forgotPassword')}</Text>
                         </TouchableOpacity>
                     </View>
 
                     {/* Sign In Button */}
                     <View style={styles.buttonSection}>
                         <PrimaryButton
-                            title={loginLoading ? 'Signing In...' : 'Sign In'}
+                            title={loginLoading ? t('login.signingInButton') : t('login.signInButton')}
                             onPress={handleSignIn}
                             variant="primary"
                             size="medium"
@@ -238,7 +255,7 @@ export default function AuthLoginScreen() {
                             end={{ x: 1, y: 0 }}
                             style={styles.dividerLine}
                         />
-                        <Text style={styles.dividerText}>Or continue with</Text>
+                        <Text style={styles.dividerText}>{t('login.dividerText')}</Text>
                         <LinearGradient
                             colors={[colors.gradient3, colors.gradient2, colors.gradient1]} // example colors
                             start={{ x: 0, y: 0 }}
@@ -250,7 +267,7 @@ export default function AuthLoginScreen() {
                     {/* Social Login Buttons */}
                     <View style={styles.socialSection}>
                         <PrimaryButton
-                            title="Sign In with Google"
+                            title={t('login.googleButton')}
                             onPress={handleGoogleSignIn}
                             variant="secondary"
                             size="medium"
@@ -260,7 +277,7 @@ export default function AuthLoginScreen() {
                         />
                         {Platform.OS === 'ios' && (
                             <PrimaryButton
-                                title="Sign In with Apple"
+                                title={t('login.appleButton')}
                                 onPress={handleAppleSignIn}
                                 variant="secondary"
                                 size="medium"
@@ -276,9 +293,9 @@ export default function AuthLoginScreen() {
 
                 </ScrollView>
                 <View style={styles.signUpSection}>
-                    <Text style={styles.signUpText}>Don't have an account? </Text>
+                    <Text style={styles.signUpText}>{t('login.signUpPrompt')}</Text>
                     <TouchableOpacity onPress={handleSignUp}>
-                        <Text style={styles.signUpLink}>Sign Up</Text>
+                        <Text style={styles.signUpLink}>{t('login.signUpLink')}</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>

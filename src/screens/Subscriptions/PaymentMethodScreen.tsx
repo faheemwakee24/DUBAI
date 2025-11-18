@@ -18,10 +18,8 @@ import { FontFamily } from '../../constants/fonts';
 import colors from '../../constants/colors';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { showToast } from '../../utils/toast';
-import {
-  useCreatePaymentMethodMutation,
-  useCreateSetupIntentMutation,
-} from '../../store/api/paymentsApi';
+import { useCreatePaymentMethodMutation, useCreateSetupIntentMutation } from '../../store/api/paymentsApi';
+import { useTranslation } from 'react-i18next';
 
 type PaymentMethodNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -36,6 +34,7 @@ export default function PaymentMethodScreen() {
   
   const [savePaymentMethodToBackend] = useCreatePaymentMethodMutation();
   const [createSetupIntent] = useCreateSetupIntentMutation();
+  const { t } = useTranslation();
 
   // Initialize PaymentSheet when component mounts
   useEffect(() => {
@@ -52,7 +51,7 @@ export default function PaymentMethodScreen() {
       }).unwrap();
 
       if (!setupIntentResult.setupIntent.clientSecret) {
-        showToast.error('Error', 'Failed to initialize payment sheet');
+        showToast.error('Error', t('paymentMethod.errors.generic'));
         setIsLoading(false);
         return;
       }
@@ -75,9 +74,7 @@ export default function PaymentMethodScreen() {
       setIsLoading(false);
     } catch (error: any) {
       const errorMessage =
-        error?.data?.message ||
-        error?.message ||
-        'Failed to initialize payment sheet';
+        error?.data?.message || error?.message || t('paymentMethod.errors.generic');
       showToast.error('Error', errorMessage);
       setIsLoading(false);
     }
@@ -85,7 +82,7 @@ export default function PaymentMethodScreen() {
 
   const handleSavePaymentMethod = async () => {
     if (!isPaymentSheetReady) {
-      showToast.error('Error', 'Payment sheet not ready yet');
+      showToast.error('Error', t('paymentMethod.errors.sheetNotReady'));
       return;
     }
 
@@ -109,20 +106,18 @@ export default function PaymentMethodScreen() {
         try {
           // The setup intent will have the payment method attached
           // We need to get it from the backend or PaymentSheet
-          showToast.success('Success', 'Payment method saved successfully');
+          showToast.success(t('paymentMethod.success.title'), t('paymentMethod.success.message'));
           setTimeout(() => {
             navigation.goBack();
           }, 1500);
         } catch (saveError: any) {
           const errorMessage =
-            saveError?.data?.message ||
-            saveError?.message ||
-            'Failed to save payment method';
+            saveError?.data?.message || saveError?.message || t('paymentMethod.errors.saveFailed');
           showToast.error('Error', errorMessage);
         }
       }
     } catch (error: any) {
-      showToast.error('Error', error?.message || 'Failed to save payment method');
+      showToast.error('Error', error?.message || t('paymentMethod.errors.saveFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -131,7 +126,7 @@ export default function PaymentMethodScreen() {
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header title="Add Payment Method" showBackButton />
+        <Header title={t('paymentMethod.headerTitle')} showBackButton />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardView}
@@ -142,30 +137,31 @@ export default function PaymentMethodScreen() {
             showsVerticalScrollIndicator={false}
           >
             <LiquidGlassBackground style={styles.cardContainer}>
-              <Text style={styles.sectionTitle}>Add Payment Method</Text>
+              <Text style={styles.sectionTitle}>{t('paymentMethod.sectionTitle')}</Text>
               <Text style={styles.description}>
-                Tap the button below to open Stripe's secure payment modal where you can add your card details.
+                {t('paymentMethod.description')}
               </Text>
 
               <View style={styles.testCardContainer}>
-                <Text style={styles.hintTitle}>Test Cards (Development Only):</Text>
-                <Text style={styles.hintText}>
-                  • 4242 4242 4242 4242 - Success (Visa)
-                </Text>
-                <Text style={styles.hintText}>
-                  • 4000 0000 0000 0002 - Card Declined
-                </Text>
-                <Text style={styles.hintText}>
-                  • 4000 0025 0000 3155 - 3D Secure Required
-                </Text>
-                <Text style={styles.hintText}>
-                  Use any future expiry date (e.g., 12/34) and any CVC
-                </Text>
+                <Text style={styles.hintTitle}>{t('paymentMethod.testCards')}</Text>
+                {(
+                  t('paymentMethod.testCardList', {
+                    returnObjects: true,
+                  }) as string[]
+                ).map(line => (
+                  <Text key={line} style={styles.hintText}>
+                    {line}
+                  </Text>
+                ))}
               </View>
             </LiquidGlassBackground>
 
             <PrimaryButton
-              title={isPaymentSheetReady ? "Add Card" : "Loading..."}
+              title={
+                isPaymentSheetReady
+                  ? t('paymentMethod.buttons.addCard')
+                  : t('paymentMethod.buttons.loading')
+              }
               onPress={handleSavePaymentMethod}
               variant="primary"
               style={styles.saveButton}

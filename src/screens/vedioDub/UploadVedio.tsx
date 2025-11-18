@@ -25,6 +25,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground } from '../../components/ui';
 import { Images } from '../../assets/images';
 import { useUploadVideoDubbingMutation } from '../../store/api';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -33,6 +34,7 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 
 export default function UploadVedio() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { t } = useTranslation();
 
   const [selectedVideo, setSelectedVideo] = useState<{
     uri: string;
@@ -45,7 +47,7 @@ export default function UploadVedio() {
   const selectVideo = () => {
     const options = {
       mediaType: 'video' as MediaType,
-      quality: 1,
+      quality: 1 as const,
       videoQuality: 'high' as const,
       maxWidth: 1920,
       maxHeight: 1080,
@@ -56,7 +58,7 @@ export default function UploadVedio() {
         console.log('User cancelled video picker');
       } else if (response.errorCode) {
         console.log('ImagePicker Error: ', response.errorMessage);
-        Alert.alert('Error', response.errorMessage || 'Failed to pick video');
+        Alert.alert('Error', response.errorMessage || t('uploadVideo.errors.pickFailed'));
       } else if (response.assets && response.assets[0]) {
         const asset = response.assets[0];
         console.log('asset', asset);
@@ -105,7 +107,7 @@ export default function UploadVedio() {
           showsVerticalScrollIndicator={false}
         >
           <Header
-            title="Video Dubbing"
+            title={t('uploadVideo.headerTitle')}
             showBackButton
             RigthIcon={
               <TouchableOpacity onPress={()=>navigation.navigate('VideoHistory')}>
@@ -121,16 +123,16 @@ export default function UploadVedio() {
               <Image source={Images.UploadVedio} />
               {!selectedVideo && (
                 <>
-                  <Text style={styles.title}>Upload your Video</Text>
+                  <Text style={styles.title}>{t('uploadVideo.title')}</Text>
                   <Text style={styles.subtitle}>
-                    Drag and drop or click to browse
+                    {t('uploadVideo.description')}
                   </Text>
                 </>
               )}
               {selectedVideo && (
                 <View style={styles.videoInfoContainer}>
                   <Text style={styles.videoInfoText} numberOfLines={1}>
-                    {selectedVideo.name}
+                    {selectedVideo.name || t('uploadVideo.videoPlaceholder')}
                   </Text>
                   <View style={styles.videoMetaRow}>
                     <Text style={styles.videoMetaText}>
@@ -144,7 +146,11 @@ export default function UploadVedio() {
                 </View>
               )}
               <PrimaryButton
-                title={selectedVideo ? 'Continue' : 'Select File'}
+                title={
+                  selectedVideo
+                    ? t('uploadVideo.buttons.continue')
+                    : t('uploadVideo.buttons.selectFile')
+                }
                 onPress={handleSelectFile}
                 variant="primary"
                 size="small"
@@ -155,13 +161,15 @@ export default function UploadVedio() {
                   onPress={selectVideo}
                   style={styles.changeButton}
                 >
-                  <Text style={styles.changeButtonText}>Change Video</Text>
+                  <Text style={styles.changeButtonText}>
+                    {t('uploadVideo.buttons.changeVideo')}
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
           </LiquidGlassBackground>
 
-          <Text style={styles.title2}>How it Works</Text>
+          <Text style={styles.title2}>{t('uploadVideo.howItWorks.title')}</Text>
           <View style={styles.howItWorksContainer}>
             <View style={styles.stepContainer}>
               <LinearGradient
@@ -169,30 +177,16 @@ export default function UploadVedio() {
                 style={styles.gradientLine}
               />
 
-              <View style={styles.roww}>
-                <Image source={Images.Elipse} style={styles.elipse} />
-                <Text style={styles.stepText}>
-                  Upload your video in any language
-                </Text>
-              </View>
-              <View style={styles.roww}>
-                <Image source={Images.Elipse} style={styles.elipse} />
-                <Text style={styles.stepText}>
-                  AI detects the original language{' '}
-                </Text>
-              </View>
-              <View style={styles.roww}>
-                <Image source={Images.Elipse} style={styles.elipse} />
-                <Text style={styles.stepText}>
-                  Select target language and voice{' '}
-                </Text>
-              </View>
-              <View style={styles.roww}>
-                <Image source={Images.Elipse} style={styles.elipse} />
-                <Text style={styles.stepText}>
-                  Generate dubbed video with lip-sync{' '}
-                </Text>
-              </View>
+              {(
+                t('uploadVideo.howItWorks.steps', {
+                  returnObjects: true,
+                }) as string[]
+              ).map(step => (
+                <View key={step} style={styles.roww}>
+                  <Image source={Images.Elipse} style={styles.elipse} />
+                  <Text style={styles.stepText}>{step}</Text>
+                </View>
+              ))}
             </View>
           </View>
         </ScrollView>

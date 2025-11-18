@@ -22,6 +22,7 @@ import { Header } from '../../components/ui';
 import { useVerifyOtpMutation, useResendOtpMutation } from '../../store/api/authApi';
 import { tokenStorage } from '../../utils/tokenStorage';
 import { showToast } from '../../utils/toast';
+import { useTranslation } from 'react-i18next';
 
 type VerifyOtpNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
@@ -37,6 +38,7 @@ export default function VerifyOtp() {
     const [verifyOtp, { isLoading: verifyLoading }] = useVerifyOtpMutation();
     const [resendOtp, { isLoading: resendLoading }] = useResendOtpMutation();
     const isVerifyingRef = useRef(false);
+    const { t } = useTranslation();
 
     const handleOTPChange = (text: string) => {
         setOtp(text);
@@ -53,12 +55,18 @@ export default function VerifyOtp() {
         }
 
         if (!otpCode || otpCode.length !== 4) {
-            showToast.error('Error', 'Please enter a valid 4-digit OTP');
+            showToast.error(
+                t('verifyOtp.toast.errorTitle'),
+                t('verifyOtp.toast.invalidOtp')
+            );
             return;
         }
 
         if (!email) {
-            showToast.error('Error', 'Email is required');
+            showToast.error(
+                t('verifyOtp.toast.errorTitle'),
+                t('verifyOtp.toast.emailRequired')
+            );
             navigation.goBack();
             return;
         }
@@ -76,7 +84,10 @@ export default function VerifyOtp() {
             await tokenStorage.setRefreshToken(result.refreshToken);
             await tokenStorage.setUser(result.user);
 
-            showToast.success('Registration successful!', 'Welcome to the app');
+            showToast.success(
+                t('verifyOtp.toast.successTitle'),
+                t('verifyOtp.toast.successBody')
+            );
             navigation.reset({
               index: 0,
               routes: [{ name: 'Dashboard' }],
@@ -84,8 +95,8 @@ export default function VerifyOtp() {
         } catch (error: any) {
             console.error('Verify OTP error:', error);
             showToast.error(
-                'Verification Failed',
-                error?.data?.message || error?.message || 'Invalid OTP. Please try again.'
+                t('verifyOtp.toast.verifyErrorTitle'),
+                error?.data?.message || error?.message || t('verifyOtp.toast.verifyErrorBody')
             );
             // Reset on error so user can try again
             isVerifyingRef.current = false;
@@ -94,7 +105,10 @@ export default function VerifyOtp() {
 
     const handleResendOtp = async () => {
         if (!email) {
-            showToast.error('Error', 'Email is required');
+            showToast.error(
+                t('verifyOtp.toast.errorTitle'),
+                t('verifyOtp.toast.emailRequired')
+            );
             return;
         }
 
@@ -103,13 +117,16 @@ export default function VerifyOtp() {
                 email: email.trim(),
             }).unwrap();
 
-            showToast.success('OTP resent!', result.message || 'A new verification code has been sent to your email');
+            showToast.success(
+                t('verifyOtp.toast.resendSuccessTitle'),
+                result.message || t('verifyOtp.toast.resendSuccessBody')
+            );
             setOtp('');
         } catch (error: any) {
             console.error('Resend OTP error:', error);
             showToast.error(
-                'Error',
-                error?.data?.message || error?.message || 'Failed to resend OTP. Please try again.'
+                t('verifyOtp.toast.errorTitle'),
+                error?.data?.message || error?.message || t('verifyOtp.toast.resendErrorBody')
             );
         }
     };
@@ -126,9 +143,11 @@ export default function VerifyOtp() {
                     
                     {/* Welcome Section */}
                     <View style={styles.welcomeSection}>
-                        <Text style={styles.welcomeTitle}>Enter Verification Code</Text>
+                        <Text style={styles.welcomeTitle}>{t('verifyOtp.title')}</Text>
                         <Text style={styles.welcomeSubtitle}>
-                            A 4-digit code has been sent to {email || 'your email'}
+                            {email
+                                ? t('verifyOtp.subtitle', { email })
+                                : t('verifyOtp.subtitleFallback')}
                         </Text>
                     </View>
 
@@ -146,10 +165,12 @@ export default function VerifyOtp() {
 
                     {/* Resend Section */}
                     <View style={styles.resendSection}>
-                        <Text style={styles.resendText}>Didn't receive the code? </Text>
+                        <Text style={styles.resendText}>{t('verifyOtp.prompts.noCode')}</Text>
                         <TouchableOpacity onPress={handleResendOtp} disabled={resendLoading}>
                             <Text style={styles.resendLink}>
-                                {resendLoading ? 'Sending...' : 'Resend'}
+                                {resendLoading
+                                    ? t('verifyOtp.prompts.resending')
+                                    : t('verifyOtp.prompts.resend')}
                             </Text>
                         </TouchableOpacity>
                     </View>

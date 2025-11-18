@@ -20,6 +20,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground } from '../../components/ui';
 import { Images } from '../../assets/images';
 import { characters_data } from '../../utils/characters';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -28,6 +29,7 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 
 export default function ChoseCharacter() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { t } = useTranslation();
   
   // Character data array
   const characters = [
@@ -50,7 +52,7 @@ export default function ChoseCharacter() {
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <Header
-          title="Chose Character"
+          title={t('chooseCharacter.headerTitle')}
           showBackButton
           RigthIcon={
             <Svgs.HistoryIcon
@@ -65,9 +67,9 @@ export default function ChoseCharacter() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.dashboardContainer}>
-            <Text style={styles.title}>Choose your Character</Text>
+            <Text style={styles.title}>{t('chooseCharacter.title')}</Text>
             <Text style={styles.subTitle}>
-              Select from our collection of unique characters
+              {t('chooseCharacter.subtitle')}
             </Text>
             <View style={styles.tempCharacherContainer}>
               {Array.from({ length: Math.ceil(characters.length / 2) }, (_, rowIndex) => (
@@ -98,7 +100,7 @@ export default function ChoseCharacter() {
           </View>
         </ScrollView>
         <PrimaryButton
-          title="Customize Avatar"
+          title={t('chooseCharacter.buttonCustomize')}
           onPress={() => navigation.navigate('CustomizeAvatar',{character: selectedCharacter})}
           variant='secondary'
           style={{
@@ -106,7 +108,7 @@ export default function ChoseCharacter() {
           }}
         />
         <PrimaryButton
-          title="Next"
+          title={t('chooseCharacter.buttonNext')}
           onPress={() => {}}
           variant="primary"
           style={{

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,14 +18,9 @@ import { Svgs } from '../../assets/icons';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  Header,
-  LiquidGlassBackground,
-  LanguageDropdown,
-  CustomDropdown,
-  Input,
-} from '../../components/ui';
+import { Header, LiquidGlassBackground } from '../../components/ui';
 import { Images } from '../../assets/images';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -34,58 +29,62 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 
 export default function ProjectVedios() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { t } = useTranslation();
 
   // Video data for FlatList
-  const videoData = [
-    {
-      id: '1',
-      title: 'Marketing Campaign Video',
-      subtitle: 'Facebook Ad Campaign',
-      status: 'Completed',
-      statusTime: '2 hours ago',
-      thumbnail: Images.TempAnchorImage,
-    },
-    {
-      id: '2',
-      title: 'Product Demo Video',
-      subtitle: 'Instagram Story',
-      status: 'Processing',
-      statusTime: '1 hour ago',
-      thumbnail: Images.TempAnchorImage,
-    },
-    {
-      id: '3',
-      title: 'Tutorial Video',
-      subtitle: 'YouTube Channel',
-      status: 'Completed',
-      statusTime: '3 hours ago',
-      thumbnail: Images.TempAnchorImage,
-    },
-    {
-      id: '4',
-      title: 'Behind the Scenes',
-      subtitle: 'TikTok Content',
-      status: 'Failed',
-      statusTime: '4 hours ago',
-      thumbnail: Images.TempAnchorImage,
-    },
-    {
-      id: '5',
-      title: 'Customer Testimonial',
-      subtitle: 'LinkedIn Post',
-      status: 'Completed',
-      statusTime: '5 hours ago',
-      thumbnail: Images.TempAnchorImage,
-    },
-    {
-      id: '6',
-      title: 'Brand Story Video',
-      subtitle: 'Twitter Thread',
-      status: 'Processing',
-      statusTime: '6 hours ago',
-      thumbnail: Images.TempAnchorImage,
-    },
-  ];
+  const videoData = useMemo(
+    () => [
+      {
+        id: '1',
+        title: t('projectVideos.sampleTitle'),
+        subtitle: t('projectVideos.sampleSubtitle'),
+        status: 'completed' as const,
+        statusTime: t('projectVideos.statusTimeUnits.hoursAgo', { count: 2 }),
+        thumbnail: Images.TempAnchorImage,
+      },
+      {
+        id: '2',
+        title: t('projectVideos.sampleTitle'),
+        subtitle: 'Instagram Story',
+        status: 'processing' as const,
+        statusTime: t('projectVideos.statusTimeUnits.hoursAgo', { count: 1 }),
+        thumbnail: Images.TempAnchorImage,
+      },
+      {
+        id: '3',
+        title: t('projectVideos.sampleTitle'),
+        subtitle: 'YouTube Channel',
+        status: 'completed' as const,
+        statusTime: t('projectVideos.statusTimeUnits.hoursAgo', { count: 3 }),
+        thumbnail: Images.TempAnchorImage,
+      },
+      {
+        id: '4',
+        title: t('projectVideos.sampleTitle'),
+        subtitle: 'TikTok Content',
+        status: 'failed' as const,
+        statusTime: t('projectVideos.statusTimeUnits.hoursAgo', { count: 4 }),
+        thumbnail: Images.TempAnchorImage,
+      },
+      {
+        id: '5',
+        title: t('projectVideos.sampleTitle'),
+        subtitle: 'LinkedIn Post',
+        status: 'completed' as const,
+        statusTime: t('projectVideos.statusTimeUnits.hoursAgo', { count: 5 }),
+        thumbnail: Images.TempAnchorImage,
+      },
+      {
+        id: '6',
+        title: t('projectVideos.sampleTitle'),
+        subtitle: 'Twitter Thread',
+        status: 'processing' as const,
+        statusTime: t('projectVideos.statusTimeUnits.hoursAgo', { count: 6 }),
+        thumbnail: Images.TempAnchorImage,
+      },
+    ],
+    [t],
+  );
 
   // Render video item function for FlatList
   const renderVideoItem = ({ item }: { item: (typeof videoData)[0] }) => (
@@ -110,17 +109,17 @@ export default function ProjectVedios() {
           <Text
             style={[
               styles.status,
-              item.status === 'Completed' && { color: colors.sucessGreen },
-              item.status === 'Processing' && { color: colors.primary },
-              item.status === 'Failed' && { color: '#FF6B6B' },
+              item.status === 'completed' && { color: colors.sucessGreen },
+              item.status === 'processing' && { color: colors.primary },
+              item.status === 'failed' && { color: '#FF6B6B' },
             ]}
           >
-            {item.status}
+            {t(`projectVideos.statusLabels.${item.status}`)}
           </Text>
           <Text style={styles.statusTime}>{item.statusTime}</Text>
         </View>
         <PrimaryButton
-          title="Play"
+          title={t('projectVideos.buttons.play')}
           onPress={() => {}}
           extraContainerStyle={styles.buttonContainer}
           textStyle={styles.text}
@@ -134,7 +133,7 @@ export default function ProjectVedios() {
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header title="Facebook Videos" showBackButton />
+        <Header title={t('projectVideos.headerTitle')} showBackButton />
 
         <FlatList
           data={videoData}

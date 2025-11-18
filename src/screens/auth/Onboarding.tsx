@@ -14,27 +14,36 @@ import { FontFamily } from '../../constants/fonts';
 import colors from '../../constants/colors';
 import { Svgs } from '../../assets/icons';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+import { RootStackParamList } from '../../navigation/RootNavigator';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type OnboardingNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'Onboarding'
+>;
 
 export default function Onboarding() {
     const [currentStep, setCurrentStep] = useState(0);
-    const navigation = useNavigation();
+    const navigation = useNavigation<OnboardingNavigationProp>();
+    const { t } = useTranslation();
     const steps = [
         {
             image: Images.Info1,
-            title: 'Upload Your Video',
-            description:'Simply upload any video and let our AI detect the language automatically'
+            title: t('onboarding.steps.upload.title'),
+            description: t('onboarding.steps.upload.description'),
         },
         {
-            image:Images.Info2,
-            title:'Translate Instantly',
-            description:'Choose from 50+ languages and watch AI translate your content in seconds'
+            image: Images.Info2,
+            title: t('onboarding.steps.translate.title'),
+            description: t('onboarding.steps.translate.description'),
         },
         {
-            image:Images.Info3,
-            title:'Export & Share',
-            description:'Get your dubbed video with perfect lip-sync, ready to share with the world'
-        }
-    ]
+            image: Images.Info3,
+            title: t('onboarding.steps.export.title'),
+            description: t('onboarding.steps.export.description'),
+        },
+    ];
 
     const handleNext = () => {
         if (currentStep < steps.length - 1) {
@@ -73,13 +82,13 @@ export default function Onboarding() {
               </View>
               <View style={styles.buttonRow}>
                 {currentStep<2&&(<PrimaryButton
-                  title="Skip"
+                  title={t('onboarding.buttons.skip')}
                   onPress={handleSkip}
                   variant="secondary"
                   extraContainerStyle={{flex:1}}
                 />)}
                 <PrimaryButton
-                  title={isLastStep ? "Get Started" : "Next"}
+                  title={isLastStep ? t('onboarding.buttons.getStarted') : t('onboarding.buttons.next')}
                   onPress={isLastStep ? handleSkip : handleNext} 
                   extraContainerStyle={{flex:1}}
                   icon={currentStep==2&&<Svgs.Arrows/>}

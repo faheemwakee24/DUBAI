@@ -22,6 +22,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header } from '../../components/ui';
 import { useVerifyResetOtpMutation, useResetPasswordMutation, useResendOtpMutation } from '../../store/api/authApi';
 import { showToast } from '../../utils/toast';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
@@ -32,6 +33,7 @@ export default function ResetPin() {
     const navigation = useNavigation<LoginScreenNavigationProp>();
     const route = useRoute();
     const email = (route.params as any)?.email || '';
+    const { t } = useTranslation();
     
     const [otp, setOtp] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -66,13 +68,16 @@ export default function ResetPin() {
 
             if (result.verified) {
                 setOtpVerified(true);
-                showToast.success('OTP verified!', 'Please enter your new password');
+                showToast.success(
+                    t('resetPin.toast.otpVerifiedTitle'),
+                    t('resetPin.toast.otpVerifiedBody')
+                );
             }
         } catch (error: any) {
             console.error('Verify OTP error:', error);
             showToast.error(
-                'Verification Failed',
-                error?.data?.message || error?.message || 'Invalid OTP. Please try again.'
+                t('resetPin.toast.verifyErrorTitle'),
+                error?.data?.message || error?.message || t('resetPin.toast.verifyErrorBody')
             );
             setOtp('');
         }
@@ -80,17 +85,26 @@ export default function ResetPin() {
 
     const handleResetPassword = async () => {
         if (!newPassword || !confirmPassword) {
-            showToast.error('Error', 'Please enter both password fields');
+            showToast.error(
+                t('resetPin.toast.errorTitle'),
+                t('resetPin.toast.missingFields')
+            );
             return;
         }
 
         if (newPassword.length < 6) {
-            showToast.error('Error', 'Password must be at least 6 characters');
+            showToast.error(
+                t('resetPin.toast.errorTitle'),
+                t('resetPin.toast.passwordLength')
+            );
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            showToast.error('Error', 'Passwords do not match');
+            showToast.error(
+                t('resetPin.toast.errorTitle'),
+                t('resetPin.toast.mismatch')
+            );
             return;
         }
 
@@ -101,15 +115,18 @@ export default function ResetPin() {
                 newPassword,
             }).unwrap();
 
-            showToast.success('Password reset!', result.message || 'Your password has been reset successfully');
+            showToast.success(
+                t('resetPin.toast.resetSuccessTitle'),
+                result.message || t('resetPin.toast.resetSuccessBody')
+            );
             setTimeout(() => {
                 navigation.navigate('Login' as never);
             }, 1500);
         } catch (error: any) {
             console.error('Reset password error:', error);
             showToast.error(
-                'Error',
-                error?.data?.message || error?.message || 'Failed to reset password. Please try again.'
+                t('resetPin.toast.errorTitle'),
+                error?.data?.message || error?.message || t('resetPin.toast.resetErrorBody')
             );
         }
     };
@@ -120,13 +137,16 @@ export default function ResetPin() {
                 email,
             }).unwrap();
 
-            showToast.success('OTP resent!', result.message || 'A new verification code has been sent to your email');
+            showToast.success(
+                t('resetPin.toast.resendSuccessTitle'),
+                result.message || t('resetPin.toast.resendSuccessBody')
+            );
             setOtp('');
         } catch (error: any) {
             console.error('Resend OTP error:', error);
             showToast.error(
-                'Error',
-                error?.data?.message || error?.message || 'Failed to resend OTP. Please try again.'
+                t('resetPin.toast.errorTitle'),
+                error?.data?.message || error?.message || t('resetPin.toast.resendErrorBody')
             );
         }
     };
@@ -142,11 +162,11 @@ export default function ResetPin() {
                     <Header onBackPress={()=>navigation.goBack()} showBackButton/>
                     {/* Welcome Section */}
                     <View style={styles.welcomeSection}>
-                        <Text style={styles.welcomeTitle}>Reset Password</Text>
+                        <Text style={styles.welcomeTitle}>{t('resetPin.title')}</Text>
                         <Text style={styles.welcomeSubtitle}>
                             {otpVerified 
-                                ? 'Enter your new password'
-                                : '4-Digit verification code has been sent to your email'
+                                ? t('resetPin.subtitleVerified')
+                                : t('resetPin.subtitlePending')
                             }
                         </Text>
                     </View>
@@ -165,10 +185,12 @@ export default function ResetPin() {
                                 />
                             </View>
                             <View style={styles.signUpSection}>
-                                <Text style={styles.signUpText}>Didn't receive the code? </Text>
+                                <Text style={styles.signUpText}>{t('resetPin.prompts.noCode')}</Text>
                                 <TouchableOpacity onPress={handleResendOtp} disabled={resendLoading}>
                                     <Text style={styles.signUpLink}>
-                                        {resendLoading ? 'Sending...' : 'Request again'}
+                                        {resendLoading
+                                            ? t('resetPin.prompts.resending')
+                                            : t('resetPin.prompts.resend')}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -176,8 +198,8 @@ export default function ResetPin() {
                     ) : (
                         <View style={styles.inputSection}>
                             <Input
-                                label="New Password"
-                                placeholder="Enter your new password"
+                                label={t('resetPin.inputs.newPasswordLabel')}
+                                placeholder={t('resetPin.inputs.newPasswordPlaceholder')}
                                 value={newPassword}
                                 onChangeText={setNewPassword}
                                 showPasswordToggle
@@ -187,8 +209,8 @@ export default function ResetPin() {
                                 required
                             />
                             <Input
-                                label="Confirm Password"
-                                placeholder="Confirm your new password"
+                                label={t('resetPin.inputs.confirmPasswordLabel')}
+                                placeholder={t('resetPin.inputs.confirmPasswordPlaceholder')}
                                 value={confirmPassword}
                                 onChangeText={setConfirmPassword}
                                 showPasswordToggle
@@ -209,7 +231,11 @@ export default function ResetPin() {
                 {otpVerified && (
                     <View style={[styles.signUpSection, { marginHorizontal: metrics.width(20) }]}>
                         <PrimaryButton
-                            title={resetLoading ? 'Resetting...' : 'Reset Password'}
+                            title={
+                                resetLoading
+                                    ? t('resetPin.buttons.resetting')
+                                    : t('resetPin.buttons.reset')
+                            }
                             onPress={handleResetPassword}
                             variant="primary"
                             size="medium"

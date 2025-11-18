@@ -21,6 +21,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header } from '../../components/ui';
 import { useForgotPasswordMutation } from '../../store/api/authApi';
 import { showToast } from '../../utils/toast';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
@@ -31,10 +32,14 @@ export default function ForgotPasword() {
     const [email, setEmail] = useState('');
     const navigation = useNavigation<LoginScreenNavigationProp>();
     const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
+    const { t } = useTranslation();
 
     const handleResetPassword = async () => {
         if (!email || !email.trim()) {
-            showToast.error('Error', 'Please enter your email address');
+            showToast.error(
+                t('forgotPassword.toastErrorTitle'),
+                t('forgotPassword.toastMissingEmail')
+            );
             return;
         }
 
@@ -44,15 +49,18 @@ export default function ForgotPasword() {
             }).unwrap();
 
             if (result.otpSent) {
-                showToast.success('OTP sent!', result.message || 'A verification code has been sent to your email');
+                showToast.success(
+                    t('forgotPassword.toastSuccessTitle'),
+                    result.message || t('forgotPassword.toastSuccessBody')
+                );
                 // Navigate to ResetPin screen with email
                 navigation.navigate('ResetPin', { email: email.trim() });
             }
         } catch (error: any) {
             console.error('Forgot password error:', error);
             showToast.error(
-                'Error',
-                error?.data?.message || error?.message || 'Failed to send OTP. Please try again.'
+                t('forgotPassword.toastErrorTitle'),
+                error?.data?.message || error?.message || t('forgotPassword.toastFailureBody')
             );
         }
     };
@@ -69,16 +77,16 @@ export default function ForgotPasword() {
                     <Header onBackPress={()=>navigation.goBack()} showBackButton/>
                     {/* Welcome Section */}
                     <View style={styles.welcomeSection}>
-                        <Text style={styles.welcomeTitle}>Forgot Password</Text>
-                        <Text style={styles.welcomeSubtitle}>Enter your email to reset your password</Text>
+                        <Text style={styles.welcomeTitle}>{t('forgotPassword.title')}</Text>
+                        <Text style={styles.welcomeSubtitle}>{t('forgotPassword.subtitle')}</Text>
                     </View>
 
                     {/* Input Fields */}
                     <View style={styles.inputSection}>
                         {/* Email Input */}
                         <Input
-                            label="Email"
-                            placeholder="Enter your Email"
+                            label={t('forgotPassword.emailLabel')}
+                            placeholder={t('forgotPassword.emailPlaceholder')}
                             value={email}
                             onChangeText={setEmail}
                             keyboardType="email-address"
@@ -101,7 +109,11 @@ export default function ForgotPasword() {
                 </ScrollView>
                 <View style={styles.signUpSection}>
                     <PrimaryButton
-                        title={isLoading ? 'Sending...' : 'Reset Password'}
+                        title={
+                            isLoading
+                                ? t('forgotPassword.sendingButton')
+                                : t('forgotPassword.sendButton')
+                        }
                         onPress={handleResetPassword}
                         variant="primary"
                         size="medium"

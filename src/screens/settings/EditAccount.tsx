@@ -24,6 +24,7 @@ import { useGetProfileQuery } from '../../store/api/authApi';
 import { User } from '../../store/api/authApi';
 import { useUpdateProfileMutation } from '../../store/api/usersApi';
 import { showToast } from '../../utils/toast';
+import { useTranslation } from 'react-i18next';
 
 type EditAccountNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -34,6 +35,7 @@ export default function EditAccount() {
   const navigation = useNavigation<EditAccountNavigationProp>();
   const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
   const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
+  const { t } = useTranslation();
 
   // Form state
   const [firstName, setFirstName] = useState('');
@@ -84,7 +86,10 @@ export default function EditAccount() {
   const handleSaveChanges = async () => {
     // Validate input
     if (!firstName.trim() || !lastName.trim()) {
-      showToast.error('Validation Error', 'First name and last name are required');
+      showToast.error(
+        t('editAccount.errors.validationTitle'),
+        t('editAccount.errors.missingNames'),
+      );
       return;
     }
 
@@ -98,25 +103,29 @@ export default function EditAccount() {
       if (result) {
         setUser(result as any);
         tokenStorage.setUser(result as any);
-        showToast.success('Profile updated!', 'Your profile has been updated successfully');
+        showToast.success(t('editAccount.success.title'), t('editAccount.success.body'));
       }
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      const errorMessage = error?.data?.message || error?.message || 'Failed to update profile';
-      showToast.error('Update Failed', errorMessage);
+      const errorMessage =
+        error?.data?.message || error?.message || t('editAccount.errors.updateFailed');
+      showToast.error(t('editAccount.errors.updateFailed'), errorMessage);
     }
   };
 
   const handleEditProfilePicture = () => {
     // Handle profile picture edit
     console.log('Edit profile picture pressed');
-    showToast.info('Feature coming soon', 'Profile picture editing will be available soon');
+    showToast.info(
+      t('editAccount.profile.comingSoonTitle'),
+      t('editAccount.profile.comingSoonBody'),
+    );
   };
 
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header title="Edit Profile" showBackButton />
+        <Header title={t('editAccount.headerTitle')} showBackButton />
 
         <ScrollView
           style={styles.scrollView}
@@ -145,20 +154,20 @@ export default function EditAccount() {
           <View style={styles.inputFieldsSection}>
             {/* First Name Field */}
             <Input
-              label="First Name"
+              label={t('editAccount.fields.firstNameLabel')}
               value={firstName}
               onChangeText={setFirstName}
-              placeholder="Enter your first name"
+              placeholder={t('editAccount.fields.firstNamePlaceholder')}
               autoCapitalize="words"
               fullWidth
             />
 
             {/* Last Name Field */}
             <Input
-              label="Last Name"
+              label={t('editAccount.fields.lastNameLabel')}
               value={lastName}
               onChangeText={setLastName}
-              placeholder="Enter your last name"
+              placeholder={t('editAccount.fields.lastNamePlaceholder')}
               autoCapitalize="words"
               fullWidth
             />
@@ -167,9 +176,9 @@ export default function EditAccount() {
             <Input
               value={email}
               onChangeText={setEmail}
-              placeholder="Enter your email"
+              placeholder={t('editAccount.fields.emailPlaceholder')}
               keyboardType="email-address"
-              label="Email"
+              label={t('editAccount.fields.emailLabel')}
               autoCapitalize="none"
               editable={false} // Email might not be editable
               fullWidth
@@ -190,7 +199,7 @@ export default function EditAccount() {
 
         {/* Save Changes Button */}
         <PrimaryButton
-          title={isUpdating ? 'Saving...' : 'Save Changes'}
+          title={isUpdating ? t('editAccount.buttons.saving') : t('editAccount.buttons.save')}
           onPress={handleSaveChanges}
           variant="primary"
           style={styles.saveButton}

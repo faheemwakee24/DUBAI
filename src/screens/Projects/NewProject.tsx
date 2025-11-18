@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -18,16 +18,11 @@ import { Svgs } from '../../assets/icons';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  Header,
-  LiquidGlassBackground,
-  LanguageDropdown,
-  CustomDropdown,
-  Input,
-} from '../../components/ui';
+import { Header, LiquidGlassBackground, CustomDropdown, Input } from '../../components/ui';
 import { Images } from '../../assets/images';
 import { useCreateProjectMutation } from '../../store/api/projectsApi';
 import { showToast } from '../../utils/toast';
+import { useTranslation } from 'react-i18next';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -50,23 +45,40 @@ const languageMap: { [key: string]: string } = {
   Russian: 'ru',
 };
 
-const languageOptions = Object.keys(languageMap);
-
 export default function NewProject() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const [projectName, setProjectName] = useState('');
   // State for all dropdowns
   const [selectedHairStyle, setSelectedHairStyle] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState('enå');
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [selectedProjectType, setSelectedProjectType] = useState<
     'video-dubbing' | 'character-reader'
   >('video-dubbing');
+  const { t } = useTranslation();
 
   // API hook
   const [createProject, { isLoading }] = useCreateProjectMutation();
 
   // Options for all dropdowns
-  const hairStyleOptions = ['Facebook', 'Tiktok', 'Instagram', 'Youtube'];
+  const hairStyleOptions = useMemo(
+    () =>
+      Object.values(
+        t('newProject.projectOptions', {
+          returnObjects: true,
+        }) as Record<string, string>,
+      ),
+    [t],
+  );
+
+  const languageOptions = useMemo(
+    () =>
+      Object.values(
+        t('newProject.languages', {
+          returnObjects: true,
+        }) as Record<string, string>,
+      ),
+    [t],
+  );
 
   const handleHairStyleSelect = (hairStyle: string) => {
     setSelectedHairStyle(hairStyle);
@@ -87,17 +99,17 @@ export default function NewProject() {
   const handleCreateProject = async () => {
     // Validation
     if (!projectName.trim()) {
-      showToast.error('Error', 'Please enter a project name');
+      showToast.error(t('newProject.errors.title'), t('newProject.errors.missingName'));
       return;
     }
 
     if (!selectedHairStyle) {
-      showToast.error('Error', 'Please select a project description');
+      showToast.error(t('newProject.errors.title'), t('newProject.errors.missingDescription'));
       return;
     }
 
     if (!selectedLanguage) {
-      showToast.error('Error', 'Please select a language');
+      showToast.error(t('newProject.errors.title'), t('newProject.errors.missingLanguage'));
       return;
     }
 
@@ -105,7 +117,10 @@ export default function NewProject() {
     const category = selectedProjectType === 'video-dubbing' ? 'video' : 'character';
     
     // Get language code
-    const languageCode = languageMap[selectedLanguage] || selectedLanguage.toLowerCase();
+    const languageCode =
+      Object.keys(languageMap).find(
+        key => languageMap[key] === selectedLanguage || key === selectedLanguage,
+      ) || languageMap[selectedLanguage] || selectedLanguage.toLowerCase();
 
     try {
       const result = await createProject({
@@ -117,35 +132,33 @@ export default function NewProject() {
         },
       }).unwrap();
 
-      showToast.success('Success', 'Project created successfully!');
+      showToast.success(t('newProject.success.title'), t('newProject.success.message'));
       // Navigate back after a short delay
       setTimeout(() => {
         navigation.goBack();
       }, 1500);
     } catch (error: any) {
       const errorMessage =
-        error?.data?.message || error?.message || 'Failed to create project';
-      showToast.error('Error', errorMessage);
+        error?.data?.message || error?.message || t('newProject.errors.generic');
+      showToast.error(t('newProject.errors.title'), errorMessage);
     }
   };
 
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header title="Create Project" showBackButton />
+        <Header title={t('newProject.headerTitle')} showBackButton />
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.dashboardContainer}>
-            <Text style={styles.title}>Create Project</Text>
-            <Text style={styles.subTitle}>
-              Start your new project for dubbing and character reading.
-            </Text>
+            <Text style={styles.title}>{t('newProject.title')}</Text>
+            <Text style={styles.subTitle}>{t('newProject.subtitle')}</Text>
             <Input
-              label="Project Name"
-              placeholder="Enter your Project Name"
+              label={t('newProject.fields.nameLabel')}
+              placeholder={t('newProject.fields.namePlaceholder')}
               value={projectName}
               onChangeText={setProjectName}
               autoCapitalize="none"
@@ -155,11 +168,21 @@ export default function NewProject() {
             />
             <View style={styles.tempCharacherContainer}>
               <CustomDropdown
-                title="Project"
+                title={t('newProject.fields.descriptionLabel')}
                 options={hairStyleOptions}
                 selectedValue={selectedHairStyle}
                 onSelect={handleHairStyleSelect}
-                placeholder="Select Project"
+                placeholder={t('newProject.fields.descriptionPlaceholder')}
+              />
+            </View>
+
+            <View style={styles.tempCharacherContainer}>
+              <CustomDropdown
+                title={t('newProject.fields.languageLabel')}
+                options={languageOptions}
+                selectedValue={selectedLanguage}
+                onSelect={handleLanguageSelect}
+                placeholder={t('newProject.fields.languageLabel')}
               />
             </View>
 
@@ -175,9 +198,9 @@ export default function NewProject() {
                 ]}
               >
                 <View>
-                  <Text style={styles.debugTitle}>Video {'\n'}Dubbing</Text>
+                  <Text style={styles.debugTitle}>{t('newProject.projectTypes.videoDubbingTitle')}</Text>
                   <Text style={styles.debuggingSubtitle}>
-                    Translate & Dub Video
+                    {t('newProject.projectTypes.videoDubbingSubtitle')}
                   </Text>
                 </View>
                 <View style={styles.row}></View>
@@ -196,9 +219,9 @@ export default function NewProject() {
                 ]}
               >
                 <View>
-                  <Text style={styles.debugTitle}>Character {'\n'}Reader</Text>
+                  <Text style={styles.debugTitle}>{t('newProject.projectTypes.characterReaderTitle')}</Text>
                   <Text style={styles.debuggingSubtitle}>
-                    Create talking avatars
+                    {t('newProject.projectTypes.characterReaderSubtitle')}
                   </Text>
                 </View>
                 <View style={styles.row}></View>
@@ -212,7 +235,7 @@ export default function NewProject() {
         </ScrollView>
 
         <PrimaryButton
-          title={isLoading ? 'Creating...' : 'Create Project'}
+          title={isLoading ? t('newProject.buttons.creating') : t('newProject.buttons.create')}
           onPress={handleCreateProject}
           variant="primary"
           disabled={isLoading}

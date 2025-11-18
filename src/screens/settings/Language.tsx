@@ -1,85 +1,88 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import { FontFamily } from '../../constants/fonts';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { metrics } from '../../constants/metrics';
 import colors from '../../constants/colors';
 import { Svgs } from '../../assets/icons';
-import { useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '../../navigation/RootNavigator';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground } from '../../components/ui';
-
-type LanguageNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  'Signup'
->;
+import { useTranslation } from 'react-i18next';
+import {
+  supportedLanguages,
+  setAppLanguage,
+  LanguageCode,
+  LanguageOption,
+  normalizeLanguageCode,
+  i18n,
+} from '../../localization';
 
 export default function Language() {
-  const navigation = useNavigation<LanguageNavigationProp>();
-  
-  // Language data
-  const languageData = [
-    { id: '1', name: 'English', code: 'en', isSelected: true },
-    { id: '2', name: 'Spanish', code: 'es', isSelected: false },
-    { id: '3', name: 'Japanese', code: 'ja', isSelected: false },
-    { id: '4', name: 'French', code: 'fr', isSelected: false },
-    { id: '5', name: 'Chinese', code: 'zh', isSelected: false },
-  ];
-
-  const [selectedLanguage, setSelectedLanguage] = useState('English');
-
-  const handleLanguageSelect = (languageName: string) => {
-    setSelectedLanguage(languageName);
-    // Here you would typically save the language preference
-    console.log('Selected language:', languageName);
-  };
-
-  const renderLanguageItem = (item: typeof languageData[0]) => (
-    <LiquidGlassBackground key={item.id} style={styles.languageCard}>
-      <TouchableOpacity 
-        style={styles.languageRow}
-        onPress={() => handleLanguageSelect(item.name)}
-      >
-        <Text style={styles.languageName}>{item.name}</Text>
-        <View style={styles.radioContainer}>
-          <View style={[
-            styles.radioButton,
-            selectedLanguage === item.name && styles.radioButtonSelected
-          ]}>
-            {selectedLanguage === item.name && (
-              <View style={styles.radioCheckmark}>
-                <Svgs.TickIcon 
-                  height={metrics.width(12)} 
-                  width={metrics.width(12)} 
-                />
-              </View>
-            )}
-          </View>
-        </View>
-      </TouchableOpacity>
-    </LiquidGlassBackground>
+  const { t } = useTranslation();
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>(
+    normalizeLanguageCode(i18n.language),
   );
+
+  useEffect(() => {
+    const handleLanguageChange = (language: string) => {
+      setSelectedLanguage(normalizeLanguageCode(language));
+    };
+
+    i18n.on('languageChanged', handleLanguageChange);
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+    };
+  }, []);
+
+  const handleLanguageSelect = useCallback(
+    async (languageCode: LanguageCode) => {
+      if (languageCode === selectedLanguage) {
+        return;
+      }
+
+      await setAppLanguage(languageCode);
+    },
+    [selectedLanguage],
+  );
+
+  const renderLanguageItem = (item: LanguageOption) => {
+    const isActive = selectedLanguage === item.code;
+
+    return (
+      <LiquidGlassBackground key={item.code} style={styles.languageCard}>
+        <TouchableOpacity style={styles.languageRow} onPress={() => handleLanguageSelect(item.code)}>
+          <View style={styles.languageTextContainer}>
+            <Text style={styles.languageName}>{item.label}</Text>
+            <Text style={styles.languageNativeLabel}>{item.nativeLabel}</Text>
+          </View>
+
+          <View style={styles.radioContainer}>
+            <View style={[styles.radioButton, isActive && styles.radioButtonSelected]}>
+              {isActive && (
+                <View style={styles.radioCheckmark}>
+                  <Svgs.TickIcon height={metrics.width(12)} width={metrics.width(12)} />
+                </View>
+              )}
+            </View>
+          </View>
+        </TouchableOpacity>
+      </LiquidGlassBackground>
+    );
+  };
 
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header title="Language" showBackButton />
-        
-        <ScrollView 
+        <Header title={t('language.title')} showBackButton />
+        <Text style={styles.pageDescription}>{t('language.description')}</Text>
+
+        <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.languageList}>
-            {languageData.map(renderLanguageItem)}
+            {supportedLanguages.map(renderLanguageItem)}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -94,6 +97,13 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     marginHorizontal: metrics.width(25),
+  },
+  pageDescription: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(12),
+    color: colors.subtitle,
+    marginTop: metrics.width(10),
+    marginBottom: metrics.width(20),
   },
   scrollView: {
     flex: 1,
@@ -115,11 +125,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  languageTextContainer: {
+    flex: 1,
+  },
   languageName: {
     fontFamily: FontFamily.spaceGrotesk.regular,
     fontSize: metrics.width(15),
     color: colors.white,
-    flex: 1,
+  },
+  languageNativeLabel: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(12),
+    color: colors.subtitle,
+    marginTop: metrics.width(4),
   },
   radioContainer: {
     marginLeft: metrics.width(15),

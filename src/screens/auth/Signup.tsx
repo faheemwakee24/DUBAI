@@ -24,6 +24,7 @@ import { useRegisterMutation, useSocialAuthMutation } from '../../store/api/auth
 import { tokenStorage } from '../../utils/tokenStorage';
 import authService from '../../services/authService';
 import { showToast } from '../../utils/toast';
+import { useTranslation } from 'react-i18next';
 
 type SignUpNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
 
@@ -38,15 +39,22 @@ export default function SignUp() {
     const [socialAuth, { isLoading: socialLoading }] = useSocialAuthMutation();
     const [googleLoading, setGoogleLoading] = useState(false);
     const [appleLoading, setAppleLoading] = useState(false);
+    const { t } = useTranslation();
 
     const handleRegister = async () => {
         if (!email || !firstName || !lastName || !password) {
-            showToast.error('Error', 'Please fill in all fields');
+            showToast.error(
+                t('signup.toast.errorTitle'),
+                t('signup.toast.missingFields')
+            );
             return;
         }
 
         if (password.length < 6) {
-            showToast.error('Error', 'Password must be at least 6 characters');
+            showToast.error(
+                t('signup.toast.errorTitle'),
+                t('signup.toast.passwordLength')
+            );
             return;
         }
 
@@ -59,14 +67,17 @@ export default function SignUp() {
             }).unwrap();
 
             if (result.otpSent) {
-                showToast.success('OTP sent!', 'A verification code has been sent to your email');
+                showToast.success(
+                    t('signup.toast.otpSentTitle'),
+                    t('signup.toast.otpSentBody')
+                );
                 navigation.navigate('VerifyOtp', { email: email.trim() });
             }
         } catch (error: any) {
             console.error('Register error:', error);
             showToast.error(
-                'Registration Failed',
-                error?.data?.message || error?.message || 'Failed to register. Please try again.'
+                t('signup.toast.registerErrorTitle'),
+                error?.data?.message || error?.message || t('signup.toast.registerErrorBody')
             );
         }
     };
@@ -94,7 +105,10 @@ export default function SignUp() {
             await tokenStorage.setRefreshToken(result.refreshToken);
             await tokenStorage.setUser(result.user);
 
-            showToast.success('Google Sign-Up successful!', 'Welcome to the app');
+            showToast.success(
+                t('signup.toast.googleSuccessTitle'),
+                t('signup.subtitle')
+            );
             navigation.reset({
               index: 0,
               routes: [{ name: 'Dashboard' }],
@@ -102,8 +116,8 @@ export default function SignUp() {
         } catch (error: any) {
             console.error('Google Sign-In Error:', error);
             showToast.error(
-                'Sign Up Error',
-                error?.data?.message || error?.message || 'Failed to sign up with Google.'
+                t('signup.toast.socialErrorTitle'),
+                error?.data?.message || error?.message || t('signup.toast.googleErrorBody')
             );
         } finally {
             setGoogleLoading(false);
@@ -113,7 +127,10 @@ export default function SignUp() {
     const handleAppleSignIn = async () => {
         try {
             if (Platform.OS !== 'ios') {
-                showToast.error('Not Available', 'Apple Sign-In is only available on iOS devices.');
+                showToast.error(
+                    t('signup.toast.appleUnavailableTitle'),
+                    t('signup.toast.appleUnavailableBody')
+                );
                 return;
             }
             setAppleLoading(true);
@@ -136,7 +153,10 @@ export default function SignUp() {
             await tokenStorage.setRefreshToken(result.refreshToken);
             await tokenStorage.setUser(result.user);
 
-            showToast.success('Apple Sign-Up successful!', 'Welcome to the app');
+            showToast.success(
+                t('signup.toast.appleSuccessTitle'),
+                t('signup.subtitle')
+            );
             navigation.reset({
               index: 0,
               routes: [{ name: 'Dashboard' }],
@@ -144,8 +164,8 @@ export default function SignUp() {
         } catch (error: any) {
             console.error('Apple Sign-In Error:', error);
             showToast.error(
-                'Sign Up Error',
-                error?.data?.message || error?.message || 'Failed to sign up with Apple.'
+                t('signup.toast.socialErrorTitle'),
+                error?.data?.message || error?.message || t('signup.toast.appleErrorBody')
             );
         } finally {
             setAppleLoading(false);
@@ -167,15 +187,15 @@ export default function SignUp() {
                 >
                     {/* Welcome Section */}
                     <View style={styles.welcomeSection}>
-                        <Text style={styles.welcomeTitle}>Get Started</Text>
-                        <Text style={styles.welcomeSubtitle}>Sign up to begin your journey.</Text>
+                        <Text style={styles.welcomeTitle}>{t('signup.title')}</Text>
+                        <Text style={styles.welcomeSubtitle}>{t('signup.subtitle')}</Text>
                     </View>
 
                     {/* Input Fields */}
                     <View style={styles.inputSection}>
                         <Input
-                            label="First Name"
-                            placeholder="Enter your First Name"
+                            label={t('signup.fields.firstNameLabel')}
+                            placeholder={t('signup.fields.firstNamePlaceholder')}
                             value={firstName}
                             onChangeText={setFirstName}
                             autoCapitalize="words"
@@ -184,8 +204,8 @@ export default function SignUp() {
                             required
                         />
                         <Input
-                            label="Last Name"
-                            placeholder="Enter your Last Name"
+                            label={t('signup.fields.lastNameLabel')}
+                            placeholder={t('signup.fields.lastNamePlaceholder')}
                             value={lastName}
                             onChangeText={setLastName}
                             autoCapitalize="words"
@@ -194,8 +214,8 @@ export default function SignUp() {
                             required
                         />
                         <Input
-                            label="Email"
-                            placeholder="Enter your Email"
+                            label={t('signup.fields.emailLabel')}
+                            placeholder={t('signup.fields.emailPlaceholder')}
                             value={email}
                             onChangeText={setEmail}
                             keyboardType="email-address"
@@ -205,8 +225,8 @@ export default function SignUp() {
                             required
                         />
                         <Input
-                            label="Password"
-                            placeholder="Enter your Password"
+                            label={t('signup.fields.passwordLabel')}
+                            placeholder={t('signup.fields.passwordPlaceholder')}
                             value={password}
                             onChangeText={setPassword}
                             showPasswordToggle
@@ -220,7 +240,11 @@ export default function SignUp() {
                     {/* Sign In Button */}
                     <View style={styles.buttonSection}>
                         <PrimaryButton
-                            title={registerLoading ? 'Creating...' : 'Create'}
+                            title={
+                                registerLoading
+                                    ? t('signup.buttons.creating')
+                                    : t('signup.buttons.create')
+                            }
                             onPress={handleRegister}
                             variant="primary"
                             size="medium"
@@ -237,7 +261,7 @@ export default function SignUp() {
                             end={{ x: 1, y: 0 }}
                             style={styles.dividerLine}
                         />
-                        <Text style={styles.dividerText}>Or continue with</Text>
+                        <Text style={styles.dividerText}>{t('signup.dividerText')}</Text>
                         <LinearGradient
                             colors={[colors.gradient3, colors.gradient2, colors.gradient1]} // example colors
                             start={{ x: 0, y: 0 }}
@@ -249,7 +273,7 @@ export default function SignUp() {
                     {/* Social Login Buttons */}
                     <View style={styles.socialSection}>
                         <PrimaryButton
-                            title="Sign Up with Google"
+                            title={t('signup.buttons.google')}
                             onPress={handleGoogleSignIn}
                             variant="secondary"
                             size="medium"
@@ -259,7 +283,7 @@ export default function SignUp() {
                         />
                         {Platform.OS === 'ios' && (
                             <PrimaryButton
-                                title="Sign Up with Apple"
+                                title={t('signup.buttons.apple')}
                                 onPress={handleAppleSignIn}
                                 variant="secondary"
                                 size="medium"
@@ -275,9 +299,9 @@ export default function SignUp() {
 
                 </ScrollView>
                 <View style={styles.signUpSection}>
-                    <Text style={styles.signUpText}>Already have an account? </Text>
+                    <Text style={styles.signUpText}>{t('signup.footerPrompt')}</Text>
                     <TouchableOpacity onPress={handleSignUp}>
-                        <Text style={styles.signUpLink}>Sign In</Text>
+                        <Text style={styles.signUpLink}>{t('signup.footerLink')}</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>

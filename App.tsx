@@ -16,9 +16,11 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { toastConfig } from './src/components/ui/ToastConfig';
 import SplashScreen from './src/screens/auth/SplashScreen';
 import { STRIPE_CONFIG } from './src/constants/stripe';
+import { initLocalization } from './src/localization';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const [isLocalizationReady, setLocalizationReady] = useState(false);
 
   useEffect(() => {
     // Show splash screen for minimum duration, then hide it
@@ -29,13 +31,19 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    initLocalization().finally(() => setLocalizationReady(true));
+  }, []);
+
+  const shouldShowSplash = showSplash || !isLocalizationReady;
+
   return (
     <Provider store={store}>
       <StripeProvider publishableKey={STRIPE_CONFIG.publishableKey}>
         <SafeAreaProvider>
           <StatusBar barStyle="light-content" />
           <View style={styles.container}>
-            {showSplash ? (
+            {shouldShowSplash ? (
               <SplashScreen />
             ) : (
               <>

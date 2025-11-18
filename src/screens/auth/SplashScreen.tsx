@@ -1,13 +1,16 @@
 import React from 'react';
-import { View, StyleSheet, Image, Text, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Image, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import { Images } from '../../assets/images';
 import { metrics } from '../../constants/metrics';
 import { FontFamily } from '../../constants/fonts';
 import colors from '../../constants/colors';
+import { useTranslation } from 'react-i18next';
 
 export default function SplashScreen() {
+  const { t } = useTranslation();
+
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.container}>
@@ -25,8 +28,8 @@ export default function SplashScreen() {
           {/* Brand Name */}
           <View style={styles.brandContainer}>
             <Text style={styles.brandText}>
-              <Text style={styles.brandTextRed}>Dub</Text>
-              <Text style={styles.brandTextWhite}> Nxt</Text>
+              <Text style={styles.brandTextRed}>{t('splash.brandPrimary')}</Text>
+              <Text style={styles.brandTextWhite}>{t('splash.brandSecondary')}</Text>
             </Text>
           </View>
         </View>

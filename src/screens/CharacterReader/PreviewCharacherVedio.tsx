@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,65 @@ import { characters_data } from '../../utils/characters';
 import ViewShot from 'react-native-view-shot';
 import { showToast } from '../../utils/toast';
 import { useUploadImageMutation, useCreateVideoMutation } from '../../store/api/characterApi';
+import { useTranslation } from 'react-i18next';
+
+const HAIR_LABEL_DEFAULTS: Record<string, string> = {
+  short: 'Short',
+  long: 'Long',
+  curly: 'Curly',
+  spiky: 'Spiky',
+};
+
+const OUTFIT_LABEL_DEFAULTS: Record<string, string> = {
+  casual: 'Casual',
+  formal: 'Formal',
+  semiFormal: 'Semi Formal',
+  sporty: 'Sporty',
+  superHero: 'Super Hero',
+};
+
+const BACKGROUND_LABEL_DEFAULTS: Record<string, string> = {
+  dubai_red: 'Dub AI Red',
+  gradient_blue: 'Gradient Blue',
+  gradient_orange: 'Gradient Orange',
+  pattern: 'Pattern',
+};
+
+const ACCESSORY_LABEL_DEFAULTS: Record<string, string> = {
+  cap: 'Cap',
+  glasses: 'Glasses',
+  watch: 'Watch',
+  none: 'None',
+};
+
+const buildReverseMap = (
+  defaults: Record<string, string>,
+  translated: unknown,
+): Record<string, string> => {
+  const reverse: Record<string, string> = {};
+
+  Object.entries(defaults).forEach(([key, value]) => {
+    reverse[value] = key;
+  });
+
+  if (translated) {
+    if (Array.isArray(translated)) {
+      const defaultKeys = Object.keys(defaults);
+      translated.forEach((value, index) => {
+        const key = defaultKeys[index];
+        if (key && value) {
+          reverse[String(value)] = key;
+        }
+      });
+    } else if (typeof translated === 'object') {
+      Object.entries(translated as Record<string, string>).forEach(([key, value]) => {
+        reverse[String(value)] = key;
+      });
+    }
+  }
+
+  return reverse;
+};
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -39,6 +98,43 @@ export default function PreviewCharacherVedio() {
   const viewShotRef = useRef<ViewShot | null>(null);
   const [uploadImage] = useUploadImageMutation();
   const [createVideo, { isLoading: isCreatingVideo }] = useCreateVideoMutation();
+  const { t } = useTranslation();
+
+  const hairLabelReverse = useMemo(
+    () =>
+      buildReverseMap(
+        HAIR_LABEL_DEFAULTS,
+        t('customizeAvatar.dropdowns.hairStyle.options', { returnObjects: true }),
+      ),
+    [t],
+  );
+
+  const bodyLabelReverse = useMemo(
+    () =>
+      buildReverseMap(
+        OUTFIT_LABEL_DEFAULTS,
+        t('customizeAvatar.dropdowns.outfit.options', { returnObjects: true }),
+      ),
+    [t],
+  );
+
+  const backgroundLabelReverse = useMemo(
+    () =>
+      buildReverseMap(
+        BACKGROUND_LABEL_DEFAULTS,
+        t('customizeAvatar.dropdowns.background.options', { returnObjects: true }),
+      ),
+    [t],
+  );
+
+  const accessoriesLabelReverse = useMemo(
+    () =>
+      buildReverseMap(
+        ACCESSORY_LABEL_DEFAULTS,
+        t('customizeAvatar.dropdowns.accessories.options', { returnObjects: true }),
+      ),
+    [t],
+  );
 
   // Map character ID to character key
   const getCharacterKey = (id: number): keyof typeof characters_data | null => {
@@ -53,42 +149,28 @@ export default function PreviewCharacherVedio() {
   const characterData = characterKey ? characters_data[characterKey] : null;
 
   // Map display labels back to keys
-  const mapLabelToKey = (label: string, type: 'body' | 'hair' | 'background'): string | null => {
-    if (!characterData) return null;
-    
-    if (type === 'body') {
-      const labelMap: Record<string, string> = {
-        'Casual': 'casual',
-        'Formal': 'formal',
-        'Semi Formal': 'semiFormal',
-        'Sporty': 'sporty',
-        'Super Hero': 'superHero',
-      };
-      return labelMap[label] || null;
-    }
-    
-    if (type === 'hair') {
-      const labelMap: Record<string, string> = {
-        'Short': 'short',
-        'Long': 'long',
-        'Curly': 'curly',
-        'Spiky': 'spiky',
-      };
-      return labelMap[label] || null;
-    }
-    
-    if (type === 'background') {
-      const labelMap: Record<string, string> = {
-        'Dub AI Red': 'dubai_red',
-        'Gradient Blue': 'gradient_blue',
-        'Gradient Orange': 'gradient_orange',
-        'Pattern': 'pattern',
-      };
-      return labelMap[label] || null;
-    }
-    
-    return null;
-  };
+  const mapLabelToKey = useCallback(
+    (label: string | undefined, type: 'body' | 'hair' | 'background'): string | null => {
+      if (!label || !characterData) {
+        return null;
+      }
+
+      if (type === 'body') {
+        return bodyLabelReverse[label] || null;
+      }
+
+      if (type === 'hair') {
+        return hairLabelReverse[label] || null;
+      }
+
+      if (type === 'background') {
+        return backgroundLabelReverse[label] || null;
+      }
+
+      return null;
+    },
+    [backgroundLabelReverse, bodyLabelReverse, characterData, hairLabelReverse],
+  );
 
   // Get images based on selections
   const characterImages = useMemo(() => {
@@ -106,22 +188,28 @@ export default function PreviewCharacherVedio() {
       glasses: accessories === 'Glasses' ? characterData.accessories.glasses : null,
       ristwatch: accessories === 'Watch' ? characterData.accessories.ristwatch : null,
     };
-  }, [characterData, body, hair, accessories, background]);
+  }, [accessories, background, body, characterData, hair, mapLabelToKey]);
 
   // Build customization chips
   const currentCustomizations = useMemo(() => {
-    const chips = [];
-    if (hair) chips.push({ label: hair + ' Hair', type: 'hair' });
+    const chips: { label: string; type: string }[] = [];
+    const hairSuffix = t('characterPreview.chips.hairSuffix');
+    const outfitSuffix = t('characterPreview.chips.outfitSuffix');
+    const noAccessoriesLabel = t('characterPreview.chips.noAccessories');
+
+    if (hair) chips.push({ label: `${hair}${hairSuffix}`, type: 'hair' });
     if (emotion) chips.push({ label: emotion, type: 'emotion' });
     if (background) chips.push({ label: background, type: 'background' });
-    if (body) chips.push({ label: body + ' Outfit', type: 'outfit' });
-    if (accessories && accessories !== 'None') {
+    if (body) chips.push({ label: `${body}${outfitSuffix}`, type: 'outfit' });
+
+    const accessoryKey = accessories ? accessoriesLabelReverse[accessories] : null;
+    if (accessoryKey && accessoryKey !== 'none') {
       chips.push({ label: accessories, type: 'accessories' });
-    } else if (!accessories || accessories === 'None') {
-      chips.push({ label: 'No Accessories', type: 'accessories' });
+    } else {
+      chips.push({ label: noAccessoriesLabel, type: 'accessories' });
     }
     return chips;
-  }, [hair, emotion, background, body, accessories]);
+  }, [accessories, accessoriesLabelReverse, background, body, emotion, hair, t]);
 
   // Generate video: capture snapshot, upload, create video, navigate to generating screen
   const handleGenerateVideo = async () => {
@@ -130,13 +218,19 @@ export default function PreviewCharacherVedio() {
 
     if (!viewShotRef.current) {
       console.error('[PreviewCharacherVedio] ViewShot ref is null');
-      showToast.error('Error', 'Unable to capture character preview');
+      showToast.error(
+        t('characterPreview.toast.errorTitle'),
+        t('characterPreview.toast.captureFailure'),
+      );
       return;
     }
 
     if (!message || !message.trim()) {
       console.warn('[PreviewCharacherVedio] Message is empty');
-      showToast.error('Error', 'Please provide a message to generate video');
+      showToast.error(
+        t('characterPreview.toast.errorTitle'),
+        t('characterPreview.toast.emptyMessage'),
+      );
       return;
     }
 
@@ -162,7 +256,10 @@ export default function PreviewCharacherVedio() {
 
       // Step 1: Upload image to server
       console.log('[PreviewCharacherVedio] Step 1: Uploading image to server...');
-      showToast.info('Uploading', 'Uploading character image...');
+      showToast.info(
+        t('characterPreview.toast.uploadingTitle'),
+        t('characterPreview.toast.uploadingBody'),
+      );
       const uploadResult = await uploadImage({
         file: {
           uri,
@@ -190,7 +287,10 @@ export default function PreviewCharacherVedio() {
         source_url: imageUrl,
         text: message.trim(),
       });
-      showToast.info('Creating', 'Creating character video...');
+      showToast.info(
+        t('characterPreview.toast.creatingTitle'),
+        t('characterPreview.toast.creatingBody'),
+      );
       const videoResult = await createVideo({
         source_url: imageUrl,
         text: message.trim(),
@@ -215,8 +315,9 @@ export default function PreviewCharacherVedio() {
         status: error?.status,
         stack: error?.stack,
       });
-      const errorMessage = error?.data?.message || error?.message || 'Failed to generate video';
-      showToast.error('Error', errorMessage);
+      const errorMessage =
+        error?.data?.message || error?.message || t('characterPreview.toast.genericFailure');
+      showToast.error(t('characterPreview.toast.errorTitle'), errorMessage);
     } finally {
       setIsCapturing(false);
       console.log('[PreviewCharacherVedio] Video generation process completed');
@@ -227,9 +328,13 @@ export default function PreviewCharacherVedio() {
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.contentContainer}>
-          <Header title="Character Reader" showBackButton />
-          {!isPlaying&&<><Text style={styles.title}>Preview your Avatar</Text>
-          <Text style={styles.subTitle}>Alexa is ready to speak</Text></>}
+          <Header title={t('characterPreview.headerTitle')} showBackButton />
+          {!isPlaying && (
+            <>
+              <Text style={styles.title}>{t('characterPreview.title')}</Text>
+              <Text style={styles.subTitle}>{t('characterPreview.subtitle')}</Text>
+            </>
+          )}
           <View>
         
           <ViewShot
@@ -302,7 +407,9 @@ export default function PreviewCharacherVedio() {
           {!isPlaying&&<>
             {/* Current Customization Section */}
             <View style={styles.customizationSection}>
-            <Text style={styles.customizationTitle}>Current Customization</Text>
+            <Text style={styles.customizationTitle}>
+              {t('characterPreview.customizationTitle')}
+            </Text>
             <View style={styles.chipsContainer}>
               {currentCustomizations.map((customization, index) => (
                 <LiquidGlassBackground key={index} style={styles.chip}>
@@ -328,7 +435,7 @@ export default function PreviewCharacherVedio() {
             disabled={isCapturing}
           />*/}
           <PrimaryButton
-            title="Generate Video"
+            title={t('characterPreview.buttonGenerate')}
             onPress={handleGenerateVideo}
             disabled={isCapturing || isCreatingVideo}
           />
