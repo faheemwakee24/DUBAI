@@ -7,7 +7,6 @@ export * from './authApi';
 export * from './projectsApi';
 export * from './paymentsApi';
 export * from './subscriptionsApi';
-
-// When you create new API slices, add them here:
-// export * from './videoApi';
+export * from './characterApi';
+export * from './videoDubbingApi';
 

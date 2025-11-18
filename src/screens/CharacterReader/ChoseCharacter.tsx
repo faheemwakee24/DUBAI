@@ -19,6 +19,7 @@ import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground } from '../../components/ui';
 import { Images } from '../../assets/images';
+import { characters_data } from '../../utils/characters';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -30,16 +31,16 @@ export default function ChoseCharacter() {
   
   // Character data array
   const characters = [
-    { id: 1, name: 'Alex', image: Images.TempCharacher },
-    { id: 2, name: 'Sarah', image: Images.TempCharacher },
-    { id: 3, name: 'Mike', image: Images.TempCharacher },
-    { id: 4, name: 'Emma', image: Images.TempCharacher },
-    { id: 5, name: 'David', image: Images.TempCharacher },
-    { id: 6, name: 'Lisa', image: Images.TempCharacher },
+    { id: 1, name: 'Alex', image: Images.TempCharacher,character: characters_data.alex },
+    // { id: 2, name: 'Sarah', image: Images.TempCharacher },
+    // { id: 3, name: 'Mike', image: Images.TempCharacher },
+    // { id: 4, name: 'Emma', image: Images.TempCharacher },
+    // { id: 5, name: 'David', image: Images.TempCharacher },
+    // { id: 6, name: 'Lisa', image: Images.TempCharacher },
   ];
 
   // Selection state
-  const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
+  const [selectedCharacter, setSelectedCharacter] = useState<number >(1);
 
   const handleCharacterSelect = (characterId: number) => {
     setSelectedCharacter(characterId);
@@ -98,7 +99,7 @@ export default function ChoseCharacter() {
         </ScrollView>
         <PrimaryButton
           title="Customize Avatar"
-          onPress={() => navigation.navigate('CustomizeAvatar')}
+          onPress={() => navigation.navigate('CustomizeAvatar',{character: selectedCharacter})}
           variant='secondary'
           style={{
             marginBottom: metrics.width(15),

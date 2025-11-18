@@ -199,7 +199,7 @@ export default function Settings() {
                 />
               </TouchableOpacity>
             </LiquidGlassBackground>
-            <LiquidGlassBackground style={styles.optionCard}>
+            {/* <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={()=>navigation.navigate('AvatarCustomization')}
@@ -209,7 +209,24 @@ export default function Settings() {
                   
                 />
               </TouchableOpacity>
-            </LiquidGlassBackground>
+            </LiquidGlassBackground> */}
+             <LiquidGlassBackground style={styles.optionCard}>
+              <TouchableOpacity
+                style={styles.optionRow}
+                onPress={()=>    navigation.navigate('PreViewVedio',
+                  
+                  { video_url:
+                    
+                    'https://d-id-talks-prod.s3.us-west-2.amazonaws.com/google-oauth2%7C103671870125720999955/tlk_KLdmaIQo-2yV88fU1B-Bq/1763327418387.mp4?AWSAccessKeyId=AKIA5CUMPJBIK65W6FGA&Expires=1763413825&Signature=%2BlkCDvpdoCLqx92iRx0ZIpdzEMY%3D' 
+                  //'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
+                  })}
+              >
+                <Text style={styles.optionText}>vedio preview </Text>
+                <Svgs.WhiteArrowRight
+                  
+                />
+              </TouchableOpacity>
+            </LiquidGlassBackground> 
 
             {/* Notifications Option */}
             <LiquidGlassBackground style={styles.optionCard}>

@@ -4,8 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  ImageBackground,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -14,11 +12,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { metrics } from '../../constants/metrics';
 import colors from '../../constants/colors';
 import { Svgs } from '../../assets/icons';
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, LiquidGlassBackground, LanguageDropdown, CustomDropdown } from '../../components/ui';
-import { Images } from '../../assets/images';
+import { Header, CustomDropdown } from '../../components/ui';
+import { characters_data } from '../../utils/characters';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -27,44 +25,90 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 
 export default function CustomizeAvatar() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const route = useRoute<RouteProp<RootStackParamList, 'CustomizeAvatar'>>();
+  const { character } = route.params;
+  
+  // Map character ID to character key
+  const getCharacterKey = (id: number): keyof typeof characters_data | null => {
+    const idToKeyMap: Record<number, keyof typeof characters_data> = {
+      1: 'alex',
+    };
+    return idToKeyMap[id] || null;
+  };
+  
+  // Get character data
+  const characterKey = getCharacterKey(character);
+  const characterData = characterKey ? characters_data[characterKey] : null;
   
   // State for all dropdowns
-  const [selectedLanguage, setSelectedLanguage] = useState('');
   const [selectedHairStyle, setSelectedHairStyle] = useState('');
   const [selectedOutfit, setSelectedOutfit] = useState('');
   const [selectedAccessories, setSelectedAccessories] = useState('');
   const [selectedEmotion, setSelectedEmotion] = useState('');
   const [selectedBackground, setSelectedBackground] = useState('');
   
-  // Options for all dropdowns
-  const languageOptions = ['Spanish', 'Japanese', 'German', 'French'];
-  const hairStyleOptions = ['Short', 'Long', 'Curly', 'Spiky', 'Bald'];
-  const outfitOptions = ['Casual', 'Formal', 'Semi Formal', 'Sporty', 'Super Hero'];
-  const accessoriesOptions = ['Cap', 'Glasses', 'Watch', 'Headphones', 'None'];
+  // Options for all dropdowns based on character data
+  const hairStyleOptions = characterData 
+    ? Object.keys(characterData.hair).map(key => {
+        const labels: Record<string, string> = {
+          short: 'Short',
+          long: 'Long',
+          curly: 'Curly',
+          spiky: 'Spiky',
+        };
+        return labels[key] || key;
+      })
+    : ['Short', 'Long', 'Curly', 'Spiky'];
+    
+  const outfitOptions = characterData
+    ? Object.keys(characterData.body).map(key => {
+        const labels: Record<string, string> = {
+          casual: 'Casual',
+          formal: 'Formal',
+          semiFormal: 'Semi Formal',
+          sporty: 'Sporty',
+          superHero: 'Super Hero',
+        };
+        return labels[key] || key;
+      })
+    : ['Casual', 'Formal', 'Semi Formal', 'Sporty', 'Super Hero'];
+    
+  const accessoriesOptions = ['Cap', 'Glasses', 'Watch', 'None'];
   const emotionOptions = ['Happy 😊', 'Excited 🤩', 'Neutral 😐', 'Thoughtful 🧐', 'Surprised 😲'];
-  const backgroundOptions = ['Dub AI Red', 'Gradient Blue', 'Gradient Orange', 'Solid White', 'Pattern'];
   
-  const handleCharacterSelect = (characterId: number) => {};
+  const backgroundOptions = characterData
+    ? Object.keys(characterData.background).map(key => {
+        const labels: Record<string, string> = {
+          dubai_red: 'Dub AI Red',
+          gradient_blue: 'Gradient Blue',
+          gradient_orange: 'Gradient Orange',
+          pattern: 'Pattern',
+        };
+        return labels[key] || key;
+      })
+    : ['Dub AI Red', 'Gradient Blue', 'Gradient Orange', 'Pattern'];
   
   // Handler functions for all dropdowns
-  const handleLanguageSelect = (language: string) => {
-    setSelectedLanguage(language);
-  };
   const handleHairStyleSelect = (hairStyle: string) => {
     setSelectedHairStyle(hairStyle);
   };
+  
   const handleOutfitSelect = (outfit: string) => {
     setSelectedOutfit(outfit);
   };
+  
   const handleAccessoriesSelect = (accessories: string) => {
     setSelectedAccessories(accessories);
   };
+  
   const handleEmotionSelect = (emotion: string) => {
     setSelectedEmotion(emotion);
   };
+  
   const handleBackgroundSelect = (background: string) => {
     setSelectedBackground(background);
   };
+
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -86,11 +130,9 @@ export default function CustomizeAvatar() {
           <View style={styles.dashboardContainer}>
             <Text style={styles.title}>Customize your Avatar</Text>
             <Text style={styles.subTitle}>
-              Personal your Character’s Appearance{' '}
+              Personal your Character's Appearance{' '}
             </Text>
             <View style={styles.tempCharacherContainer}>
-
-              
               <CustomDropdown
                 title="Hair Style"
                 options={hairStyleOptions}
@@ -135,7 +177,14 @@ export default function CustomizeAvatar() {
         </ScrollView>
         <PrimaryButton
           title="Customize Avatar"
-          onPress={() => navigation.navigate('CharacherReader')}
+          onPress={() => navigation.navigate('CharacherReader', {
+            character: character,
+            body: selectedOutfit,
+            hair: selectedHairStyle,
+            accessories: selectedAccessories,
+            background: selectedBackground,
+            emotion: selectedEmotion
+          })}
           variant="secondary"
           style={{
             marginBottom: metrics.width(15),
@@ -169,17 +218,9 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 40,
   },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: metrics.width(17),
-    marginHorizontal: metrics.width(25),
-  },
-  headerLeftContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: metrics.width(10),
+  dashboardContainer: {
+    flex: 1,
+    marginTop: metrics.width(30),
   },
   title: {
     fontFamily: FontFamily.spaceGrotesk.bold,
@@ -192,177 +233,6 @@ const styles = StyleSheet.create({
     color: colors.subtitle,
     marginBottom: metrics.width(30),
   },
-  profileImage: {
-    width: metrics.width(48),
-    height: metrics.width(48),
-    borderRadius: 100,
-    overflow: 'hidden',
-  },
-  profileImageBackground: {},
-  headerLeftContainerText: {
-    gap: metrics.width(4),
-  },
-  headerRightContainer: {
-    gap: metrics.width(8),
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerRightIconBackground: {
-    padding: metrics.width(10),
-  },
-  dashboardContainer: {
-    flex: 1,
-    marginTop: metrics.width(30),
-  },
-  dashboardCard: {
-    paddingHorizontal: metrics.width(16),
-    paddingVertical: metrics.width(22),
-    borderRadius: 12,
-    backgroundColor: colors.white15,
-  },
-  ProPlanIconImage: {
-    width: metrics.width(50),
-    height: metrics.width(50),
-    resizeMode: 'contain',
-  },
-  ProPlanIconContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: metrics.width(10),
-  },
-  ProPlanTitle: {
-    fontFamily: FontFamily.spaceGrotesk.bold,
-    fontSize: metrics.width(15),
-    color: colors.white,
-  },
-  propPlanIconTextContainer: {
-    gap: metrics.width(15),
-    color: colors.white,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ProPlanSubTitle: {
-    fontFamily: FontFamily.spaceGrotesk.regular,
-    fontSize: metrics.width(11),
-    color: colors.subtitle,
-    marginTop: metrics.width(4),
-  },
-  upgradeButton: {},
-  button: {
-    borderRadius: 8,
-    paddingHorizontal: metrics.width(15),
-  },
-  debugCotainer: {
-    paddingHorizontal: metrics.width(17),
-    paddingVertical: metrics.width(20),
-    marginTop: metrics.width(40),
-  },
-  debugTitle: {
-    fontFamily: FontFamily.spaceGrotesk.bold,
-    fontSize: metrics.width(20),
-    color: colors.white,
-    lineHeight: metrics.width(27),
-  },
-  debuggingSubtitle: {
-    fontFamily: FontFamily.spaceGrotesk.regular,
-    fontSize: metrics.width(13),
-    color: colors.subtitle,
-    marginTop: metrics.width(4),
-  },
-  row: {
-    flexDirection: 'row',
-    marginTop: metrics.width(11),
-    marginBottom: metrics.width(70),
-  },
-  createButton: {
-    fontFamily: FontFamily.spaceGrotesk.bold,
-    fontSize: metrics.width(12),
-    color: colors.white,
-  },
-  vedioIcon2: {
-    height: metrics.width(150),
-    width: metrics.width(150),
-    alignSelf: 'flex-end',
-    position: 'absolute',
-    bottom: 0,
-  },
-  characherIcon: {
-    height: metrics.width(200),
-    width: metrics.width(200),
-    alignSelf: 'flex-end',
-    position: 'absolute',
-    bottom: -25,
-    right: -15,
-  },
-  createButtonContainer: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: metrics.width(13),
-    paddingVertical: metrics.width(6),
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  CharacterCreationContainer: {
-    paddingHorizontal: metrics.width(17),
-    paddingVertical: metrics.width(20),
-    marginTop: metrics.width(9),
-    borderWidth: 0.8,
-    borderColor: colors.primary40,
-    shadowColor: colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: -12,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 0.1,
-
-    elevation: 7,
-    backgroundColor: colors.primary3,
-  },
-  columnRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: metrics.width(15),
-  },
-  tempCharacherTitle: {
-    fontFamily: FontFamily.spaceGrotesk.bold,
-    fontSize: metrics.width(16),
-    color: colors.white,
-    marginTop: metrics.width(10),
-    margin: metrics.width(10),
-  },
-  tempCharacher: {
-    height: metrics.screenWidth * 0.41,
-    borderRadius: 16,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-    flex: 1,
-    borderWidth: 0,
-    borderColor: 'transparent',
-  },
-  tempCharacherImage: {
-    height: '100%',
-    width: '100%',
-    justifyContent: 'flex-end',
-  },
-  selectedCharacter: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
   tempCharacherContainer: {
-  },
-  textContainer: {
-    gap: metrics.width(5),
-  },
-  vedioIcon: {
-    height: metrics.width(50),
-    width: metrics.width(50),
-  },
-  dot: {
-    height: metrics.width(5),
-    width: metrics.width(5),
-    borderRadius: 100,
-    backgroundColor: colors.subtitle,
   },
 });

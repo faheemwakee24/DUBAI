@@ -36,4 +36,33 @@ export const Images = {
     CharacterCap2:require('./charcheter/cap2.png'),
     CharacterGlasses:require('./charcheter/Glasses.png'),
     CharacterGlasses2:require('./charcheter/glasses2.png'),
+
+
+
+
+
+    ///// characters images
+    ch1_bg_1:require('./characters/ch1/background/ch1_bg_1.png'),
+    ch1_bg_2:require('./characters/ch1/background/ch1_bg_2.png'),
+    ch1_bg_3:require('./characters/ch1/background/ch1_bg_3.png'),
+    ch1_bg_4:require('./characters/ch1/background/ch1_bg_4.png'),
+
+    ///// character body images
+    ch1_ch_1:require('./characters/ch1/body/ch1_ch_1.png'),
+    ch1_ch_2:require('./characters/ch1/body/ch1_ch_2.png'),
+    ch1_ch_3:require('./characters/ch1/body/ch1_ch_3.png'),
+    ch1_ch_4:require('./characters/ch1/body/ch1_ch_4.png'),
+    ch1_ch_5:require('./characters/ch1/body/ch1_ch_5.png'),
+
+    ///// character hair images
+    ch1_hair_1:require('./characters/ch1/hair/ch1_hair_1.png'),
+    ch1_hair_2:require('./characters/ch1/hair/ch1_hair_2.png'),
+    ch1_hair_3:require('./characters/ch1/hair/ch1_hair_3.png'),
+    ch1_hair_4:require('./characters/ch1/hair/ch1_hair_4.png'),
+
+
+    /// character accessories images
+    ch1_cap:require('./characters/ch1/accerries/ch1_cap.png'),
+    ch1_glasses:require('./characters/ch1/accerries/ch1_glasses.png'),
+    ristwatch:require('./characters/ch1/accerries/ch1_ristwatch.png'),
 };

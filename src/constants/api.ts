@@ -4,7 +4,7 @@
  */
 
 // Base API URLs
-export const API_BASE_URL = 'https://dubnxt.infyrolabs.com';
+export const API_BASE_URL = 'https://dubnxtbe.infyrolabs.com';
 
 // API version prefix
 export const API_VERSION_PREFIX = '/api/v1';
@@ -70,6 +70,12 @@ export const API_ENDPOINTS = {
     CREATE_PAYMENT_INTENT: '/payment-intents',
     CONFIRM_PAYMENT: (id: string) => `/payment-intents/${id}/confirm`,
     SETUP_INTENT: '/setup-intents',
+  },
+  // Character endpoints
+  CHARACTER: {
+    UPLOAD_IMAGE: '/gcp/upload',
+    CREATE_VIDEO: '/character-speaking/create-video',
+    VIDEO_STATUS: (talkId: string) => `/character-speaking/video-status/${talkId}`,
   },
 } as const;
 

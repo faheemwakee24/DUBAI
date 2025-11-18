@@ -16,6 +16,7 @@ import {
   GeneratingVedio,
   PreViewVedio,
   SelectVedioDescription,
+  GeneratingClone,
 } from '../screens/vedioDub';
 import Dashboard from '../screens/home/Dashboard';
 import { CharacherReader, ChoseCharacter, CustomizeAvatar } from '../screens/CharacterReader';
@@ -47,14 +48,33 @@ export type RootStackParamList = {
   ResetPin: { email?: string };
   Onboarding: undefined;
   UploadVedio: undefined;
-  SelectVedioDescription: undefined;
-  GeneratingVedio: undefined;
-  PreViewVedio: undefined;
+  SelectVedioDescription: { 
+    video: {
+      uri: string;
+      type: string;
+      name: string;
+      fileSize?: number;
+      duration?: number;
+    };
+  };
+  GeneratingVedio: { talkId: string };
+  GeneratingClone: {
+    video: {
+      uri: string;
+      type: string;
+      name: string;
+      fileSize?: number;
+      duration?: number;
+    };
+    language: string;
+    voiceStyle: string;
+  };
+  PreViewVedio: { video_url: string };
   Dashboard: undefined;
   ChoseCharacter: undefined;
-  CustomizeAvatar: undefined;
-  CharacherReader:undefined;
-  PreviewCharacherVedio:undefined;
+  CustomizeAvatar: { character: number };
+  CharacherReader: { character: number, body: string, hair: string, accessories: string, background: string, emotion: string };
+  PreviewCharacherVedio: { character: number, body: string, hair: string, accessories: string, background: string, emotion: string, message: string, speed: string, voiceTone: string };
   RecentProjects:undefined;
   ProjectVedios:undefined;
   NewProject:undefined;
@@ -146,6 +166,7 @@ export default function RootNavigator() {
           component={SelectVedioDescription}
         />
         <Stack.Screen name="GeneratingVedio" component={GeneratingVedio} />
+        <Stack.Screen name="GeneratingClone" component={GeneratingClone} />
         <Stack.Screen name="Dashboard" component={Dashboard} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
        

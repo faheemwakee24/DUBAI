@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { metrics } from '../../constants/metrics';
 import colors from '../../constants/colors';
 import { Svgs } from '../../assets/icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground } from '../../components/ui';
@@ -26,8 +26,26 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
   'Signup'
 >;
 
+// Language mapping to codes
+const LANGUAGE_MAP: Record<string, string> = {
+  'Spanish': 'es',
+  'Japanese': 'ja',
+  'German': 'de',
+  'French': 'fr',
+  'Urdu': 'ur',
+  'English': 'en',
+  'Hindi': 'hi',
+  'Arabic': 'ar',
+  'Chinese': 'zh',
+  'Portuguese': 'pt',
+  'Russian': 'ru',
+  'Italian': 'it',
+};
+
 export default function SelectVedioDescription() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const route = useRoute<RouteProp<RootStackParamList, 'SelectVedioDescription'>>();
+  const { video } = route.params || {};
 
   // State for dropdowns
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
@@ -36,10 +54,17 @@ export default function SelectVedioDescription() {
   const [selectedVoice, setSelectedVoice] = useState('Select Style');
 
   // Language options
-  const languageOptions = ['Spanish', 'Japanese', 'German', 'French'];
+  const languageOptions = ['Urdu', 'Spanish', 'Japanese', 'German', 'French', 'Hindi', 'Arabic'];
 
   // Voice style options
   const voiceOptions = ['Female', 'Male'];
+
+  useEffect(() => {
+    if (!video) {
+      // If no video, go back
+      navigation.goBack();
+    }
+  }, [video]);
 
   const handleLanguageSelect = (language: string) => {
     setSelectedLanguage(language);
@@ -49,6 +74,35 @@ export default function SelectVedioDescription() {
   const handleVoiceSelect = (voice: string) => {
     setSelectedVoice(voice);
     setIsVoiceDropdownOpen(false);
+  };
+
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return '0 MB';
+    const mb = bytes / (1024 * 1024);
+    return `${mb.toFixed(2)} MB`;
+  };
+
+  const formatDuration = (seconds?: number) => {
+    if (!seconds) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleGenerateDub = () => {
+    if (selectedLanguage === 'Select Language' || selectedVoice === 'Select Style') {
+      // Show error - both fields required
+      return;
+    }
+
+    const languageCode = LANGUAGE_MAP[selectedLanguage] || selectedLanguage.toLowerCase();
+    
+    // Navigate to GeneratingClone with all data
+    navigation.navigate('GeneratingClone', {
+      video: video!,
+      language: languageCode,
+      voiceStyle: selectedVoice,
+    });
   };
 
   return (
@@ -64,11 +118,17 @@ export default function SelectVedioDescription() {
             <View style={styles.imageContainer}>
               <Image source={Images.VedioIcon} style={styles.vedioIcon} />
               <View style={styles.textContainer}>
-                <Text style={styles.title}>Maketing_video.mp4</Text>
+                <Text style={styles.title} numberOfLines={1}>
+                  {video?.name || 'video.mp4'}
+                </Text>
                 <View style={styles.roww}>
-                  <Text style={styles.subtitle}>2:34 min</Text>
+                  <Text style={styles.subtitle}>
+                    {formatDuration(video?.duration)}
+                  </Text>
                   <View style={styles.dot} />
-                  <Text style={styles.subtitle}>8.5 MB</Text>
+                  <Text style={styles.subtitle}>
+                    {formatFileSize(video?.fileSize)}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -160,7 +220,7 @@ export default function SelectVedioDescription() {
         </ScrollView>
         <PrimaryButton
           title="Generate Dub"
-          onPress={() => navigation.navigate('GeneratingVedio')}
+          onPress={handleGenerateDub}
         />
       </SafeAreaView>
     </ScreenBackground>

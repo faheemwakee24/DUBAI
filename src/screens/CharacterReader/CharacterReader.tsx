@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { metrics } from '../../constants/metrics';
 import colors from '../../constants/colors';
 import { Svgs } from '../../assets/icons';
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
@@ -34,17 +34,18 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 
 export default function CharacherReader() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-
+  const route = useRoute<RouteProp<RootStackParamList, 'CharacherReader'>>();
+  const { character, body, hair, accessories, background, emotion } = route.params;
   // State for all dropdowns
 
-  const [selectedHairStyle, setSelectedHairStyle] = useState('');
+  const [selectedVoiceTone, setSelectedVoiceTone] = useState('');
 
   const [speed, setSpeed] = useState('');
   const [messsage, setMessage] = useState('');
 
   // Options for all dropdowns
 
-  const hairStyleOptions = [
+  const voiceToneOptions = [
     'Friendly',
     'Professional',
     'Casual',
@@ -59,8 +60,8 @@ export default function CharacherReader() {
 
   // Handler functions for all dropdowns
 
-  const handleHairStyleSelect = (hairStyle: string) => {
-    setSelectedHairStyle(hairStyle);
+  const handleVoiceToneSelect = (voiceTone: string) => {
+    setSelectedVoiceTone(voiceTone);
   };
   const handlSpeed = (hairStyle: string) => {
     setSpeed(hairStyle);
@@ -99,9 +100,9 @@ export default function CharacherReader() {
               />
               <CustomDropdown
                 title="Voice Tone"
-                options={hairStyleOptions}
-                selectedValue={selectedHairStyle}
-                onSelect={handleHairStyleSelect}
+                options={voiceToneOptions}
+                selectedValue={selectedVoiceTone}
+                onSelect={handleVoiceToneSelect}
                 placeholder="Select Tune"
               />
               <CustomDropdown
@@ -117,7 +118,7 @@ export default function CharacherReader() {
         
         <PrimaryButton
           title="Preview"
-          onPress={() => navigation.navigate('PreviewCharacherVedio')}
+          onPress={() => navigation.navigate('PreviewCharacherVedio',{character: character,body: body,hair: hair,accessories: accessories,background: background,emotion: emotion,message: messsage,speed: speed,voiceTone: selectedVoiceTone})}
           variant="primary"
           style={{
             marginBottom: metrics.width(25),
