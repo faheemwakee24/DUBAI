@@ -90,6 +90,35 @@ export interface VideoStatusResponse {
   message?: string;
 }
 
+export interface MakeYourOwnCharacterRequest {
+  name: string;
+  age: string;
+  gender: string;
+  ethnicity: string;
+  orientation: string;
+  pose: string;
+  style: string;
+  appearance: string;
+}
+
+export interface MakeYourOwnCharacterResponse {
+  error: null | string;
+  data: {
+    generation_id: string;
+  };
+}
+
+export interface PhotoGenerationResponse {
+  error: null | string;
+  data: {
+    id: string;
+    status: 'in_progress' | 'success' | 'failed';
+    msg: string | null;
+    image_url_list: string[] | null;
+    image_key_list: string[] | null;
+  };
+}
+
 export const heygenApi = baseApi.injectEndpoints({
   endpoints: builder => ({
     getAllAvatars: builder.query<GetAllAvatarsResponse, GetAllAvatarsRequest | void>({
@@ -120,6 +149,20 @@ export const heygenApi = baseApi.injectEndpoints({
       }),
       keepUnusedDataFor: 0, // Don't cache - always fetch fresh data
     }),
+    makeYourOwnCharacter: builder.mutation<MakeYourOwnCharacterResponse, MakeYourOwnCharacterRequest>({
+      query: (body) => ({
+        url: API_ENDPOINTS.HEYGEN.MAKE_YOUR_OWN_CHARACTER,
+        method: 'POST',
+        body,
+      }),
+    }),
+    getPhotoGeneration: builder.query<PhotoGenerationResponse, string>({
+      query: (generationId) => ({
+        url: API_ENDPOINTS.HEYGEN.PHOTO_GENERATION(generationId),
+        method: 'GET',
+      }),
+      keepUnusedDataFor: 0, // Don't cache - always fetch fresh data
+    }),
   }),
 });
 
@@ -131,6 +174,9 @@ export const {
   useGenerateVideoMutation,
   useGetHeygenVideoStatusQuery,
   useLazyGetHeygenVideoStatusQuery,
+  useMakeYourOwnCharacterMutation,
+  useGetPhotoGenerationQuery,
+  useLazyGetPhotoGenerationQuery,
 } = heygenApi;
 
 

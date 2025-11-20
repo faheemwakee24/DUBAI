@@ -77,6 +77,8 @@ export const API_ENDPOINTS = {
     GET_ALL_VOICES: '/heygen/getAllVoices',
     GENERATE_VIDEO: '/heygen/video/generate',
     VIDEO_STATUS: '/heygen/video/status',
+    MAKE_YOUR_OWN_CHARACTER: '/heygen/makeYourOwnCharacter',
+    PHOTO_GENERATION: (generationId: string) => `/heygen/photo/generation/${generationId}`,
   },
   // Character endpoints
   CHARACTER: {

@@ -2142,7 +2142,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-video (6.17.0):
+  - react-native-video (6.18.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2160,7 +2160,7 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-video/Video (= 6.17.0)
+    - react-native-video/Video (= 6.18.0)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -2171,7 +2171,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-video/Fabric (6.17.0):
+  - react-native-video/Fabric (6.18.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2199,7 +2199,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-video/Video (6.17.0):
+  - react-native-video/Video (6.18.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2833,6 +2833,8 @@ PODS:
     - Firebase/Auth (= 12.4.0)
     - React-Core
     - RNFBApp
+  - RNFS (2.20.0):
+    - React-Core
   - RNGoogleSignin (16.0.0):
     - boost
     - DoubleConversion
@@ -2921,6 +2923,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RNSoundPlayer (0.14.5):
+    - React-Core
   - RNSVG (15.14.0):
     - boost
     - DoubleConversion
@@ -3167,8 +3171,10 @@ DEPENDENCIES:
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBAuth (from `../node_modules/@react-native-firebase/auth`)"
+  - RNFS (from `../node_modules/react-native-fs`)
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNSoundPlayer (from `../node_modules/react-native-sound-player`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - SocketRocket (~> 0.7.1)
   - "stripe-react-native (from `../node_modules/@stripe/stripe-react-native`)"
@@ -3378,10 +3384,14 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-firebase/app"
   RNFBAuth:
     :path: "../node_modules/@react-native-firebase/auth"
+  RNFS:
+    :path: "../node_modules/react-native-fs"
   RNGoogleSignin:
     :path: "../node_modules/@react-native-google-signin/google-signin"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSoundPlayer:
+    :path: "../node_modules/react-native-sound-player"
   RNSVG:
     :path: "../node_modules/react-native-svg"
   stripe-react-native:
@@ -3456,7 +3466,7 @@ SPEC CHECKSUMS:
   react-native-image-picker: 6051cfd030121b880a58f1cc0e5e33e9887804e4
   react-native-safe-area-context: ee1e8e2a7abf737a8d4d9d1a5686a7f2e7466236
   react-native-skia: 09470181a6cc755f68797d2bdf8ecb444beb9df9
-  react-native-video: d9d12aa2325ae06222e97e8bd801bbc31df2675d
+  react-native-video: 624deff94be379ffaba289bed13fc0917f01abcb
   react-native-view-shot: aab9ffbcc2f01035ee8ffd9a00c773e215b35c8b
   React-NativeModulesApple: b2ee5b48020439fd81d1fd9cba40ebf0c3af5636
   React-oscompat: 80ca388c4831481cd03a6b45ecfc82739ca9a95e
@@ -3495,8 +3505,10 @@ SPEC CHECKSUMS:
   RNCAsyncStorage: fd44f4b03e007e642e98df6726737bc66e9ba609
   RNFBApp: 255fa19a91d6c1309e021ee75d5d209754e5961b
   RNFBAuth: 7123a71a1fc8dec4aa4e6cb656562661b3ece9f7
+  RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNGoogleSignin: 85c82d6e1494bd4a039804959362e63771f7ad5a
   RNScreens: ccfcc2f7d9c0d458b7fc41b3f4f0bea054602b3a
+  RNSoundPlayer: 7961678d02c7339d9e9cfb78b9f3e8fde17f9df2
   RNSVG: 82979f324e1cbf99f558a04e66f574a568ed54c0
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Stripe: 376c3c637adc25fe2c766f9a5e133f43f71343ba

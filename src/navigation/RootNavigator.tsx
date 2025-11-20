@@ -19,7 +19,7 @@ import {
   GeneratingClone,
 } from '../screens/vedioDub';
 import Dashboard from '../screens/home/Dashboard';
-import { CharacherReader, ChoseCharacter, CustomizeAvatar, VoiceSelection, DescribeCharacter, GeneratingCharacterVideo } from '../screens/CharacterReader';
+import { CharacherReader, ChoseCharacter, CustomizeAvatar, VoiceSelection, DescribeCharacter, GeneratingCharacterVideo, GeneratedCharacters } from '../screens/CharacterReader';
 import PreviewCharacherVedio from '../screens/CharacterReader/PreviewCharacherVedio';
 import { NewProject, ProjectVedios, RecentProjects } from '../screens/Projects';
 import { Subscription, SubsCriptionDetail, BillingDetail, PaymentMethodScreen } from '../screens/Subscriptions';
@@ -72,12 +72,13 @@ export type RootStackParamList = {
   PreViewVedio: { video_url: string };
   Dashboard: undefined;
   ChoseCharacter: undefined;
-  CustomizeAvatar: { character?: number; avatarId?: string };
+  CustomizeAvatar: undefined;
   CharacherReader: { character: number, body: string, hair: string, accessories: string, background: string, emotion: string };
   PreviewCharacherVedio: { character: number, body: string, hair: string, accessories: string, background: string, emotion: string, message: string, speed: string, voiceTone: string } | { avatarId: string, voiceId: string, message: string, speed: string, voiceTone: string, backgroundType?: string, backgroundColor?: string };
   VoiceSelection: { avatarId: string };
   DescribeCharacter: { avatarId: string; voiceId: string };
   GeneratingCharacterVideo: { videoId: string };
+  GeneratedCharacters: { generationId?: string; imageUrls?: string[] };
   RecentProjects:undefined;
   ProjectVedios:undefined;
   NewProject:undefined;
@@ -181,6 +182,7 @@ export default function RootNavigator() {
         <Stack.Screen name="VoiceSelection" component={VoiceSelection} />
         <Stack.Screen name="DescribeCharacter" component={DescribeCharacter} />
         <Stack.Screen name="GeneratingCharacterVideo" component={GeneratingCharacterVideo} />
+        <Stack.Screen name="GeneratedCharacters" component={GeneratedCharacters} />
         <Stack.Screen name="RecentProjects" component={RecentProjects} />
         <Stack.Screen name="ProjectVedios" component={ProjectVedios} />
         <Stack.Screen name="NewProject" component={NewProject} />

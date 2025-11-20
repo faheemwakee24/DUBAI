@@ -215,9 +215,9 @@ export default function Settings() {
                 style={styles.optionRow}
                 onPress={()=>   {
                   
+                  navigation.navigate('GeneratedCharacters',{generationId: 'd8a09a54e0ba4941b96ec29bc832a7a4'});
                   
-                  
-                  navigation.navigate('GeneratingCharacterVideo', { videoId: '301cfd6e6e9741a79be12541c991f736' })
+                  //navigation.navigate('GeneratingCharacterVideo', { videoId: '301cfd6e6e9741a79be12541c991f736' })
                   // navigation.navigate('PreViewVedio',
                   
                   // { video_url:

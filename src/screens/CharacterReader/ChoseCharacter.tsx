@@ -92,12 +92,8 @@ export default function ChoseCharacter() {
   };
 
   const handleNavigateToCustomize = () => {
-    if (!selectedCharacter) {
-      Alert.alert('Select a character', 'Please choose a character to continue.');
-      return;
-    }
 
-    navigation.navigate('CustomizeAvatar', { avatarId: selectedCharacter });
+    navigation.navigate('CustomizeAvatar');
   };
   const handleNavigateNext = () => {
     if (!selectedCharacter) {
@@ -297,7 +293,7 @@ export default function ChoseCharacter() {
           style={{
             marginBottom: metrics.width(15),
           }}
-          disabled={!selectedCharacter}
+        //  disabled={!selectedCharacter}
         />
         <PrimaryButton
           title="Next"

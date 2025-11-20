@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  ImageBackground,
+  Alert,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -14,59 +13,197 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { metrics } from '../../constants/metrics';
 import colors from '../../constants/colors';
 import { Svgs } from '../../assets/icons';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, LiquidGlassBackground, LanguageDropdown, CustomDropdown } from '../../components/ui';
-import { Images } from '../../assets/images';
+import {
+  Header,
+  CustomDropdown,
+  Input,
+} from '../../components/ui';
+import {
+  useMakeYourOwnCharacterMutation,
+  useLazyGetPhotoGenerationQuery,
+} from '../../store/api/heygenApi';
 
-type LoginScreenNavigationProp = NativeStackNavigationProp<
+type CustomizeAvatarNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  'Signup'
+  'CustomizeAvatar'
 >;
 
 export default function CustomizeAvatar() {
-  const navigation = useNavigation<LoginScreenNavigationProp>();
-  const route = useRoute<RouteProp<RootStackParamList, 'CustomizeAvatar'>>();
-  const { avatarId } = route.params ?? {};
-  
+  const navigation = useNavigation<CustomizeAvatarNavigationProp>();
   // State for all dropdowns
-  const [selectedLanguage, setSelectedLanguage] = useState('');
-  const [selectedHairStyle, setSelectedHairStyle] = useState('');
-  const [selectedOutfit, setSelectedOutfit] = useState('');
-  const [selectedAccessories, setSelectedAccessories] = useState('');
-  const [selectedEmotion, setSelectedEmotion] = useState('');
-  const [selectedBackground, setSelectedBackground] = useState('');
-  
+  const [selectedAge, setSelectedAge] = useState('');
+  const [selectedGender, setSelectedGender] = useState('');
+  const [selectedEthnicity, setSelectedEthnicity] = useState('');
+  const [selectedOrientation, setSelectedOrientation] = useState('');
+  const [selectedPersonality, setSelectedPersonality] = useState('');
+  const [selectedStyle, setSelectedStyle] = useState('');
+  const [description, setDescription] = useState('');
+  const [generationId, setGenerationId] = useState<string | null>(null);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [makeYourOwnCharacter, { isLoading: isCreatingCharacter }] =
+    useMakeYourOwnCharacterMutation();
+  const [getPhotoGeneration] = useLazyGetPhotoGenerationQuery();
+
   // Options for all dropdowns
-  const languageOptions = ['Spanish', 'Japanese', 'German', 'French'];
-  const hairStyleOptions = ['Short', 'Long', 'Curly', 'Spiky', 'Bald'];
-  const outfitOptions = ['Casual', 'Formal', 'Semi Formal', 'Sporty', 'Super Hero'];
-  const accessoriesOptions = ['Cap', 'Glasses', 'Watch', 'Headphones', 'None'];
-  const emotionOptions = ['Happy 😊', 'Excited 🤩', 'Neutral 😐', 'Thoughtful 🧐', 'Surprised 😲'];
-  const backgroundOptions = ['Dub AI Red', 'Gradient Blue', 'Gradient Orange', 'Solid White', 'Pattern'];
-  
+  const ageOptions = [
+    'Young Adult',
+    'Early Middle Age',
+    'Late Middle Age',
+    'Senior',
+    'Unspecified',
+  ];
+  const genderOptions = ['Woman', 'Man', 'Unspecified'];
+  const ethnicityOptions = [
+    'White',
+    'Black',
+    'Asian American',
+    'East Asian',
+    'South East Asian',
+    'South Asian',
+    'Middle Eastern',
+    'Pacific',
+    'Hispanic',
+    'Unspecified',
+  ];
+  const orientationOptions = ['square', 'horizontal', 'vertical'];
+  const personalityOptions = ['half_body', 'close_up', 'full_body'];
+  const styleOptions = [
+    'Realistic',
+    'Pixar',
+    'Cinematic',
+    'Vintage',
+    'Noir',
+    'Cyberpunk',
+    'Unspecified',
+  ];
   const handleCharacterSelect = (characterId: number) => {};
-  
+
   // Handler functions for all dropdowns
-  const handleLanguageSelect = (language: string) => {
-    setSelectedLanguage(language);
+  const handleAgeSelect = (age: string) => {
+    setSelectedAge(age);
   };
-  const handleHairStyleSelect = (hairStyle: string) => {
-    setSelectedHairStyle(hairStyle);
+  const handleGenderSelect = (gender: string) => {
+    setSelectedGender(gender);
   };
-  const handleOutfitSelect = (outfit: string) => {
-    setSelectedOutfit(outfit);
+  const handleEthnicitySelect = (ethnicity: string) => {
+    setSelectedEthnicity(ethnicity);
   };
-  const handleAccessoriesSelect = (accessories: string) => {
-    setSelectedAccessories(accessories);
+  const handleOrientationSelect = (orientation: string) => {
+    setSelectedOrientation(orientation);
   };
-  const handleEmotionSelect = (emotion: string) => {
-    setSelectedEmotion(emotion);
+  const handlePersonalitySelect = (personality: string) => {
+    setSelectedPersonality(personality);
   };
-  const handleBackgroundSelect = (background: string) => {
-    setSelectedBackground(background);
+  const handleStyleSelect = (style: string) => {
+    setSelectedStyle(style);
   };
+
+  // Poll photo generation status
+  const pollPhotoGeneration = async (genId: string) => {
+    try {
+      const result = await getPhotoGeneration(genId, true);
+      console.log('Photo generation status:', result.data);
+
+      if (result.data?.data) {
+        const status = result.data.data.status;
+        const imageList = result.data.data.image_url_list;
+
+        if (status === 'success' && imageList && imageList.length > 0) {
+          // Generation completed - navigation will be handled in GeneratedCharacters
+          setIsGenerating(false);
+          setImageUrls(imageList);
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+        } else if (status === 'failed') {
+          // Generation failed
+          setIsGenerating(false);
+          Alert.alert('Error', 'Character generation failed. Please try again.');
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+        }
+        // If status is 'in_progress', continue polling
+      }
+    } catch (error: any) {
+      console.error('Error polling photo generation:', error);
+    }
+  };
+
+  // Handle Next button press
+  const handleNext = async () => {
+    // Validation
+    if (!description.trim()) {
+      Alert.alert('Description Required', 'Please enter a description.');
+      return;
+    }
+    if (!selectedAge || !selectedGender || !selectedEthnicity || !selectedOrientation || !selectedPersonality || !selectedStyle) {
+      Alert.alert('All Fields Required', 'Please select all options.');
+      return;
+    }
+
+    try {
+      setIsGenerating(true);
+      setImageUrls([]);
+
+      // Call first API
+      const response = await makeYourOwnCharacter({
+        name: description.trim() || 'Character',
+        age: selectedAge,
+        gender: selectedGender,
+        ethnicity: selectedEthnicity,
+        orientation: selectedOrientation,
+        pose: selectedPersonality,
+        style: selectedStyle,
+        appearance: description.trim(),
+      }).unwrap();
+
+      const genId = response.data?.generation_id;
+      if (!genId) {
+        Alert.alert('Error', 'Failed to start character generation.');
+        setIsGenerating(false);
+        return;
+      }
+
+      setGenerationId(genId);
+
+      // Navigate to GeneratedCharacters screen immediately with generationId
+      // The screen will handle polling
+      navigation.navigate('GeneratedCharacters', {
+        generationId: genId,
+      });
+
+      // Continue polling in background (will stop when success)
+      pollPhotoGeneration(genId);
+      intervalRef.current = setInterval(() => {
+        pollPhotoGeneration(genId);
+      }, 4000);
+    } catch (error: any) {
+      console.error('Error creating character:', error);
+      Alert.alert(
+        'Error',
+        error?.data?.message || error?.message || 'Failed to create character. Please try again.'
+      );
+      setIsGenerating(false);
+    }
+  };
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -90,71 +227,77 @@ export default function CustomizeAvatar() {
             <Text style={styles.subTitle}>
               Personal your Character’s Appearance{' '}
             </Text>
-            {avatarId ? (
-              <View style={styles.avatarIdContainer}>
-                <Text style={styles.avatarIdLabel}>Selected Avatar ID</Text>
-                <Text style={styles.avatarIdValue}>{avatarId}</Text>
-              </View>
-            ) : null}
             <View style={styles.tempCharacherContainer}>
+              <Input
+                label="Description"
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Enter description"
+                multiline
+                numberOfLines={4}
+                containerStyle={{
+                  height: metrics.width(120),
+                  alignItems: 'flex-start',
+                }}
+              />
 
-              
               <CustomDropdown
-                title="Hair Style"
-                options={hairStyleOptions}
-                selectedValue={selectedHairStyle}
-                onSelect={handleHairStyleSelect}
+                title="Age"
+                options={ageOptions}
+                selectedValue={selectedAge}
+                onSelect={handleAgeSelect}
+                placeholder="Select Age"
+              />
+
+              <CustomDropdown
+                title="Gender"
+                options={genderOptions}
+                selectedValue={selectedGender}
+                onSelect={handleGenderSelect}
+                placeholder="Select Gender"
+              />
+
+              <CustomDropdown
+                title="Ethnicity"
+                options={ethnicityOptions}
+                selectedValue={selectedEthnicity}
+                onSelect={handleEthnicitySelect}
+                placeholder="Select Ethnicity"
+              />
+
+              <CustomDropdown
+                title="Orientation"
+                options={orientationOptions}
+                selectedValue={selectedOrientation}
+                onSelect={handleOrientationSelect}
+                placeholder="Select Orientation"
+              />
+
+              <CustomDropdown
+                title="Personality"
+                options={personalityOptions}
+                selectedValue={selectedPersonality}
+                onSelect={handlePersonalitySelect}
+                placeholder="Select Personality"
+              />
+
+              <CustomDropdown
+                title="Style"
+                options={styleOptions}
+                selectedValue={selectedStyle}
+                onSelect={handleStyleSelect}
                 placeholder="Select Style"
-              />
-              
-              <CustomDropdown
-                title="Outfit"
-                options={outfitOptions}
-                selectedValue={selectedOutfit}
-                onSelect={handleOutfitSelect}
-                placeholder="Select Outfit"
-              />
-              
-              <CustomDropdown
-                title="Accessories"
-                options={accessoriesOptions}
-                selectedValue={selectedAccessories}
-                onSelect={handleAccessoriesSelect}
-                placeholder="Select Accessories"
-              />
-              
-              <CustomDropdown
-                title="Emotion"
-                options={emotionOptions}
-                selectedValue={selectedEmotion}
-                onSelect={handleEmotionSelect}
-                placeholder="Select Emotion"
-              />
-              
-              <CustomDropdown
-                title="Background"
-                options={backgroundOptions}
-                selectedValue={selectedBackground}
-                onSelect={handleBackgroundSelect}
-                placeholder="Select Background"
               />
             </View>
           </View>
         </ScrollView>
         <PrimaryButton
-          title="Customize Avatar"
-          onPress={() => navigation.navigate('CharacherReader')}
-          variant="secondary"
+          title="Next"
+          onPress={handleNext}
+          variant="primary"
+          disabled={isCreatingCharacter || isGenerating}
           style={{
             marginBottom: metrics.width(15),
-          }}
-        />
-        <PrimaryButton
-          title="Next"
-          onPress={() => {}}
-          variant="primary"
-          style={{
-            marginBottom: metrics.width(25),
           }}
         />
       </SafeAreaView>
@@ -358,8 +501,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.primary,
   },
-  tempCharacherContainer: {
-  },
+  tempCharacherContainer: {},
   avatarIdContainer: {
     borderWidth: 1,
     borderColor: colors.white10,
