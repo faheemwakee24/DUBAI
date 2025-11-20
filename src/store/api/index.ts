@@ -9,4 +9,5 @@ export * from './paymentsApi';
 export * from './subscriptionsApi';
 export * from './characterApi';
 export * from './videoDubbingApi';
+export * from './heygenApi';
 

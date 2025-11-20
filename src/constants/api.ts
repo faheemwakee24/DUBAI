@@ -71,6 +71,13 @@ export const API_ENDPOINTS = {
     CONFIRM_PAYMENT: (id: string) => `/payment-intents/${id}/confirm`,
     SETUP_INTENT: '/setup-intents',
   },
+  // Heygen endpoints
+  HEYGEN: {
+    GET_ALL_AVATARS: '/heygen/getAllAvatars',
+    GET_ALL_VOICES: '/heygen/getAllVoices',
+    GENERATE_VIDEO: '/heygen/video/generate',
+    VIDEO_STATUS: '/heygen/video/status',
+  },
   // Character endpoints
   CHARACTER: {
     UPLOAD_IMAGE: '/gcp/upload',

@@ -2,24 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CLIENT_ID</key>
-	<string>5903335579-re1mivq2d5t40s73iljf550oatipscsn.apps.googleusercontent.com</string>
-	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.5903335579-re1mivq2d5t40s73iljf550oatipscsn</string>
-	<key>ANDROID_CLIENT_ID</key>
-	<string>5903335579-qarbihgknij8evc8sh16oo0jaiurlr2k.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
-	<string>AIzaSyC3_Fpw7tt0KkNsMMT1AHzs2K1I0IXp1vk</string>
+	<string>AIzaSyAoxGjaSY50-dlRBWM5gGFtJNcQbxu-QH4</string>
 	<key>GCM_SENDER_ID</key>
-	<string>5903335579</string>
+	<string>315596728489</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.dubai</string>
 	<key>PROJECT_ID</key>
-	<string>dubnext</string>
+	<string>dub-nxt</string>
 	<key>STORAGE_BUCKET</key>
-	<string>dubnext.firebasestorage.app</string>
+	<string>dub-nxt.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -31,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:5903335579:ios:2e264b4ba2a28f56dfc63e</string>
+	<string>1:315596728489:ios:e43c606a4c7fb512fb21b8</string>
 </dict>
 </plist>

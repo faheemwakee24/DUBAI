@@ -6,7 +6,11 @@ import {Platform} from 'react-native';
 // Configure Google Sign-In
 // Use Web Client ID (client_type: 3) which works for both iOS and Android
 GoogleSignin.configure({
-  webClientId: '5903335579-gvuclhdvjhi9j8kq9rkqc89jjufj96rn.apps.googleusercontent.com', // Web Client ID from google-services.json
+  webClientId:
+    '315596728489-i3tmpkkb55i80k34i3d5ebuakp4ql3ja.apps.googleusercontent.com', // ✅ from client_type 3
+  // androidClientId (optional)
+  // androidClientId: '315596728489-rh9b9bmakvr3gr5ql60figt6rq4g1fof.apps.googleusercontent.com',
+  offlineAccess: true,
 });
 
 export interface AuthUser {

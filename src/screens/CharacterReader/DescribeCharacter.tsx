@@ -4,8 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  ImageBackground,
+  Alert,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -17,56 +16,121 @@ import { Svgs } from '../../assets/icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, LiquidGlassBackground, LanguageDropdown, CustomDropdown } from '../../components/ui';
-import { Images } from '../../assets/images';
+import {
+  Header,
+  CustomDropdown,
+  Input,
+} from '../../components/ui';
+import { useGenerateVideoMutation } from '../../store/api/heygenApi';
 
-type LoginScreenNavigationProp = NativeStackNavigationProp<
+type DescribeCharacterNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  'Signup'
+  'DescribeCharacter'
 >;
 
-export default function CustomizeAvatar() {
-  const navigation = useNavigation<LoginScreenNavigationProp>();
-  const route = useRoute<RouteProp<RootStackParamList, 'CustomizeAvatar'>>();
-  const { avatarId } = route.params ?? {};
-  
+export default function DescribeCharacter() {
+  const navigation = useNavigation<DescribeCharacterNavigationProp>();
+  const route = useRoute<RouteProp<RootStackParamList, 'DescribeCharacter'>>();
+  const { avatarId, voiceId } = route.params;
+
+  const [generateVideo, { isLoading: isGenerating }] = useGenerateVideoMutation();
+
   // State for all dropdowns
-  const [selectedLanguage, setSelectedLanguage] = useState('');
-  const [selectedHairStyle, setSelectedHairStyle] = useState('');
-  const [selectedOutfit, setSelectedOutfit] = useState('');
-  const [selectedAccessories, setSelectedAccessories] = useState('');
-  const [selectedEmotion, setSelectedEmotion] = useState('');
-  const [selectedBackground, setSelectedBackground] = useState('');
-  
+  const [selectedVoiceTone, setSelectedVoiceTone] = useState('');
+  const [speed, setSpeed] = useState('');
+  const [message, setMessage] = useState('');
+  const [selectedBackgroundType, setSelectedBackgroundType] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
+
   // Options for all dropdowns
-  const languageOptions = ['Spanish', 'Japanese', 'German', 'French'];
-  const hairStyleOptions = ['Short', 'Long', 'Curly', 'Spiky', 'Bald'];
-  const outfitOptions = ['Casual', 'Formal', 'Semi Formal', 'Sporty', 'Super Hero'];
-  const accessoriesOptions = ['Cap', 'Glasses', 'Watch', 'Headphones', 'None'];
-  const emotionOptions = ['Happy 😊', 'Excited 🤩', 'Neutral 😐', 'Thoughtful 🧐', 'Surprised 😲'];
-  const backgroundOptions = ['Dub AI Red', 'Gradient Blue', 'Gradient Orange', 'Solid White', 'Pattern'];
-  
-  const handleCharacterSelect = (characterId: number) => {};
-  
+  const voiceToneOptions = [
+    'Excited',
+    'Friendly',
+    'Serious',
+    'Soothing',
+    'Broadcaster',
+  ];
+  const speedOptions = [
+    '0.5x',
+    '1x',
+    '1.5x',
+  ];
+
   // Handler functions for all dropdowns
-  const handleLanguageSelect = (language: string) => {
-    setSelectedLanguage(language);
+  const handleVoiceToneSelect = (voiceTone: string) => {
+    setSelectedVoiceTone(voiceTone);
   };
-  const handleHairStyleSelect = (hairStyle: string) => {
-    setSelectedHairStyle(hairStyle);
+
+  const handleSpeed = (speedValue: string) => {
+    setSpeed(speedValue);
   };
-  const handleOutfitSelect = (outfit: string) => {
-    setSelectedOutfit(outfit);
+
+  const handleBackgroundTypeSelect = (backgroundType: string) => {
+    setSelectedBackgroundType(backgroundType);
+    // Reset color selection when background type changes
+    if (backgroundType !== 'color') {
+      setSelectedColor('');
+    }
   };
-  const handleAccessoriesSelect = (accessories: string) => {
-    setSelectedAccessories(accessories);
+
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
   };
-  const handleEmotionSelect = (emotion: string) => {
-    setSelectedEmotion(emotion);
+
+  const handlePreview = async () => {
+    // Validate required fields
+    if (!message.trim()) {
+      Alert.alert('Validation Error', 'Please enter a message.');
+      return;
+    }
+    if (!selectedVoiceTone) {
+      Alert.alert('Validation Error', 'Please select an emotion.');
+      return;
+    }
+    if (!speed) {
+      Alert.alert('Validation Error', 'Please select a speed.');
+      return;
+    }
+    // if (!selectedBackgroundType) {
+    //   Alert.alert('Validation Error', 'Please select a background type.');
+    //   return;
+    // }
+    // if (selectedBackgroundType === 'color' && !selectedColor) {
+    //   Alert.alert('Validation Error', 'Please select a background color.');
+    //   return;
+    // }
+
+    try {
+      const response = await generateVideo({
+        avatar_id: avatarId,
+        voice_id: voiceId,
+        input_text: message,
+        emotion: selectedVoiceTone,
+        speed: speed.replace('x', ''), // Remove 'x' from speed (e.g., '1x' -> '1')
+      }).unwrap();
+
+      // Handle different response structures
+      const videoId = response.data?.video_id || (response as any).video_id || (response as any).data?.id;
+      console.log(videoId,'respoce-------',response);
+      console.log('videoId-------',videoId);
+      
+      
+      if (videoId) {
+        navigation.navigate('GeneratingCharacterVideo', {
+          videoId: String(videoId),
+        });
+      } else {
+        Alert.alert('Error', response.message || 'Failed to generate video. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('[DescribeCharacter] Generate video error:', error);
+      Alert.alert(
+        'Error',
+        error?.data?.message || error?.message || 'Failed to generate video. Please try again.'
+      );
+    }
   };
-  const handleBackgroundSelect = (background: string) => {
-    setSelectedBackground(background);
-  };
+
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -88,71 +152,40 @@ export default function CustomizeAvatar() {
           <View style={styles.dashboardContainer}>
             <Text style={styles.title}>Customize your Avatar</Text>
             <Text style={styles.subTitle}>
-              Personal your Character’s Appearance{' '}
+              Personal your Character's Appearance{' '}
             </Text>
-            {avatarId ? (
-              <View style={styles.avatarIdContainer}>
-                <Text style={styles.avatarIdLabel}>Selected Avatar ID</Text>
-                <Text style={styles.avatarIdValue}>{avatarId}</Text>
-              </View>
-            ) : null}
             <View style={styles.tempCharacherContainer}>
-
-              
-              <CustomDropdown
-                title="Hair Style"
-                options={hairStyleOptions}
-                selectedValue={selectedHairStyle}
-                onSelect={handleHairStyleSelect}
-                placeholder="Select Style"
+              <Input
+                label="Message"
+                value={message}
+                onChangeText={setMessage}
+                placeholder="Your Message"
+                containerStyle={{height: metrics.width(120),alignItems:'flex-start'}}
               />
-              
               <CustomDropdown
-                title="Outfit"
-                options={outfitOptions}
-                selectedValue={selectedOutfit}
-                onSelect={handleOutfitSelect}
-                placeholder="Select Outfit"
+                title="Emotios"
+                options={voiceToneOptions}
+                selectedValue={selectedVoiceTone}
+                onSelect={handleVoiceToneSelect}
+                placeholder="Select Tune"
               />
-              
               <CustomDropdown
-                title="Accessories"
-                options={accessoriesOptions}
-                selectedValue={selectedAccessories}
-                onSelect={handleAccessoriesSelect}
-                placeholder="Select Accessories"
-              />
-              
-              <CustomDropdown
-                title="Emotion"
-                options={emotionOptions}
-                selectedValue={selectedEmotion}
-                onSelect={handleEmotionSelect}
-                placeholder="Select Emotion"
-              />
-              
-              <CustomDropdown
-                title="Background"
-                options={backgroundOptions}
-                selectedValue={selectedBackground}
-                onSelect={handleBackgroundSelect}
-                placeholder="Select Background"
+                title="Voice Speed"
+                options={speedOptions}
+                selectedValue={speed}
+                onSelect={handleSpeed}
+                placeholder="Select Speed"
               />
             </View>
           </View>
         </ScrollView>
+        
         <PrimaryButton
-          title="Customize Avatar"
-          onPress={() => navigation.navigate('CharacherReader')}
-          variant="secondary"
-          style={{
-            marginBottom: metrics.width(15),
-          }}
-        />
-        <PrimaryButton
-          title="Next"
-          onPress={() => {}}
+          title="Preview"
+          onPress={handlePreview}
           variant="primary"
+          loading={isGenerating}
+          disabled={isGenerating}
           style={{
             marginBottom: metrics.width(25),
           }}
@@ -358,30 +391,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.primary,
   },
-  tempCharacherContainer: {
-  },
-  avatarIdContainer: {
-    borderWidth: 1,
-    borderColor: colors.white10,
-    borderRadius: 12,
-    paddingHorizontal: metrics.width(16),
-    paddingVertical: metrics.width(12),
-    marginBottom: metrics.width(20),
-    backgroundColor: colors.white5,
-  },
-  avatarIdLabel: {
-    fontFamily: FontFamily.spaceGrotesk.medium,
-    fontSize: metrics.width(12),
-    color: colors.subtitle,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  avatarIdValue: {
-    fontFamily: FontFamily.spaceGrotesk.bold,
-    fontSize: metrics.width(16),
-    color: colors.white,
-    marginTop: metrics.width(6),
-  },
+  tempCharacherContainer: {},
   textContainer: {
     gap: metrics.width(5),
   },
@@ -396,3 +406,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.subtitle,
   },
 });
+
