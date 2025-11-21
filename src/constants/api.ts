@@ -75,7 +75,11 @@ export const API_ENDPOINTS = {
   HEYGEN: {
     GET_ALL_AVATARS: '/heygen/getAllAvatars',
     GET_ALL_VOICES: '/heygen/getAllVoices',
+    GET_ALL_VOICES_LOCALES: '/heygen/video_translate/getTargetLanguage',
     GENERATE_VIDEO: '/heygen/video/generate',
+    GENERATE_AV4_VIDEO: '/heygen/video/av4/generate',
+    VIDEO_TRANSLATE: '/heygen/video/translate',
+    VIDEO_TRANSLATE_STATUS: (videoTranslateId: string) => `/heygen/video/translate/${videoTranslateId}`,
     VIDEO_STATUS: '/heygen/video/status',
     MAKE_YOUR_OWN_CHARACTER: '/heygen/makeYourOwnCharacter',
     PHOTO_GENERATION: (generationId: string) => `/heygen/photo/generation/${generationId}`,

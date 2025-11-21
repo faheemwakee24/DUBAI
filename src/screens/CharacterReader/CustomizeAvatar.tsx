@@ -233,12 +233,11 @@ export default function CustomizeAvatar() {
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Enter description"
-                multiline
-                numberOfLines={4}
-                containerStyle={{
-                  height: metrics.width(120),
-                  alignItems: 'flex-start',
+                inputStyle={{
+                  height: metrics.width(100),
                 }}
+                containerStyle={{ alignItems: 'flex-start' }}
+                multiline
               />
 
               <CustomDropdown

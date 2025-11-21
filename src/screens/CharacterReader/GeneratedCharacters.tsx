@@ -34,6 +34,7 @@ export default function GeneratedCharacters() {
   const initialImageUrls = route.params?.imageUrls;
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [imageUrls, setImageUrls] = useState<string[]>(initialImageUrls || []);
+  const [imageKeys, setImageKeys] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(!initialImageUrls || initialImageUrls.length === 0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -84,14 +85,19 @@ export default function GeneratedCharacters() {
         const responseData = apiResponse.data;
         const status = responseData.status;
         const imageList = responseData.image_url_list;
+        const imageKeyList = responseData.image_key_list;
         
         console.log('Status from API:', status);
         console.log('Image list:', imageList);
+        console.log('Image key list:', imageKeyList);
 
         if (status === 'success' && imageList && imageList.length > 0) {
           // Generation completed
           setIsProcessing(false);
           setImageUrls(imageList);
+          if (imageKeyList && imageKeyList.length > 0) {
+            setImageKeys(imageKeyList);
+          }
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -193,13 +199,7 @@ export default function GeneratedCharacters() {
                 style={styles.generatedImage}
                 resizeMode="cover"
               />
-              {isSelected && (
-                <View style={styles.selectedOverlay}>
-                  <View style={styles.checkIconContainer}>
-                    <Text style={styles.checkMark}>✓</Text>
-                  </View>
-                </View>
-              )}
+              
             </TouchableOpacity>
           );
         })}
@@ -230,10 +230,13 @@ export default function GeneratedCharacters() {
     if (selectedImageIndex === null) {
       return;
     }
-    const selectedImageUrl = imageUrls[selectedImageIndex];
-    // Navigate to next screen with selected image
-    // You can update this navigation based on your requirements
-    navigation.navigate('ChoseCharacter');
+    const selectedImageKey = imageKeys[selectedImageIndex];
+    // Navigate to next screen with selected image key
+    if (selectedImageKey) {
+      navigation.navigate('VoiceSelection', { avatarId: selectedImageKey, screenFrom: 'GeneratedCharacters' });
+    } else {
+      Alert.alert('Error', 'Image key not available. Please try again.');
+    }
   };
 
   return (

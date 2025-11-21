@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import { FontFamily } from '../../constants/fonts';
@@ -16,12 +10,11 @@ import { Svgs } from '../../assets/icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Header, CustomDropdown, Input } from '../../components/ui';
 import {
-  Header,
-  CustomDropdown,
-  Input,
-} from '../../components/ui';
-import { useGenerateVideoMutation } from '../../store/api/heygenApi';
+  useGenerateVideoMutation,
+  useGenerateAv4VideoMutation,
+} from '../../store/api/heygenApi';
 
 type DescribeCharacterNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -31,9 +24,15 @@ type DescribeCharacterNavigationProp = NativeStackNavigationProp<
 export default function DescribeCharacter() {
   const navigation = useNavigation<DescribeCharacterNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'DescribeCharacter'>>();
-  const { avatarId, voiceId } = route.params;
+  const { avatarId, voiceId, screenFrom } = route.params;
+  console.log('screenFrom', screenFrom);
+  console.log('avatarId', avatarId);
+  console.log('voiceId', voiceId);
 
-  const [generateVideo, { isLoading: isGenerating }] = useGenerateVideoMutation();
+  const [generateVideo, { isLoading: isGenerating }] =
+    useGenerateVideoMutation();
+  const [generateAv4Video, { isLoading: isGeneratingAv4 }] =
+    useGenerateAv4VideoMutation();
 
   // State for all dropdowns
   const [selectedVoiceTone, setSelectedVoiceTone] = useState('');
@@ -41,6 +40,8 @@ export default function DescribeCharacter() {
   const [message, setMessage] = useState('');
   const [selectedBackgroundType, setSelectedBackgroundType] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
+  const [selectedVideoOrientation, setSelectedVideoOrientation] = useState('');
+  const [selectedFit, setSelectedFit] = useState('');
 
   // Options for all dropdowns
   const voiceToneOptions = [
@@ -50,11 +51,9 @@ export default function DescribeCharacter() {
     'Soothing',
     'Broadcaster',
   ];
-  const speedOptions = [
-    '0.5x',
-    '1x',
-    '1.5x',
-  ];
+  const speedOptions = ['0.5x', '1x', '1.5x'];
+  const vedioOriettation = ['Portrait', 'Landscape'];
+  const fit = ['cover', 'contain'];
 
   // Handler functions for all dropdowns
   const handleVoiceToneSelect = (voiceTone: string) => {
@@ -77,12 +76,55 @@ export default function DescribeCharacter() {
     setSelectedColor(color);
   };
 
+  const handleVideoOrientationSelect = (orientation: string) => {
+    setSelectedVideoOrientation(orientation);
+  };
+
+  const handleFitSelect = (fitValue: string) => {
+    setSelectedFit(fitValue);
+  };
+
   const handlePreview = async () => {
     // Validate required fields
     if (!message.trim()) {
       Alert.alert('Validation Error', 'Please enter a message.');
       return;
     }
+
+    try {
+      let response: any;
+      let videoId: string | undefined;
+
+      if (screenFrom === 'GeneratedCharacters') {
+        // Validate AV4 specific fields
+        if (!selectedVideoOrientation) {
+          Alert.alert('Validation Error', 'Please select video orientation.');
+          return;
+        }
+        if (!selectedFit) {
+          Alert.alert('Validation Error', 'Please select fit.');
+          return;
+        }
+
+        // Call AV4 generate API
+        response = await generateAv4Video({
+          image_key: avatarId,
+          video_title: 'Generated Character Video', // Default title, can be made configurable
+          script: message,
+          voice_id: voiceId,
+          video_orientation: selectedVideoOrientation.toLowerCase(),
+          fit: selectedFit,
+          custom_motion_prompt: 'just go with the text', // Default as per example
+          enhance_custom_motion_prompt: false,
+        }).unwrap();
+
+        // Handle AV4 response structure
+        videoId =
+          response.data?.video_id ||
+          response.video_id ||
+          (response as any).data?.id;
+      } else {
+        // Validate original fields
     if (!selectedVoiceTone) {
       Alert.alert('Validation Error', 'Please select an emotion.');
       return;
@@ -91,17 +133,9 @@ export default function DescribeCharacter() {
       Alert.alert('Validation Error', 'Please select a speed.');
       return;
     }
-    // if (!selectedBackgroundType) {
-    //   Alert.alert('Validation Error', 'Please select a background type.');
-    //   return;
-    // }
-    // if (selectedBackgroundType === 'color' && !selectedColor) {
-    //   Alert.alert('Validation Error', 'Please select a background color.');
-    //   return;
-    // }
 
-    try {
-      const response = await generateVideo({
+        // Call original generate API
+        response = await generateVideo({
         avatar_id: avatarId,
         voice_id: voiceId,
         input_text: message,
@@ -109,24 +143,33 @@ export default function DescribeCharacter() {
         speed: speed.replace('x', ''), // Remove 'x' from speed (e.g., '1x' -> '1')
       }).unwrap();
 
-      // Handle different response structures
-      const videoId = response.data?.video_id || (response as any).video_id || (response as any).data?.id;
-      console.log(videoId,'respoce-------',response);
-      console.log('videoId-------',videoId);
-      
+        // Handle original response structure
+        videoId =
+          response.data?.video_id ||
+          (response as any).video_id ||
+          (response as any).data?.id;
+      }
+
+      console.log(videoId, 'response-------', response);
+      console.log('videoId-------', videoId);
       
       if (videoId) {
         navigation.navigate('GeneratingCharacterVideo', {
           videoId: String(videoId),
         });
       } else {
-        Alert.alert('Error', response.message || 'Failed to generate video. Please try again.');
+        Alert.alert(
+          'Error',
+          response.message || 'Failed to generate video. Please try again.',
+        );
       }
     } catch (error: any) {
       console.error('[DescribeCharacter] Generate video error:', error);
       Alert.alert(
         'Error',
-        error?.data?.message || error?.message || 'Failed to generate video. Please try again.'
+        error?.data?.message ||
+          error?.message ||
+          'Failed to generate video. Please try again.',
       );
     }
   };
@@ -160,8 +203,31 @@ export default function DescribeCharacter() {
                 value={message}
                 onChangeText={setMessage}
                 placeholder="Your Message"
-                containerStyle={{height: metrics.width(120),alignItems:'flex-start'}}
+                inputStyle={{
+                  height: metrics.width(100),
+                }}
+                containerStyle={{ alignItems: 'flex-start' }}
+                multiline
               />
+              {screenFrom === 'GeneratedCharacters' ? (
+                <>
+                  <CustomDropdown
+                    title="Video Orientation"
+                    options={vedioOriettation}
+                    selectedValue={selectedVideoOrientation}
+                    onSelect={handleVideoOrientationSelect}
+                    placeholder="Select Orientation"
+                  />
+                  <CustomDropdown
+                    title="Fit"
+                    options={fit}
+                    selectedValue={selectedFit}
+                    onSelect={handleFitSelect}
+                    placeholder="Select Fit"
+                  />
+                </>
+              ) : (
+                <>
               <CustomDropdown
                 title="Emotios"
                 options={voiceToneOptions}
@@ -176,6 +242,8 @@ export default function DescribeCharacter() {
                 onSelect={handleSpeed}
                 placeholder="Select Speed"
               />
+                </>
+              )}
             </View>
           </View>
         </ScrollView>
@@ -184,8 +252,8 @@ export default function DescribeCharacter() {
           title="Preview"
           onPress={handlePreview}
           variant="primary"
-          loading={isGenerating}
-          disabled={isGenerating}
+          loading={isGenerating || isGeneratingAv4}
+          disabled={isGenerating || isGeneratingAv4}
           style={{
             marginBottom: metrics.width(25),
           }}
@@ -406,4 +474,3 @@ const styles = StyleSheet.create({
     backgroundColor: colors.subtitle,
   },
 });
-

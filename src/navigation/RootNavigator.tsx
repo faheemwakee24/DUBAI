@@ -68,6 +68,8 @@ export type RootStackParamList = {
     };
     language: string;
     voiceStyle: string;
+    mode?: string;
+    jobId?: string;
   };
   PreViewVedio: { video_url: string };
   Dashboard: undefined;
@@ -75,9 +77,9 @@ export type RootStackParamList = {
   CustomizeAvatar: undefined;
   CharacherReader: { character: number, body: string, hair: string, accessories: string, background: string, emotion: string };
   PreviewCharacherVedio: { character: number, body: string, hair: string, accessories: string, background: string, emotion: string, message: string, speed: string, voiceTone: string } | { avatarId: string, voiceId: string, message: string, speed: string, voiceTone: string, backgroundType?: string, backgroundColor?: string };
-  VoiceSelection: { avatarId: string };
-  DescribeCharacter: { avatarId: string; voiceId: string };
-  GeneratingCharacterVideo: { videoId: string };
+  VoiceSelection: { avatarId: string ,screenFrom?: string };
+  DescribeCharacter: { avatarId: string; voiceId: string, screenFrom?: string };
+  GeneratingCharacterVideo: { videoId: string,screenFrom?: string };
   GeneratedCharacters: { generationId?: string; imageUrls?: string[] };
   RecentProjects:undefined;
   ProjectVedios:undefined;

@@ -21,7 +21,7 @@ type GeneratingCharacterVideoNavigationProp = NativeStackNavigationProp<
 export default function GeneratingCharacterVideo() {
   const navigation = useNavigation<GeneratingCharacterVideoNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'GeneratingCharacterVideo'>>();
-  const { videoId } = route.params;
+  const { videoId,screenFrom } = route.params;
   console.log('params-------',route.params);
 
   console.log('videoId-------',videoId);
@@ -37,11 +37,20 @@ export default function GeneratingCharacterVideo() {
       // Get auth token
       const token = await tokenStorage.getAccessToken();
       
-      // Build URL with cache-busting timestamp to ensure fresh data
+      // Build URL based on screenFrom
       const timestamp = Date.now();
-      const url = `${API_BASE_URL}${API_VERSION_PREFIX}${API_ENDPOINTS.HEYGEN.VIDEO_STATUS}?video_id=${videoId}&_t=${timestamp}`;
+      let url: string;
       
-      console.log('=== Polling video status ===');
+      if (screenFrom === 'translating') {
+        // Use translate status API
+        url = `${API_BASE_URL}${API_VERSION_PREFIX}${API_ENDPOINTS.HEYGEN.VIDEO_TRANSLATE_STATUS(videoId)}?_t=${timestamp}`;
+        console.log('=== Polling translate video status ===');
+      } else {
+        // Use regular video status API
+        url = `${API_BASE_URL}${API_VERSION_PREFIX}${API_ENDPOINTS.HEYGEN.VIDEO_STATUS}?video_id=${videoId}&_t=${timestamp}`;
+        console.log('=== Polling video status ===');
+      }
+      
       console.log('URL:', url);
       
       // Prepare headers
@@ -73,51 +82,103 @@ export default function GeneratingCharacterVideo() {
       
       const apiResponse = await response.json();
       console.log('API Response:', apiResponse);
-      console.log('API Response code:', apiResponse.code);
-      console.log('API Response data:', apiResponse.data);
       
-      if (apiResponse?.data) {
-        const responseData = apiResponse.data;
-        const status = responseData.status;
-        console.log('Status from API:', status);
-        console.log('Video URL:', responseData.video_url);
-        
-        setCurrentStatus(status);
-        
-        if (status === 'processing') {
-          setStatusMessage('Our AI is translating and syncing the audio');
-        } else if (status === 'completed') {
-          // Video is ready
-          console.log('Video completed! Navigating to preview...');
-          setProgress(100);
-          setStatusMessage('Video generation completed!');
+      if (screenFrom === 'translating') {
+        // Handle translate status response
+        if (apiResponse?.data) {
+          const responseData = apiResponse.data;
+          const status = responseData.status;
+          console.log('Translate Status from API:', status);
+          console.log('Video URL:', responseData.url);
+          console.log('responseData-------',responseData);
           
-          // Clear interval
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
+          // Map translate status to our status
+          if (status === 'success') {
+            setCurrentStatus('completed');
+          } else if (status === 'processing' || status === 'in_progress'||status === 'pending') {
+            setCurrentStatus('processing');
+          } else {
+            setCurrentStatus('failed');
           }
-
-          // Navigate to preview screen after a short delay
-          setTimeout(() => {
-            if (responseData.video_url) {
-              navigation.navigate('PreViewVedio', {
-                video_url: responseData.video_url,
-              });
-            } else {
-              console.error('Video URL is missing in completed response');
+          
+          if (status === 'processing' || status === 'in_progress') {
+            setStatusMessage('Our AI is translating and syncing the audio');
+          } else if (status === 'success') {
+            // Video is ready
+            console.log('Video translation completed! Navigating to preview...');
+            setProgress(100);
+            setStatusMessage('Video translation completed!');
+            
+            // Clear interval
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
             }
-          }, 1000);
-        } else if (status === 'failed') {
-          // Handle error
-          setStatusMessage(responseData.error || 'Video generation failed. Please try again.');
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
+
+            // Navigate to preview screen after a short delay
+            setTimeout(() => {
+              if (responseData.url) {
+                navigation.navigate('PreViewVedio', {
+                  video_url: responseData.url,
+                });
+              } else {
+                console.error('Video URL is missing in completed response');
+              }
+            }, 1000);
+          } else {
+            // Handle error
+            setStatusMessage(responseData.message || 'Video translation failed. Please try again.');
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+            }
           }
         } else {
-          console.log('Unknown status:', status);
+          console.log('No data in translate API response');
         }
       } else {
-        console.log('No data in API response');
+        // Handle regular video status response
+        if (apiResponse?.data) {
+          const responseData = apiResponse.data;
+          const status = responseData.status;
+          console.log('Status from API:', status);
+          console.log('Video URL:', responseData.video_url);
+          
+          setCurrentStatus(status);
+          
+          if (status === 'processing') {
+            setStatusMessage('Our AI is translating and syncing the audio');
+          } else if (status === 'completed') {
+            // Video is ready
+            console.log('Video completed! Navigating to preview...');
+            setProgress(100);
+            setStatusMessage('Video generation completed!');
+            
+            // Clear interval
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+            }
+
+            // Navigate to preview screen after a short delay
+            setTimeout(() => {
+              if (responseData.video_url) {
+                navigation.navigate('PreViewVedio', {
+                  video_url: responseData.video_url,
+                });
+              } else {
+                console.error('Video URL is missing in completed response');
+              }
+            }, 1000);
+          } else if (status === 'failed') {
+            // Handle error
+            setStatusMessage(responseData.error || 'Video generation failed. Please try again.');
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+            }
+          } else {
+            console.log('Unknown status:', status);
+          }
+        } else {
+          console.log('No data in API response');
+        }
       }
     } catch (error: any) {
       console.error('Error polling video status:', error);
@@ -144,7 +205,7 @@ export default function GeneratingCharacterVideo() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [videoId]);
+  }, [videoId, screenFrom]);
 
   // Simulate progress animation while processing
   useEffect(() => {

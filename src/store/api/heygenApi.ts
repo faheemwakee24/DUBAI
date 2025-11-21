@@ -72,6 +72,29 @@ export interface GenerateVideoResponse {
   message?: string;
 }
 
+export interface GenerateAv4VideoRequest {
+  image_key: string;
+  video_title: string;
+  script: string;
+  voice_id: string;
+  video_orientation: string;
+  fit: string;
+  custom_motion_prompt: string;
+  enhance_custom_motion_prompt: boolean;
+}
+
+export interface GenerateAv4VideoResponse {
+  code?: number;
+  data?: {
+    video_id: string;
+    status: string;
+    message?: string;
+  };
+  video_id?: string;
+  status?: string;
+  message?: string;
+}
+
 export interface VideoStatusResponse {
   code: number;
   data: {
@@ -119,6 +142,62 @@ export interface PhotoGenerationResponse {
   };
 }
 
+export interface VoiceLocale {
+  value: string;
+  label: string;
+  language: string;
+  tag: string | null;
+  locale: string | null;
+  language_code: string;
+}
+
+export interface GetAllVoicesLocalesResponse {
+  error: null | string;
+  data: {
+    languages: string[];
+  };
+}
+
+export interface TranslateVideoRequest {
+  video_url: string;
+  title: string;
+  output_language: string;
+  translate_audio_only: boolean;
+  speaker_num: string;
+  keep_the_same_format: boolean;
+  mode: string;
+}
+
+export interface TranslateVideoResponse {
+  error?: null | string;
+  data?: {
+    job_id?: string;
+    video_id?: string;
+    video_translate_id?: string;
+    status?: string;
+    message?: string;
+  };
+  job_id?: string;
+  video_id?: string;
+  video_translate_id?: string;
+  status?: string;
+  message?: string;
+}
+
+export interface TranslateVideoStatusResponse {
+  error: null | string;
+  data: {
+    video_translate_id: string;
+    title: string;
+    output_language: string;
+    status: string; // 'success', 'processing', etc.
+    url: string;
+    message: string | null;
+    callback_id: string | null;
+    caption_url: string | null;
+  };
+}
+
 export const heygenApi = baseApi.injectEndpoints({
   endpoints: builder => ({
     getAllAvatars: builder.query<GetAllAvatarsResponse, GetAllAvatarsRequest | void>({
@@ -138,6 +217,13 @@ export const heygenApi = baseApi.injectEndpoints({
     generateVideo: builder.mutation<GenerateVideoResponse, GenerateVideoRequest>({
       query: (body) => ({
         url: API_ENDPOINTS.HEYGEN.GENERATE_VIDEO,
+        method: 'POST',
+        body,
+      }),
+    }),
+    generateAv4Video: builder.mutation<GenerateAv4VideoResponse, GenerateAv4VideoRequest>({
+      query: (body) => ({
+        url: API_ENDPOINTS.HEYGEN.GENERATE_AV4_VIDEO,
         method: 'POST',
         body,
       }),
@@ -163,6 +249,19 @@ export const heygenApi = baseApi.injectEndpoints({
       }),
       keepUnusedDataFor: 0, // Don't cache - always fetch fresh data
     }),
+    getAllVoicesLocales: builder.query<GetAllVoicesLocalesResponse, void>({
+      query: () => ({
+        url: API_ENDPOINTS.HEYGEN.GET_ALL_VOICES_LOCALES,
+        method: 'GET',
+      }),
+    }),
+    translateVideo: builder.mutation<TranslateVideoResponse, TranslateVideoRequest>({
+      query: (body) => ({
+        url: API_ENDPOINTS.HEYGEN.VIDEO_TRANSLATE,
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 });
 
@@ -171,7 +270,11 @@ export const {
   useLazyGetAllAvatarsQuery,
   useGetAllVoicesQuery,
   useLazyGetAllVoicesQuery,
+  useGetAllVoicesLocalesQuery,
+  useLazyGetAllVoicesLocalesQuery,
   useGenerateVideoMutation,
+  useGenerateAv4VideoMutation,
+  useTranslateVideoMutation,
   useGetHeygenVideoStatusQuery,
   useLazyGetHeygenVideoStatusQuery,
   useMakeYourOwnCharacterMutation,

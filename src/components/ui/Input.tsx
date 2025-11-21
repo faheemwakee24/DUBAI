@@ -98,7 +98,23 @@ const Input = forwardRef<TextInput, InputProps>(
                 baseStyle.push(styles.errorInput);
             }
 
+            // For multiline inputs, ensure text starts at top
+            if (props.multiline) {
+                baseStyle.push(styles.multilineInput);
+            }
+
             return StyleSheet.flatten([...baseStyle, inputStyle || {}]);
+        };
+
+        const getInputContainerStyle = (): ViewStyle => {
+            const baseStyle: ViewStyle[] = [styles.inputContainer];
+            
+            // For multiline inputs, align to flex-start instead of center
+            if (props.multiline) {
+                baseStyle.push(styles.multilineInputContainer);
+            }
+            
+            return StyleSheet.flatten(baseStyle);
         };
 
         const getLabelStyle = (): TextStyle => {
@@ -166,7 +182,7 @@ const Input = forwardRef<TextInput, InputProps>(
                                 </Text>
                             )}
 
-                            <View style={styles.inputContainer}>
+                            <View style={getInputContainerStyle()}>
                                 {renderLeftIcon()}
 
                                 <TextInput
@@ -255,6 +271,9 @@ const styles = StyleSheet.create({
         color: colors.white,
 
     },
+    multilineInputContainer: {
+        alignItems: 'flex-start',
+    },
 
     // Input styles
     input: {
@@ -265,6 +284,10 @@ const styles = StyleSheet.create({
         fontSize: metrics.width(16),
         height: Platform.OS == 'android' ? metrics.width(40) : '100%',
         lineHeight: metrics.width(24),
+    },
+    multilineInput: {
+        textAlignVertical: 'top',
+        paddingTop: Platform.OS === 'android' ? metrics.width(12) : 0,
     },
     smallInput: {
         paddingVertical: 12,

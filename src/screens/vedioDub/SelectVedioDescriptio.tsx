@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -18,46 +19,58 @@ import { Svgs } from '../../assets/icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, LiquidGlassBackground } from '../../components/ui';
+import {
+  Header,
+  LiquidGlassBackground,
+  SearchableDropdown,
+  CustomDropdown,
+} from '../../components/ui';
 import { Images } from '../../assets/images';
+import {
+  useGetAllVoicesLocalesQuery,
+  useTranslateVideoMutation,
+} from '../../store/api/heygenApi';
+import type { VoiceLocale } from '../../store/api/heygenApi';
+import { useUploadVideoDubbingMutation } from '../../store/api';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   'Signup'
 >;
 
-// Language mapping to codes
-const LANGUAGE_MAP: Record<string, string> = {
-  'Spanish': 'es',
-  'Japanese': 'ja',
-  'German': 'de',
-  'French': 'fr',
-  'Urdu': 'ur',
-  'English': 'en',
-  'Hindi': 'hi',
-  'Arabic': 'ar',
-  'Chinese': 'zh',
-  'Portuguese': 'pt',
-  'Russian': 'ru',
-  'Italian': 'it',
-};
+
+
+const modeOptions = ['fast', 'quality'];
+
 
 export default function SelectVedioDescription() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const route = useRoute<RouteProp<RootStackParamList, 'SelectVedioDescription'>>();
+  const route =
+    useRoute<RouteProp<RootStackParamList, 'SelectVedioDescription'>>();
   const { video } = route.params || {};
 
   // State for dropdowns
-  const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
-  const [isVoiceDropdownOpen, setIsVoiceDropdownOpen] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('Select Language');
+  const [selectedLanguage, setSelectedLanguage] = useState('');
+  const [selectedLanguageCode, setSelectedLanguageCode] = useState('');
   const [selectedVoice, setSelectedVoice] = useState('Select Style');
+  const [selectedMode, setSelectedMode] = useState('');
 
-  // Language options
-  const languageOptions = ['Urdu', 'Spanish', 'Japanese', 'German', 'French', 'Hindi', 'Arabic'];
+  // API hooks
+  const { data: localesData, isLoading: isLoadingLocales } =
+    useGetAllVoicesLocalesQuery();
+  const [uploadVideo, { isLoading: isUploading }] =
+    useUploadVideoDubbingMutation();
+  const [translateVideo, { isLoading: isTranslating }] =
+    useTranslateVideoMutation();
 
-  // Voice style options
-  const voiceOptions = ['Female', 'Male'];
+  // Transform locales to dropdown options
+  const languageOptions = useMemo(() => {
+    if (!localesData?.data?.languages) return [];
+    return localesData.data.languages.map((language: string) => ({
+      value: language,
+      label: language,
+    }));
+  }, [localesData]);
 
   useEffect(() => {
     if (!video) {
@@ -66,14 +79,17 @@ export default function SelectVedioDescription() {
     }
   }, [video]);
 
-  const handleLanguageSelect = (language: string) => {
-    setSelectedLanguage(language);
-    setIsLanguageDropdownOpen(false);
+  const handleLanguageSelect = (value: string, option?: any) => {
+    setSelectedLanguage(option?.label || value);
+    setSelectedLanguageCode(option?.language_code || option?.locale || value);
   };
 
   const handleVoiceSelect = (voice: string) => {
     setSelectedVoice(voice);
-    setIsVoiceDropdownOpen(false);
+  };
+
+  const handleModeSelect = (mode: string) => {
+    setSelectedMode(mode);
   };
 
   const formatFileSize = (bytes?: number) => {
@@ -89,20 +105,101 @@ export default function SelectVedioDescription() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleGenerateDub = () => {
-    if (selectedLanguage === 'Select Language' || selectedVoice === 'Select Style') {
-      // Show error - both fields required
+  const handleGenerateDub = async () => {
+    if (!selectedLanguage  || !selectedMode) {
+      Alert.alert('Validation Error', 'Please fill all required fields.');
       return;
     }
 
-    const languageCode = LANGUAGE_MAP[selectedLanguage] || selectedLanguage.toLowerCase();
-    
-    // Navigate to GeneratingClone with all data
-    navigation.navigate('GeneratingClone', {
-      video: video!,
-      language: languageCode,
-      voiceStyle: selectedVoice,
-    });
+    if (!video) {
+      Alert.alert('Error', 'Video is missing.');
+      return;
+    }
+
+    try {
+      // Step 1: Upload video to get video_url
+      Alert.alert('Uploading', 'Uploading video...');
+      const uploadResult = await uploadVideo({
+        file: {
+          uri: video.uri,
+          type: video.type,
+          name: video.name,
+        },
+        language: selectedLanguageCode,
+      }).unwrap();
+
+      console.log('[SelectVedioDescription] Upload result:', uploadResult);
+
+      // Get video_url from upload response
+      // The upload API might return a video_url, or we might need to construct it
+      // For now, let's check if it's in the response, otherwise use video.uri if it's a URL
+      const videoUrl =
+        uploadResult.video_url ||
+        uploadResult.videoUrl ||
+        uploadResult.url ||
+        uploadResult?.signedUrl ||
+        (video.uri.startsWith('http') ? video.uri : null)
+        ;
+console.log('videoUrl', videoUrl);
+      if (!videoUrl) {
+        Alert.alert(
+          'Error',
+          'Failed to get video URL. Please try again.',
+        );
+        return;
+      }
+
+      // Step 2: Call translate API
+      console.log('bodyyyy', {
+        video_url: videoUrl,
+        title: video.name || 'Translated Video',
+        output_language: selectedLanguageCode,
+        translate_audio_only: false,
+        speaker_num: '1',
+        keep_the_same_format: false,
+        mode: selectedMode,
+      });
+      
+      const translateResult = await translateVideo({
+        video_url: videoUrl,
+        title: video.name || 'Translated Video',
+        output_language: selectedLanguageCode,
+        translate_audio_only: false,
+        speaker_num: '1',
+        keep_the_same_format: false,
+        mode: selectedMode,
+      }).unwrap();
+
+      console.log('[SelectVedioDescription] Translate result:', translateResult);
+
+      // Extract video_translate_id from response
+      const videoTranslateId =
+        translateResult.data?.video_translate_id ||
+        translateResult.video_translate_id;
+
+      if (videoTranslateId) {
+        // Navigate to GeneratingCharacterVideo with translate ID and screenFrom
+        navigation.navigate('GeneratingCharacterVideo', {
+          videoId: videoTranslateId,
+          screenFrom: 'translating',
+        });
+      } else {
+        Alert.alert(
+          'Error',
+          translateResult.message ||
+            translateResult.data?.message ||
+            'Failed to start translation. Please try again.',
+        );
+      }
+    } catch (error: any) {
+      console.error('[SelectVedioDescription] Error:', error);
+      Alert.alert(
+        'Error',
+        error?.data?.message ||
+          error?.message ||
+          'Failed to process video. Please try again.',
+      );
+    }
   };
 
   return (
@@ -139,88 +236,29 @@ export default function SelectVedioDescription() {
               <Text style={styles.value1}>English (US)</Text>
             </View>
           </LiquidGlassBackground>
-          <LiquidGlassBackground style={styles.liquidCotaier2}>
-            <TouchableOpacity
-              style={styles.descriptionContainer}
-              onPress={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
-            >
-              <Text style={styles.title2}>Target Language *</Text>
-              <View style={styles.roww2}>
-                <Text style={styles.value1}>{selectedLanguage}</Text>
-                <Svgs.ArrowDown
-                  style={[
-                    styles.arrowIcon,
-                    isLanguageDropdownOpen && styles.arrowIconRotated,
-                  ]}
-                />
-              </View>
-            </TouchableOpacity>
-          </LiquidGlassBackground>
-          {isLanguageDropdownOpen && (
-            <LiquidGlassBackground style={styles.dropdownContainer}>
-              <View style={styles.descriptionContainer2}>
-                {languageOptions.map((language, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.dropdownItemContainer}
-                    onPress={() => handleLanguageSelect(language)}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdowItem,
-                        selectedLanguage === language && styles.selectedItem,
-                      ]}
-                    >
-                      {language}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </LiquidGlassBackground>
-          )}
-          <LiquidGlassBackground style={styles.liquidCotaier2}>
-            <TouchableOpacity
-              style={styles.descriptionContainer}
-              onPress={() => setIsVoiceDropdownOpen(!isVoiceDropdownOpen)}
-            >
-              <Text style={styles.title2}>Voice Style *</Text>
-              <View style={styles.roww2}>
-                <Text style={styles.value1}>{selectedVoice}</Text>
-                <Svgs.ArrowDown
-                  style={[
-                    styles.arrowIcon,
-                    isVoiceDropdownOpen && styles.arrowIconRotated,
-                  ]}
-                />
-              </View>
-            </TouchableOpacity>
-          </LiquidGlassBackground>
-          {isVoiceDropdownOpen && (
-            <LiquidGlassBackground style={styles.dropdownContainer}>
-              <View style={styles.descriptionContainer2}>
-                {voiceOptions.map((voice, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.dropdownItemContainer}
-                    onPress={() => handleVoiceSelect(voice)}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdowItem,
-                        selectedVoice === voice && styles.selectedItem,
-                      ]}
-                    >
-                      {voice}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </LiquidGlassBackground>
-          )}
+          <SearchableDropdown
+            title="Target Language *"
+            options={languageOptions}
+            selectedValue={selectedLanguage}
+            onSelect={handleLanguageSelect}
+            placeholder="Select Language"
+            required
+            searchPlaceholder="Search language..."
+          />
+          <CustomDropdown
+            title="Mode *"
+            options={modeOptions}
+            selectedValue={selectedMode}
+            onSelect={handleModeSelect}
+            placeholder="Select Mode"
+            required
+          />
         </ScrollView>
         <PrimaryButton
           title="Generate Dub"
           onPress={handleGenerateDub}
+          loading={isUploading || isTranslating}
+          disabled={isUploading || isTranslating}
         />
       </SafeAreaView>
     </ScreenBackground>

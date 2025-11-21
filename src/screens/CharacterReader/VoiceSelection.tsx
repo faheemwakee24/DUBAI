@@ -32,8 +32,9 @@ const ITEMS_PER_PAGE = 10;
 export default function VoiceSelection() {
   const navigation = useNavigation<VoiceSelectionNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'VoiceSelection'>>();
-  const { avatarId } = route?.params as { avatarId: string };
+  const { avatarId, screenFrom } = route?.params as { avatarId: string, screenFrom?: string };
   console.log('avatarId', avatarId);
+  console.log('screenFrom', screenFrom);
   const [currentPage, setCurrentPage] = useState(1);
   const [allVoices, setAllVoices] = useState<HeygenVoice[]>([]);
   const [hasMorePages, setHasMorePages] = useState(true);
@@ -192,6 +193,7 @@ export default function VoiceSelection() {
           navigation.navigate('DescribeCharacter', {
             avatarId,
             voiceId: voice.voice_id,
+            screenFrom,
           });
         }}
         activeOpacity={0.7}

@@ -61,7 +61,7 @@ export const videoDubbingApi = baseApi.injectEndpoints({
             type: file.type,
             name: file.name,
           } as any);
-console.log('file', file);
+
           // Prepare headers - don't set Content-Type for FormData
           // React Native will automatically set it with boundary for multipart/form-data
           const headers: Record<string, string> = {
@@ -73,7 +73,7 @@ console.log('file', file);
           }
 
           // Make the fetch request directly to handle FormData properly
-          const uploadUrl = `${API_BASE_URL}${API_VERSION_PREFIX}/video-dubbing/upload?language=${encodeURIComponent(language)}`;
+          const uploadUrl = `${API_BASE_URL}${API_VERSION_PREFIX}/gcp/upload`;
           console.log('[VideoDubbingAPI] Uploading video to:', uploadUrl);
           console.log('[VideoDubbingAPI] Upload headers:', headers);
           console.log('[VideoDubbingAPI] File info:', { uri: file.uri, type: file.type, name: file.name });
