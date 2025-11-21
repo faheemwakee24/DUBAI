@@ -95,6 +95,19 @@ export const projectsApi = baseApi.injectEndpoints({
         url: API_ENDPOINTS.PROJECT.LIST,
         method: 'GET',
       }),
+      transformResponse: (response: Project[] | { data: Project[] } | { projects: Project[] }) => {
+        // Handle different response formats
+        if (Array.isArray(response)) {
+          return response;
+        }
+        if ('data' in response && Array.isArray(response.data)) {
+          return response.data;
+        }
+        if ('projects' in response && Array.isArray(response.projects)) {
+          return response.projects;
+        }
+        return [];
+      },
       providesTags: ['Project'],
     }),
 

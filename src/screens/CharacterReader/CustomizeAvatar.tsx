@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import { FontFamily } from '../../constants/fonts';
@@ -16,15 +10,14 @@ import { Svgs } from '../../assets/icons';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  Header,
-  CustomDropdown,
-  Input,
-} from '../../components/ui';
+import { Header, CustomDropdown, Input } from '../../components/ui';
 import {
   useMakeYourOwnCharacterMutation,
   useLazyGetPhotoGenerationQuery,
 } from '../../store/api/heygenApi';
+import { useGetProjectsQuery } from '../../store/api/projectsApi';
+import type { Project } from '../../store/api/projectsApi';
+import { showToast } from '../../utils/toast';
 
 type CustomizeAvatarNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -40,6 +33,7 @@ export default function CustomizeAvatar() {
   const [selectedOrientation, setSelectedOrientation] = useState('');
   const [selectedPersonality, setSelectedPersonality] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('');
+  const [selectedProject, setSelectedProject] = useState<string>('');
   const [description, setDescription] = useState('');
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -49,7 +43,11 @@ export default function CustomizeAvatar() {
   const [makeYourOwnCharacter, { isLoading: isCreatingCharacter }] =
     useMakeYourOwnCharacterMutation();
   const [getPhotoGeneration] = useLazyGetPhotoGenerationQuery();
-  
+
+  // Fetch projects
+  const { data: projects = [], isLoading: isLoadingProjects } =
+    useGetProjectsQuery();
+
   // Options for all dropdowns
   const ageOptions = [
     'Young Adult',
@@ -83,7 +81,7 @@ export default function CustomizeAvatar() {
     'Unspecified',
   ];
   const handleCharacterSelect = (characterId: number) => {};
-  
+
   // Handler functions for all dropdowns
   const handleAgeSelect = (age: string) => {
     setSelectedAge(age);
@@ -102,6 +100,9 @@ export default function CustomizeAvatar() {
   };
   const handleStyleSelect = (style: string) => {
     setSelectedStyle(style);
+  };
+  const handleProjectSelect = (projectId: string) => {
+    setSelectedProject(projectId);
   };
 
   // Poll photo generation status
@@ -125,7 +126,10 @@ export default function CustomizeAvatar() {
         } else if (status === 'failed') {
           // Generation failed
           setIsGenerating(false);
-          Alert.alert('Error', 'Character generation failed. Please try again.');
+          showToast.error(
+            'Error',
+            'Character generation failed. Please try again.',
+          );
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -141,12 +145,23 @@ export default function CustomizeAvatar() {
   // Handle Next button press
   const handleNext = async () => {
     // Validation
-    if (!description.trim()) {
-      Alert.alert('Description Required', 'Please enter a description.');
+    if (!selectedProject) {
+      showToast.error('Project Required', 'Please select a project.');
       return;
     }
-    if (!selectedAge || !selectedGender || !selectedEthnicity || !selectedOrientation || !selectedPersonality || !selectedStyle) {
-      Alert.alert('All Fields Required', 'Please select all options.');
+    if (!description.trim()) {
+      showToast.error('Description Required', 'Please enter a description.');
+      return;
+    }
+    if (
+      !selectedAge ||
+      !selectedGender ||
+      !selectedEthnicity ||
+      !selectedOrientation ||
+      !selectedPersonality ||
+      !selectedStyle
+    ) {
+      showToast.error('All Fields Required', 'Please select all options.');
       return;
     }
 
@@ -164,11 +179,12 @@ export default function CustomizeAvatar() {
         pose: selectedPersonality,
         style: selectedStyle,
         appearance: description.trim(),
+        project_id: selectedProject || undefined,
       }).unwrap();
 
       const genId = response.data?.generation_id;
       if (!genId) {
-        Alert.alert('Error', 'Failed to start character generation.');
+        showToast.error('Error', 'Failed to start character generation.');
         setIsGenerating(false);
         return;
       }
@@ -179,6 +195,7 @@ export default function CustomizeAvatar() {
       // The screen will handle polling
       navigation.navigate('GeneratedCharacters', {
         generationId: genId,
+        projectId: selectedProject || undefined,
       });
 
       // Continue polling in background (will stop when success)
@@ -188,9 +205,11 @@ export default function CustomizeAvatar() {
       }, 4000);
     } catch (error: any) {
       console.error('Error creating character:', error);
-      Alert.alert(
+      showToast.error(
         'Error',
-        error?.data?.message || error?.message || 'Failed to create character. Please try again.'
+        error?.data?.message ||
+          error?.message ||
+          'Failed to create character. Please try again.',
       );
       setIsGenerating(false);
     }
@@ -210,12 +229,7 @@ export default function CustomizeAvatar() {
         <Header
           title="Character Reader"
           showBackButton
-          RigthIcon={
-            <Svgs.HistoryIcon
-              height={metrics.width(20)}
-              width={metrics.width(20)}
-            />
-          }
+         
         />
         <ScrollView
           style={styles.scrollView}
@@ -239,7 +253,26 @@ export default function CustomizeAvatar() {
                 containerStyle={{ alignItems: 'flex-start' }}
                 multiline
               />
-
+              <CustomDropdown
+                title="Project"
+                options={projects.map((project: Project) => project.name)}
+                selectedValue={
+                  projects.find((p: Project) => p.id === selectedProject)
+                    ?.name || ''
+                }
+                onSelect={(projectName: string) => {
+                  const project = projects.find(
+                    (p: Project) => p.name === projectName,
+                  );
+                  if (project) {
+                    handleProjectSelect(project.id);
+                  }
+                }}
+                placeholder={
+                  isLoadingProjects ? 'Loading projects...' : 'Select Project'
+                }
+                required
+              />
               <CustomDropdown
                 title="Age"
                 options={ageOptions}
@@ -247,7 +280,7 @@ export default function CustomizeAvatar() {
                 onSelect={handleAgeSelect}
                 placeholder="Select Age"
               />
-              
+
               <CustomDropdown
                 title="Gender"
                 options={genderOptions}
@@ -255,7 +288,7 @@ export default function CustomizeAvatar() {
                 onSelect={handleGenderSelect}
                 placeholder="Select Gender"
               />
-              
+
               <CustomDropdown
                 title="Ethnicity"
                 options={ethnicityOptions}
@@ -263,7 +296,7 @@ export default function CustomizeAvatar() {
                 onSelect={handleEthnicitySelect}
                 placeholder="Select Ethnicity"
               />
-              
+
               <CustomDropdown
                 title="Orientation"
                 options={orientationOptions}
@@ -271,7 +304,7 @@ export default function CustomizeAvatar() {
                 onSelect={handleOrientationSelect}
                 placeholder="Select Orientation"
               />
-              
+
               <CustomDropdown
                 title="Personality"
                 options={personalityOptions}
@@ -279,7 +312,7 @@ export default function CustomizeAvatar() {
                 onSelect={handlePersonalitySelect}
                 placeholder="Select Personality"
               />
-              
+
               <CustomDropdown
                 title="Style"
                 options={styleOptions}

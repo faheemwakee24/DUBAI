@@ -60,6 +60,7 @@ export interface GenerateVideoRequest {
   input_text: string;
   emotion: string;
   speed: string;
+  project_id?: string;
 }
 
 export interface GenerateVideoResponse {
@@ -81,6 +82,7 @@ export interface GenerateAv4VideoRequest {
   fit: string;
   custom_motion_prompt: string;
   enhance_custom_motion_prompt: boolean;
+  project_id?: string;
 }
 
 export interface GenerateAv4VideoResponse {
@@ -122,6 +124,7 @@ export interface MakeYourOwnCharacterRequest {
   pose: string;
   style: string;
   appearance: string;
+  project_id?: string;
 }
 
 export interface MakeYourOwnCharacterResponse {
@@ -166,6 +169,7 @@ export interface TranslateVideoRequest {
   speaker_num: string;
   keep_the_same_format: boolean;
   mode: string;
+  project_id?: string;
 }
 
 export interface TranslateVideoResponse {

@@ -258,12 +258,7 @@ export default function ChoseCharacter() {
         <Header
           title="Chose Character"
           showBackButton
-          RigthIcon={
-            <Svgs.HistoryIcon
-              height={metrics.width(20)}
-              width={metrics.width(20)}
-            />
-          }
+          
         />
         <FlatList
           data={isLoading && avatars.length === 0 ? shimmerRows : avatarRows}

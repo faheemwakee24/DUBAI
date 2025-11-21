@@ -129,7 +129,7 @@ export default function UploadVedio() {
               )}
               {selectedVideo && (
                 <View style={styles.videoInfoContainer}>
-                  <Text style={styles.videoInfoText} numberOfLines={1}>
+                  <Text style={styles.videoInfoText} numberOfLines={1} ellipsizeMode='middle'>
                     {selectedVideo.name}
                   </Text>
                   <View style={styles.videoMetaRow}>
@@ -290,6 +290,8 @@ const styles = StyleSheet.create({
     fontSize: metrics.width(14),
     color: colors.white,
     textAlign: 'center',
+    maxWidth:'80%',
+    alignSelf:'center',
   },
   videoMetaRow: {
     flexDirection: 'row',

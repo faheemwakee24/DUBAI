@@ -6,8 +6,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { StatusBar, View, StyleSheet } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar, View, StyleSheet, Platform } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import Toast from 'react-native-toast-message';
 import { StripeProvider } from '@stripe/stripe-react-native';
@@ -40,7 +40,7 @@ function App() {
             ) : (
               <>
                 <AppContent />
-                <Toast config={toastConfig} />
+                <ToastWrapper />
               </>
             )}
           </View>
@@ -48,6 +48,16 @@ function App() {
       </StripeProvider>
     </Provider>
   );
+}
+
+function ToastWrapper() {
+  const insets = useSafeAreaInsets();
+  // iOS needs safe area inset + padding, Android needs status bar height + padding
+  const topOffset = Platform.OS === 'ios' 
+    ? Math.max(insets.top + 10, 50) 
+    : Math.max(insets.top + 10, 40);
+  
+  return <Toast config={toastConfig} topOffset={topOffset} />;
 }
 
 function AppContent() {

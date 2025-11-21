@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import { FontFamily } from '../../constants/fonts';
@@ -15,6 +15,9 @@ import {
   useGenerateVideoMutation,
   useGenerateAv4VideoMutation,
 } from '../../store/api/heygenApi';
+import { useGetProjectsQuery } from '../../store/api/projectsApi';
+import type { Project } from '../../store/api/projectsApi';
+import { showToast } from '../../utils/toast';
 
 type DescribeCharacterNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -24,7 +27,7 @@ type DescribeCharacterNavigationProp = NativeStackNavigationProp<
 export default function DescribeCharacter() {
   const navigation = useNavigation<DescribeCharacterNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'DescribeCharacter'>>();
-  const { avatarId, voiceId, screenFrom } = route.params;
+  const { avatarId, voiceId, screenFrom, projectId } = route.params;
   console.log('screenFrom', screenFrom);
   console.log('avatarId', avatarId);
   console.log('voiceId', voiceId);
@@ -34,6 +37,10 @@ export default function DescribeCharacter() {
   const [generateAv4Video, { isLoading: isGeneratingAv4 }] =
     useGenerateAv4VideoMutation();
 
+  // Fetch projects
+  const { data: projects = [], isLoading: isLoadingProjects } =
+    useGetProjectsQuery();
+
   // State for all dropdowns
   const [selectedVoiceTone, setSelectedVoiceTone] = useState('');
   const [speed, setSpeed] = useState('');
@@ -42,6 +49,9 @@ export default function DescribeCharacter() {
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedVideoOrientation, setSelectedVideoOrientation] = useState('');
   const [selectedFit, setSelectedFit] = useState('');
+  const [selectedProject, setSelectedProject] = useState<string>(
+    projectId || '',
+  );
 
   // Options for all dropdowns
   const voiceToneOptions = [
@@ -84,10 +94,14 @@ export default function DescribeCharacter() {
     setSelectedFit(fitValue);
   };
 
+  const handleProjectSelect = (projectId: string) => {
+    setSelectedProject(projectId);
+  };
+
   const handlePreview = async () => {
     // Validate required fields
     if (!message.trim()) {
-      Alert.alert('Validation Error', 'Please enter a message.');
+      showToast.error('Validation Error', 'Please enter a message.');
       return;
     }
 
@@ -97,12 +111,16 @@ export default function DescribeCharacter() {
 
       if (screenFrom === 'GeneratedCharacters') {
         // Validate AV4 specific fields
+        if (!selectedProject) {
+          showToast.error('Validation Error', 'Please select a project.');
+          return;
+        }
         if (!selectedVideoOrientation) {
-          Alert.alert('Validation Error', 'Please select video orientation.');
+          showToast.error('Validation Error', 'Please select video orientation.');
           return;
         }
         if (!selectedFit) {
-          Alert.alert('Validation Error', 'Please select fit.');
+          showToast.error('Validation Error', 'Please select fit.');
           return;
         }
 
@@ -116,6 +134,7 @@ export default function DescribeCharacter() {
           fit: selectedFit,
           custom_motion_prompt: 'just go with the text', // Default as per example
           enhance_custom_motion_prompt: false,
+          project_id: selectedProject || projectId || undefined,
         }).unwrap();
 
         // Handle AV4 response structure
@@ -125,23 +144,24 @@ export default function DescribeCharacter() {
           (response as any).data?.id;
       } else {
         // Validate original fields
-    if (!selectedVoiceTone) {
-      Alert.alert('Validation Error', 'Please select an emotion.');
-      return;
-    }
-    if (!speed) {
-      Alert.alert('Validation Error', 'Please select a speed.');
-      return;
-    }
+        if (!selectedVoiceTone) {
+          showToast.error('Validation Error', 'Please select an emotion.');
+          return;
+        }
+        if (!speed) {
+          showToast.error('Validation Error', 'Please select a speed.');
+          return;
+        }
 
         // Call original generate API
         response = await generateVideo({
-        avatar_id: avatarId,
-        voice_id: voiceId,
-        input_text: message,
-        emotion: selectedVoiceTone,
-        speed: speed.replace('x', ''), // Remove 'x' from speed (e.g., '1x' -> '1')
-      }).unwrap();
+          avatar_id: avatarId,
+          voice_id: voiceId,
+          input_text: message,
+          emotion: selectedVoiceTone,
+          speed: speed.replace('x', ''), // Remove 'x' from speed (e.g., '1x' -> '1')
+          project_id: projectId || undefined,
+        }).unwrap();
 
         // Handle original response structure
         videoId =
@@ -158,14 +178,14 @@ export default function DescribeCharacter() {
           videoId: String(videoId),
         });
       } else {
-        Alert.alert(
+        showToast.error(
           'Error',
           response.message || 'Failed to generate video. Please try again.',
         );
       }
     } catch (error: any) {
       console.error('[DescribeCharacter] Generate video error:', error);
-      Alert.alert(
+      showToast.error(
         'Error',
         error?.data?.message ||
           error?.message ||
@@ -180,12 +200,7 @@ export default function DescribeCharacter() {
         <Header
           title="Character Reader"
           showBackButton
-          RigthIcon={
-            <Svgs.HistoryIcon
-              height={metrics.width(20)}
-              width={metrics.width(20)}
-            />
-          }
+         
         />
         <ScrollView
           style={styles.scrollView}
@@ -209,8 +224,9 @@ export default function DescribeCharacter() {
                 containerStyle={{ alignItems: 'flex-start' }}
                 multiline
               />
-              {screenFrom === 'GeneratedCharacters' ? (
+              {screenFrom == 'GeneratedCharacters' ? (
                 <>
+                  
                   <CustomDropdown
                     title="Video Orientation"
                     options={vedioOriettation}
@@ -228,6 +244,28 @@ export default function DescribeCharacter() {
                 </>
               ) : (
                 <>
+                <CustomDropdown
+                    title="Project"
+                    options={projects.map((project: Project) => project.name)}
+                    selectedValue={
+                      projects.find((p: Project) => p.id === selectedProject)
+                        ?.name || ''
+                    }
+                    onSelect={(projectName: string) => {
+                      const project = projects.find(
+                        (p: Project) => p.name === projectName,
+                      );
+                      if (project) {
+                        handleProjectSelect(project.id);
+                      }
+                    }}
+                    placeholder={
+                      isLoadingProjects
+                        ? 'Loading projects...'
+                        : 'Select Project'
+                    }
+                    required
+                  />
               <CustomDropdown
                 title="Emotios"
                 options={voiceToneOptions}

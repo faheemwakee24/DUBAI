@@ -32,7 +32,7 @@ const ITEMS_PER_PAGE = 10;
 export default function VoiceSelection() {
   const navigation = useNavigation<VoiceSelectionNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'VoiceSelection'>>();
-  const { avatarId, screenFrom } = route?.params as { avatarId: string, screenFrom?: string };
+  const { avatarId, screenFrom, projectId } = route?.params as { avatarId: string; screenFrom?: string; projectId?: string };
   console.log('avatarId', avatarId);
   console.log('screenFrom', screenFrom);
   const [currentPage, setCurrentPage] = useState(1);
@@ -194,6 +194,7 @@ export default function VoiceSelection() {
             avatarId,
             voiceId: voice.voice_id,
             screenFrom,
+            projectId,
           });
         }}
         activeOpacity={0.7}
@@ -305,12 +306,7 @@ export default function VoiceSelection() {
         <Header
           title="Voice Selection"
           showBackButton
-          RigthIcon={
-            <Svgs.HistoryIcon
-              height={metrics.width(20)}
-              width={metrics.width(20)}
-            />
-          }
+          
         />
         <FlatList
           data={isLoading && voices.length === 0 ? shimmerRows : voices}

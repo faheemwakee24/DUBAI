@@ -131,7 +131,7 @@ export default function SearchableDropdown({
               placeholderTextColor={colors.subtitle}
               value={searchQuery}
               onChangeText={setSearchQuery}
-              autoFocus={true}
+              
             />
           </View>
           <View style={styles.listWrapper}>

@@ -26,6 +26,8 @@ import { Images } from '../../assets/images';
 import { tokenStorage } from '../../utils/tokenStorage';
 import { useGetProfileQuery } from '../../store/api/authApi';
 import { User } from '../../store/api/authApi';
+import { useGetProjectsQuery } from '../../store/api/projectsApi';
+import { showToast } from '../../utils/toast';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -36,6 +38,7 @@ export default function Dashboard() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const [user, setUser] = useState<User | null>(null);
   const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
+  const { data: projects = [], isLoading: isLoadingProjects } = useGetProjectsQuery();
 
   useEffect(() => {
     // Load user from storage on mount
@@ -82,6 +85,38 @@ export default function Dashboard() {
       return { uri: user.avatar };
     }
     return Images.DefaultProfile;
+  };
+
+  // Handle Video Dubbing create
+  const handleVideoDubbingCreate = () => {
+    if (isLoadingProjects) {
+      return; // Wait for projects to load
+    }
+    if (!projects || projects.length === 0) {
+      showToast.error(
+        'No Projects',
+        'Please create a project first before creating video dubbing.',
+      );
+      navigation.navigate('NewProject');
+      return;
+    }
+    navigation.navigate('UploadVedio');
+  };
+
+  // Handle Character Reader create
+  const handleCharacterReaderCreate = () => {
+    if (isLoadingProjects) {
+      return; // Wait for projects to load
+    }
+    if (!projects || projects.length === 0) {
+      showToast.error(
+        'No Projects',
+        'Please create a project first before creating character reader.',
+      );
+      navigation.navigate('NewProject');
+      return;
+    }
+    navigation.navigate('ChoseCharacter');
   };
 
   return (
@@ -149,7 +184,7 @@ export default function Dashboard() {
                 </Text>
               </View>
               <View style={styles.row}>
-                <TouchableOpacity onPress={()=>navigation.navigate('UploadVedio')} style={styles.createButtonContainer}>
+                <TouchableOpacity onPress={handleVideoDubbingCreate} style={styles.createButtonContainer}>
                   <Text style={styles.createButton}>Create</Text>
                 </TouchableOpacity>
               </View>
@@ -163,7 +198,7 @@ export default function Dashboard() {
                 </Text>
               </View>
               <View style={styles.row}>
-                <TouchableOpacity onPress={()=>navigation.navigate('ChoseCharacter')} style={styles.createButtonContainer}>
+                <TouchableOpacity onPress={handleCharacterReaderCreate} style={styles.createButtonContainer}>
                   <Text style={styles.createButton}>Create</Text>
                 </TouchableOpacity>
               </View>

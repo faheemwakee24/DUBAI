@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -32,6 +31,9 @@ import {
 } from '../../store/api/heygenApi';
 import type { VoiceLocale } from '../../store/api/heygenApi';
 import { useUploadVideoDubbingMutation } from '../../store/api';
+import { useGetProjectsQuery } from '../../store/api/projectsApi';
+import type { Project } from '../../store/api/projectsApi';
+import { showToast } from '../../utils/toast';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -54,10 +56,13 @@ export default function SelectVedioDescription() {
   const [selectedLanguageCode, setSelectedLanguageCode] = useState('');
   const [selectedVoice, setSelectedVoice] = useState('Select Style');
   const [selectedMode, setSelectedMode] = useState('');
+  const [selectedProject, setSelectedProject] = useState<string>('');
 
   // API hooks
   const { data: localesData, isLoading: isLoadingLocales } =
     useGetAllVoicesLocalesQuery();
+  const { data: projects = [], isLoading: isLoadingProjects } =
+    useGetProjectsQuery();
   const [uploadVideo, { isLoading: isUploading }] =
     useUploadVideoDubbingMutation();
   const [translateVideo, { isLoading: isTranslating }] =
@@ -92,6 +97,10 @@ export default function SelectVedioDescription() {
     setSelectedMode(mode);
   };
 
+  const handleProjectSelect = (projectId: string) => {
+    setSelectedProject(projectId);
+  };
+
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return '0 MB';
     const mb = bytes / (1024 * 1024);
@@ -106,19 +115,18 @@ export default function SelectVedioDescription() {
   };
 
   const handleGenerateDub = async () => {
-    if (!selectedLanguage  || !selectedMode) {
-      Alert.alert('Validation Error', 'Please fill all required fields.');
+    if (!selectedLanguage || !selectedMode || !selectedProject) {
+      showToast.error('Validation Error', 'Please fill all required fields.');
       return;
     }
 
     if (!video) {
-      Alert.alert('Error', 'Video is missing.');
+      showToast.error('Error', 'Video is missing.');
       return;
     }
 
     try {
       // Step 1: Upload video to get video_url
-      Alert.alert('Uploading', 'Uploading video...');
       const uploadResult = await uploadVideo({
         file: {
           uri: video.uri,
@@ -142,10 +150,7 @@ export default function SelectVedioDescription() {
         ;
 console.log('videoUrl', videoUrl);
       if (!videoUrl) {
-        Alert.alert(
-          'Error',
-          'Failed to get video URL. Please try again.',
-        );
+        showToast.error('Error', 'Failed to get video URL. Please try again.');
         return;
       }
 
@@ -168,6 +173,7 @@ console.log('videoUrl', videoUrl);
         speaker_num: '1',
         keep_the_same_format: false,
         mode: selectedMode,
+        project_id: selectedProject,
       }).unwrap();
 
       console.log('[SelectVedioDescription] Translate result:', translateResult);
@@ -184,7 +190,7 @@ console.log('videoUrl', videoUrl);
           screenFrom: 'translating',
         });
       } else {
-        Alert.alert(
+        showToast.error(
           'Error',
           translateResult.message ||
             translateResult.data?.message ||
@@ -193,7 +199,7 @@ console.log('videoUrl', videoUrl);
       }
     } catch (error: any) {
       console.error('[SelectVedioDescription] Error:', error);
-      Alert.alert(
+      showToast.error(
         'Error',
         error?.data?.message ||
           error?.message ||
@@ -215,7 +221,7 @@ console.log('videoUrl', videoUrl);
             <View style={styles.imageContainer}>
               <Image source={Images.VedioIcon} style={styles.vedioIcon} />
               <View style={styles.textContainer}>
-                <Text style={styles.title} numberOfLines={1}>
+                <Text style={styles.title} numberOfLines={1} ellipsizeMode='middle'>
                   {video?.name || 'video.mp4'}
                 </Text>
                 <View style={styles.roww}>
@@ -230,12 +236,27 @@ console.log('videoUrl', videoUrl);
               </View>
             </View>
           </LiquidGlassBackground>
-          <LiquidGlassBackground style={styles.liquidCotaier2}>
-            <View style={styles.descriptionContainer}>
-              <Text style={styles.title2}>Detected Language</Text>
-              <Text style={styles.value1}>English (US)</Text>
-            </View>
-          </LiquidGlassBackground>
+
+          <CustomDropdown
+            title="Project *"
+            options={projects.map((project: Project) => project.name)}
+            selectedValue={
+              projects.find((p: Project) => p.id === selectedProject)?.name ||
+              ''
+            }
+            onSelect={(projectName: string) => {
+              const project = projects.find(
+                (p: Project) => p.name === projectName,
+              );
+              if (project) {
+                handleProjectSelect(project.id);
+              }
+            }}
+            placeholder={
+              isLoadingProjects ? 'Loading projects...' : 'Select Project'
+            }
+            required
+          />
           <SearchableDropdown
             title="Target Language *"
             options={languageOptions}
@@ -291,6 +312,7 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.spaceGrotesk.bold,
     fontSize: metrics.width(15),
     color: colors.white,
+    maxWidth:'80%'
   },
   subtitle: {
     fontFamily: FontFamily.spaceGrotesk.regular,

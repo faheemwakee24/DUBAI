@@ -32,6 +32,7 @@ export default function GeneratedCharacters() {
   const route = useRoute<RouteProp<RootStackParamList, 'GeneratedCharacters'>>();
   const generationId = route.params?.generationId;
   const initialImageUrls = route.params?.imageUrls;
+  const projectId = route.params?.projectId;
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [imageUrls, setImageUrls] = useState<string[]>(initialImageUrls || []);
   const [imageKeys, setImageKeys] = useState<string[]>([]);
@@ -233,7 +234,11 @@ export default function GeneratedCharacters() {
     const selectedImageKey = imageKeys[selectedImageIndex];
     // Navigate to next screen with selected image key
     if (selectedImageKey) {
-      navigation.navigate('VoiceSelection', { avatarId: selectedImageKey, screenFrom: 'GeneratedCharacters' });
+      navigation.navigate('VoiceSelection', { 
+        avatarId: selectedImageKey, 
+        screenFrom: 'GeneratedCharacters',
+        projectId: projectId,
+      });
     } else {
       Alert.alert('Error', 'Image key not available. Please try again.');
     }
