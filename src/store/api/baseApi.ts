@@ -14,6 +14,7 @@ export const baseApi = createApi({
       // Get auth token from AsyncStorage
       const {tokenStorage} = await import('../../utils/tokenStorage');
       const token = await tokenStorage.getAccessToken();
+      console.log('token', token);
       
       if (token) {
         headers.set('authorization', `Bearer ${token}`);

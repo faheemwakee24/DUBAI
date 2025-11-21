@@ -52,6 +52,28 @@ export interface ProjectsResponse {
   limit?: number;
 }
 
+// Project Video interface based on API response
+export interface ProjectVideo {
+  id: string;
+  video_id: string;
+  avatar_id: string;
+  voice_id: string;
+  input_text: string;
+  emotion: string;
+  speed: string;
+  avatar_photo_url: string;
+  status: string;
+  video_url: string;
+  gif_download_url: string;
+  video_share_page_url: string;
+  gcs_video_url: string | null;
+  gcs_signed_url: string;
+  gcs_gif_url: string | null;
+  gcs_gif_signed_url: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /**
  * Projects API slice
  */
@@ -106,6 +128,15 @@ export const projectsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Project'],
     }),
+
+    // Get Project Videos
+    getProjectVideos: builder.query<ProjectVideo[], string>({
+      query: projectId => ({
+        url: API_ENDPOINTS.PROJECT.VIDEOS(projectId),
+        method: 'GET',
+      }),
+      providesTags: ['Project'],
+    }),
   }),
 });
 
@@ -114,6 +145,8 @@ export const {
   useCreateProjectMutation,
   useGetProjectsQuery,
   useGetProjectQuery,
+  useGetProjectVideosQuery,
+  useLazyGetProjectVideosQuery,
   useUpdateProjectMutation,
   useDeleteProjectMutation,
 } = projectsApi;

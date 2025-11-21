@@ -42,6 +42,7 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string) => `/projects/${id}`,
     UPDATE: (id: string) => `/projects/${id}`,
     DELETE: (id: string) => `/projects/${id}`,
+    VIDEOS: (id: string) => `/projects/${id}/videos`,
   },
   // Video endpoints (add based on your Swagger docs)
   VIDEO: {

@@ -38,7 +38,7 @@ export default function RecentProjects() {
   const renderProjectItem = ({ item }: { item: Project }) => (
     <LiquidGlassBackground
       style={styles.ProjectOuterContainer}
-      onPress={() => navigation.navigate('ProjectVedios')}
+      onPress={() => navigation.navigate('ProjectVedios', { projectId: item.id })}
       disabled={false}
     >
       <View style={styles.projectInnerContainer}>
@@ -91,6 +91,7 @@ export default function RecentProjects() {
   );
 
   // Handler functions for all dropdowns
+console.log('projects', projects);
 
   return (
     <ScreenBackground style={styles.container}>

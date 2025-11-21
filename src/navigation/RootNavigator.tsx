@@ -82,7 +82,7 @@ export type RootStackParamList = {
   GeneratingCharacterVideo: { videoId: string,screenFrom?: string };
   GeneratedCharacters: { generationId?: string; imageUrls?: string[] };
   RecentProjects:undefined;
-  ProjectVedios:undefined;
+  ProjectVedios: { projectId: string };
   NewProject:undefined;
   Subscription:undefined;
   SubsCriptionDetail:{ plan: SubscriptionPlan };
