@@ -23,6 +23,10 @@ target 'DubAI' do
   # Add Firebase pods with modular headers
   pod 'Firebase/Auth', :modular_headers => true
   pod 'Firebase/Core', :modular_headers => true
+  
+  # Add WebP support for iOS using SDWebImage
+  pod 'SDWebImage', '~> 5.18'
+  pod 'SDWebImageWebPCoder', '~> 0.13'
 
   post_install do |installer|
     react_native_post_install(

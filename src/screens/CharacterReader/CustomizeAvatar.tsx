@@ -49,7 +49,7 @@ export default function CustomizeAvatar() {
   const [makeYourOwnCharacter, { isLoading: isCreatingCharacter }] =
     useMakeYourOwnCharacterMutation();
   const [getPhotoGeneration] = useLazyGetPhotoGenerationQuery();
-
+  
   // Options for all dropdowns
   const ageOptions = [
     'Young Adult',
@@ -83,7 +83,7 @@ export default function CustomizeAvatar() {
     'Unspecified',
   ];
   const handleCharacterSelect = (characterId: number) => {};
-
+  
   // Handler functions for all dropdowns
   const handleAgeSelect = (age: string) => {
     setSelectedAge(age);
@@ -248,7 +248,7 @@ export default function CustomizeAvatar() {
                 onSelect={handleAgeSelect}
                 placeholder="Select Age"
               />
-
+              
               <CustomDropdown
                 title="Gender"
                 options={genderOptions}
@@ -256,7 +256,7 @@ export default function CustomizeAvatar() {
                 onSelect={handleGenderSelect}
                 placeholder="Select Gender"
               />
-
+              
               <CustomDropdown
                 title="Ethnicity"
                 options={ethnicityOptions}
@@ -264,7 +264,7 @@ export default function CustomizeAvatar() {
                 onSelect={handleEthnicitySelect}
                 placeholder="Select Ethnicity"
               />
-
+              
               <CustomDropdown
                 title="Orientation"
                 options={orientationOptions}
@@ -272,7 +272,7 @@ export default function CustomizeAvatar() {
                 onSelect={handleOrientationSelect}
                 placeholder="Select Orientation"
               />
-
+              
               <CustomDropdown
                 title="Personality"
                 options={personalityOptions}
@@ -280,7 +280,7 @@ export default function CustomizeAvatar() {
                 onSelect={handlePersonalitySelect}
                 placeholder="Select Personality"
               />
-
+              
               <CustomDropdown
                 title="Style"
                 options={styleOptions}

@@ -3,6 +3,8 @@ import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import Firebase
+import SDWebImage
+import SDWebImageWebPCoder
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -17,6 +19,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   ) -> Bool {
     // Initialize Firebase
     FirebaseApp.configure()
+    
+    // Register WebP coder for WebP image support
+    SDImageCodersManager.shared.addCoder(SDImageWebPCoder.shared)
     
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
