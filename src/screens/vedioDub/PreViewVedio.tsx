@@ -1,16 +1,13 @@
-// PreViewVideo.tsx
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
-  Animated,
-  PanResponder,
-  LayoutChangeEvent,
   Dimensions,
-  Platform,
+  StatusBar,
+  Animated,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import { FontFamily } from '../../constants/fonts';
@@ -23,11 +20,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   Header,
   PrimaryButton,
-  LiquidGlassBackground,
-  ProgressBar,
 } from '../../components/ui';
 import { Svgs } from '../../assets/icons';
 import Video, { OnLoadData, OnProgressData, VideoRef } from 'react-native-video';
+import Slider from '@react-native-community/slider';
+import LinearGradient from 'react-native-linear-gradient';
 import { downloadVideo, DownloadProgress } from '../../utils/videoDownloader';
 import { showToast } from '../../utils/toast';
 
@@ -36,215 +33,135 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
   'Signup'
 >;
 
+const { width, height } = Dimensions.get('window');
+
 export default function PreViewVideo() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'PreViewVedio'>>();
   const { video_url } = route.params || {};
   const videoRef = useRef<VideoRef | null>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [isPaused, setIsPaused] = useState(true);
+  const [paused, setPaused] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [videoLoading, setVideoLoading] = useState(true);
+  const [videoError, setVideoError] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [hasEnded, setHasEnded] = useState(false);
 
+  const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const controlsOpacity = useRef(new Animated.Value(1)).current;
-  const controlsVisibleRef = useRef(true);
-  const [controlsVisible, setControlsVisible] = useState(true);
-  const controlsTimeoutRef = useRef<number | null>(null);
 
-  const progressBarWidth = useRef(0);
-  const [seekDragging, setSeekDragging] = useState(false);
-  const [thumbLeft, setThumbLeft] = useState(0);
-
-  // Logging (kept from your original)
-  useEffect(() => {
-    console.log('[PreViewVedio] Component mounted');
-    console.log('[PreViewVedio] Route params:', { video_url });
-    if (!video_url) console.warn('[PreViewVedio] ⚠️ Video URL is missing');
-  }, [video_url]);
-
-  const formatTime = (seconds = 0) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const setControlsVisibility = (visible: boolean) => {
-    controlsVisibleRef.current = visible;
-    setControlsVisible(visible);
-  };
-
-  const showControls = (autoHide = true) => {
-    setControlsVisibility(true);
-    Animated.timing(controlsOpacity, {
-      toValue: 1,
-      duration: 180,
-      useNativeDriver: true,
-    }).start();
-
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
+  const formatTime = useCallback((time: number) => {
+    if (typeof time !== 'number' || isNaN(time) || time < 0) {
+      return '0:00';
     }
-    if (autoHide) {
-      // auto-hide after 3s
-      controlsTimeoutRef.current = (setTimeout(() => {
-        hideControls();
-      }, 3000) as unknown) as number;
-    }
-  };
-
-  const hideControls = () => {
-    setControlsVisibility(false);
-    Animated.timing(controlsOpacity, {
-      toValue: 0,
-      duration: 220,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  useEffect(() => {
-    // hide controls when loading
-    if (isLoading) {
-      hideControls();
-    } else if (!hasError) {
-      // show controls after video loads
-      showControls(true);
-    }
-    return () => {
-      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-    };
-  }, [isLoading, hasError]);
-
-  const handleLoad = (data: OnLoadData) => {
-    console.log('[PreViewVedio] ✅ Video loaded successfully', data.duration);
-    setDuration(data.duration);
-    setIsLoading(false);
-    setHasError(false);
-  };
-
-  const handleProgress = (data: OnProgressData) => {
-    if (!seekDragging) {
-      setCurrentTime(data.currentTime);
-      updateThumb(data.currentTime);
-    }
-  };
-
-  const handleError = (error: any) => {
-    console.error('[PreViewVedio] ❌ Video error:', error);
-    setHasError(true);
-    setIsLoading(false);
-  };
-
-  const togglePlayPause = () => {
-    setIsPaused((p) => !p);
-    showControls(true);
-  };
-
-  const handleVideoPress = () => {
-    console.log('[PreViewVedio] handleVideoPress called');
-    // tap to toggle controls (not playback)
-    if (controlsVisibleRef.current) {
-      hideControls();
-    } else {
-      showControls(true);
-    }
-  };
-
-  const handleFullscreen = () => {
-    if (videoRef.current) {
-      if (!isFullscreen) {
-        videoRef.current.presentFullscreenPlayer();
-      } else {
-        videoRef.current.dismissFullscreenPlayer();
-      }
-    }
-  };
-
-  const handleFullscreenWillPresent = () => {
-    setIsFullscreen(true);
-    hideControls();
-  };
-  const handleFullscreenWillDismiss = () => {
-    setIsFullscreen(false);
-    showControls(false);
-  };
-
-  const getProgressPercent = (t = currentTime) => {
-    if (duration === 0) return 0;
-    return Math.min(100, Math.max(0, (t / duration) * 100));
-  };
-
-  const updateThumb = (time: number) => {
-    const pct = getProgressPercent(time);
-    const w = progressBarWidth.current || 0;
-    setThumbLeft((pct / 100) * w);
-  };
-
-  // PanResponder for dragging the thumb to seek
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => {
-        setSeekDragging(true);
-        if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-      },
-      onPanResponderMove: (_, gestureState) => {
-        const w = progressBarWidth.current || 0;
-        const x = Math.max(0, Math.min(w, thumbLeft + gestureState.dx));
-        const pct = w > 0 ? x / w : 0;
-        const seekTime = pct * duration;
-        setThumbLeft(x);
-        setCurrentTime(seekTime);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        const w = progressBarWidth.current || 0;
-        const x = Math.max(0, Math.min(w, thumbLeft + gestureState.dx));
-        const pct = w > 0 ? x / w : 0;
-        const seekTime = pct * duration;
-        if (videoRef.current) {
-          videoRef.current.seek(seekTime);
-        }
-        setCurrentTime(seekTime);
-        setSeekDragging(false);
-        showControls(true);
-      },
-      onPanResponderTerminationRequest: () => true,
-    })
-  ).current;
-
-  // Seeking by tapping on progress bar
-  const onProgressBarPress = (evt: any) => {
-    const x = evt.nativeEvent.locationX;
-    const w = progressBarWidth.current || 0;
-    const pct = Math.max(0, Math.min(1, x / w));
-    const seekTime = pct * duration;
-    if (videoRef.current) videoRef.current.seek(seekTime);
-    setCurrentTime(seekTime);
-    updateThumb(seekTime);
-    showControls(true);
-  };
-
-  // layout capture for progress width
-  const onProgressBarLayout = (e: LayoutChangeEvent) => {
-    progressBarWidth.current = e.nativeEvent.layout.width;
-    updateThumb(currentTime);
-  };
-
-  // Clean up timers
-  useEffect(() => {
-    return () => {
-      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-    };
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   }, []);
 
-  // Default thumb position update when duration changes
   useEffect(() => {
-    updateThumb(currentTime);
-  }, [duration]);
+    if (showControls) {
+      // Animate controls in
+      Animated.timing(controlsOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+      
+      if (hideControlsTimeout.current) clearTimeout(hideControlsTimeout.current);
+      hideControlsTimeout.current = setTimeout(() => {
+        // Animate controls out
+        Animated.timing(controlsOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          setShowControls(false);
+        });
+      }, 3000);
+    } else {
+      // Animate controls out immediately
+      Animated.timing(controlsOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+    return () => {
+      if (hideControlsTimeout.current) clearTimeout(hideControlsTimeout.current);
+    };
+  }, [showControls, controlsOpacity]);
+
+  const handleLoad = useCallback((data: OnLoadData) => {
+    console.log('[PreViewVedio] ✅ Video loaded successfully', data.duration);
+    setDuration(data.duration);
+    setVideoLoading(false);
+    setVideoError(false);
+  }, []);
+
+  const handleProgress = useCallback((data: OnProgressData) => {
+    setCurrentTime(data.currentTime);
+  }, []);
+
+  const handleError = useCallback((error: any) => {
+    console.error('[PreViewVedio] ❌ Video error:', error);
+    setVideoError(true);
+    setVideoLoading(false);
+  }, []);
+
+  const handleScreenPress = useCallback(() => {
+    console.log('[PreViewVedio] Screen pressed, showing controls');
+    setShowControls(true);
+    // Clear any existing timeout
+    if (hideControlsTimeout.current) {
+      clearTimeout(hideControlsTimeout.current);
+    }
+  }, []);
+
+  const togglePlayPause = useCallback(() => {
+    // If video has ended and we're trying to play, reset to beginning
+    if (hasEnded && paused) {
+      setCurrentTime(0);
+      setHasEnded(false);
+      if (videoRef.current) {
+        videoRef.current.seek(0);
+      }
+    }
+    setPaused(prev => !prev);
+    setShowControls(true);
+  }, [hasEnded, paused]);
+
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen(!isFullscreen);
+    if (videoRef.current) {
+      isFullscreen
+        ? videoRef.current.dismissFullscreenPlayer()
+        : videoRef.current.presentFullscreenPlayer();
+    }
+  }, [isFullscreen]);
+
+  const handleSeek = useCallback((value: number) => {
+    if (videoRef.current) {
+      videoRef.current.seek(value);
+      setCurrentTime(value);
+      // If we seek, video is no longer at the end
+      if (hasEnded) {
+        setHasEnded(false);
+      }
+    }
+  }, [hasEnded]);
+
+  const handleEnd = useCallback(() => {
+    setPaused(true);
+    setHasEnded(true);
+    // Keep currentTime at duration to show it's at the end
+    // Don't reset to 0 here, let the user see it's finished
+  }, []);
 
   // Handle video download
   const handleDownloadVideo = async () => {
@@ -254,7 +171,7 @@ export default function PreViewVideo() {
     }
 
     if (isDownloading) {
-      return; // Prevent multiple simultaneous downloads
+      return;
     }
 
     setIsDownloading(true);
@@ -267,19 +184,15 @@ export default function PreViewVideo() {
         (progress: DownloadProgress) => {
           const percent = Math.round(progress.progress * 100);
           setDownloadProgress(percent);
-          console.log(`[PreViewVedio] Download progress: ${percent}%`);
         }
       );
 
       if (result.success && result.filePath) {
         showToast.success('Success', 'Video downloaded successfully!');
-        console.log('[PreViewVedio] Video saved to:', result.filePath);
       } else {
         showToast.error('Error', result.error || 'Failed to download video');
-        console.error('[PreViewVedio] Download failed:', result.error);
       }
     } catch (error: any) {
-      console.error('[PreViewVedio] Download error:', error);
       showToast.error('Error', error?.message || 'Failed to download video');
     } finally {
       setIsDownloading(false);
@@ -290,160 +203,130 @@ export default function PreViewVideo() {
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
+        <StatusBar hidden={isFullscreen} />
         <View style={styles.contentContainer}>
-          <Header title="Character Video" showBackButton />
-          <Text style={styles.title}>Preview Character Video</Text>
+          {!isFullscreen && <Header title="Preview Video" showBackButton />}
           <View style={styles.videoContainer}>
             {video_url ? (
               <>
-                <TouchableOpacity
-                  activeOpacity={1}
-                  style={styles.videoTouchable}
-                  onPress={handleVideoPress}
-                >
-                  <Video
-                    ref={videoRef}
-                    source={{ uri: video_url }}
-                    style={styles.video}
-                    resizeMode="contain"
-                    paused={isPaused}
-                    onLoad={handleLoad}
-                    onProgress={handleProgress}
-                    onError={handleError}
-                    onEnd={() => {
-                      setIsPaused(true);
-                      setCurrentTime(0);
-                      updateThumb(0);
-                    }}
-                    controls={false}
-                    ignoreSilentSwitch="ignore"
-                    playInBackground={false}
-                    playWhenInactive={false}
-                    repeat={false}
-                    allowsExternalPlayback={false}
-                    fullscreen={isFullscreen}
-                    onFullscreenPlayerWillPresent={handleFullscreenWillPresent}
-                    onFullscreenPlayerWillDismiss={handleFullscreenWillDismiss}
-                  />
-                </TouchableOpacity>
+                {!videoError ? (
+                  <>
+                    <Video
+                      ref={videoRef}
+                      source={{ uri: video_url }}
+                      style={[styles.video, isFullscreen && styles.fullscreenVideo]}
+                      resizeMode={isFullscreen ? 'contain' : 'cover'}
+                      paused={paused}
+                      onProgress={handleProgress}
+                      onLoadStart={() => setVideoLoading(true)}
+                      onLoad={handleLoad}
+                      onError={handleError}
+                      onEnd={handleEnd}
+                      controls={false}
+                      ignoreSilentSwitch="ignore"
+                      playInBackground={false}
+                      playWhenInactive={false}
+                      repeat={false}
+                      allowsExternalPlayback={false}
+                      onFullscreenPlayerWillPresent={() => setIsFullscreen(true)}
+                      onFullscreenPlayerDidDismiss={() => setIsFullscreen(false)}
+                    />
 
-                {/* Loading overlay */}
-                {isLoading && (
-                  <View style={styles.loadingOverlay}>
-                    <ActivityIndicator size="large" color={colors.primary} />
-                    <Text style={styles.loadingText}>Loading video...</Text>
-                  </View>
-                )}
-
-                {/* Error overlay */}
-                {hasError && (
-                  <View style={styles.errorOverlay}>
+                    {videoLoading && (
+                      <View style={styles.loaderContainer}>
+                        <ActivityIndicator size="large" color={colors.primary} />
+                      </View>
+                    )}
+                  </>
+                ) : (
+                  <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>Failed to load video</Text>
-                    <Text style={styles.videoUrlText} numberOfLines={2}>
-                      {video_url}
-                    </Text>
                   </View>
                 )}
 
-                {/* Touch overlay - only when controls are hidden */}
-                {!controlsVisible && !isLoading && !hasError && (
+                {/* Touch overlay - always active to show controls */}
+                {!videoError && !videoLoading && (
                   <TouchableOpacity
                     activeOpacity={1}
+                    onPress={handleScreenPress}
                     style={styles.touchOverlay}
-                    onPress={handleVideoPress}
                   />
                 )}
 
-                {/* Controls (animated) */}
-                {!isLoading && (
+                {/* Controls overlay */}
+                {!videoError && (
                   <Animated.View
                     style={[
-                      styles.controlsContainer,
+                      styles.controlsWrapper,
                       { opacity: controlsOpacity },
                     ]}
-                    pointerEvents={controlsVisible ? 'auto' : 'none'}
+                    pointerEvents={showControls ? 'auto' : 'none'}
                   >
-                  {/* Center Play / Pause */}
-                  <TouchableOpacity
-                    activeOpacity={1}
-                    style={styles.centerControls}
-                    onPress={handleVideoPress}
-                  >
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      onPress={togglePlayPause}
-                      style={styles.playPauseButtonTouchable}
+                    <LinearGradient
+                      colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.7)']}
+                      style={styles.controls}
                     >
-                      <View style={styles.playPauseCircle}>
-                        {isPaused ? (
-                          <Svgs.PlayIcon
-                            width={metrics.width(26)}
-                            height={metrics.width(26)}
-                          />
-                        ) : (
-                          <View style={styles.pauseIcon}>
-                            <View style={styles.pauseBar} />
-                            <View style={styles.pauseBar} />
-                          </View>
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  </TouchableOpacity>
-
-                  {/* Bottom bar */}
-                  <View style={styles.bottomBar}>
-                    <View
-                      style={styles.progressTouchable}
-                      onStartShouldSetResponder={() => true}
-                      onResponderGrant={() => {}}
-                      onResponderRelease={onProgressBarPress}
-                      onLayout={onProgressBarLayout}
-                    >
-                      <View style={styles.progressBackground}>
-                        <View
-                          style={[
-                            styles.progressFill,
-                            { width: `${getProgressPercent()}%` },
-                          ]}
-                        />
-                      </View>
-
-                      {/* Thumb */}
-                      <View
-                        style={[
-                          styles.thumb,
-                          { left: thumbLeft - THUMB_SIZE / 2 },
-                        ]}
-                        {...panResponder.panHandlers}
-                      />
-                    </View>
-
-                    <View style={styles.bottomRow}>
-                      <Text style={styles.timeText}>
-                        {formatTime(currentTime)} / {formatTime(duration)}
-                      </Text>
-
-                      <View style={styles.rightButtons}>
-                        <TouchableOpacity
-                          onPress={handleFullscreen}
-                          style={styles.iconButton}
-                          activeOpacity={0.8}
-                        >
-                          <LiquidGlassBackground
-                            style={styles.fullscreenIconContainer}
+                      {showControls && (
+                        <View style={[styles.controlsInner, isFullscreen && styles.controlsInner2]}>
+                          <TouchableOpacity
+                            onPress={togglePlayPause}
+                            style={styles.controlButton}
                           >
-                            <View style={styles.fullscreenIcon}>
-                              <View style={[styles.fullscreenCorner, styles.topLeft]} />
-                              <View style={[styles.fullscreenCorner, styles.topRight]} />
-                              <View style={[styles.fullscreenCorner, styles.bottomLeft]} />
-                              <View style={[styles.fullscreenCorner, styles.bottomRight]} />
-                            </View>
-                          </LiquidGlassBackground>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </View>
-                </Animated.View>
+                            {paused ? (
+                              <Svgs.PlayIcon
+                                width={metrics.width(20)}
+                                height={metrics.width(20)}
+                                color={colors.white}
+                              />
+                            ) : (
+                              <View style={styles.pauseIcon}>
+                                <View style={styles.pauseBar} />
+                                <View style={styles.pauseBar} />
+                              </View>
+                            )}
+                          </TouchableOpacity>
+
+                          <View style={{ flex: 1, justifyContent: 'center' }}>
+                            <Slider
+                              style={styles.slider}
+                              value={currentTime}
+                              onValueChange={handleSeek}
+                              minimumValue={0}
+                              maximumValue={duration}
+                              minimumTrackTintColor={colors.primary}
+                              maximumTrackTintColor={colors.white15}
+                              thumbTintColor={colors.primary}
+                            />
+                          </View>
+
+                          <Text style={styles.timeText}>
+                            <Text style={[styles.timeText, { color: colors.white }]}>
+                              {formatTime(currentTime)}
+                            </Text>
+                            /{formatTime(duration)}
+                          </Text>
+
+                          <TouchableOpacity
+                            onPress={toggleFullscreen}
+                            style={styles.controlButton}
+                          >
+                            {!isFullscreen ? (
+                              <View style={styles.maximizeIcon}>
+                                <View style={[styles.fullscreenCorner, styles.topLeft]} />
+                                <View style={[styles.fullscreenCorner, styles.topRight]} />
+                                <View style={[styles.fullscreenCorner, styles.bottomLeft]} />
+                                <View style={[styles.fullscreenCorner, styles.bottomRight]} />
+                              </View>
+                            ) : (
+                              <View style={styles.minimizeIcon}>
+                                <View style={styles.minimizeLine} />
+                              </View>
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </LinearGradient>
+                  </Animated.View>
                 )}
               </>
             ) : (
@@ -454,213 +337,128 @@ export default function PreViewVideo() {
           </View>
         </View>
 
-        <View style={styles.buttonContainer}>
-          <PrimaryButton title="Create New Dub" variant="secondary" onPress={() => {}} />
-          <PrimaryButton
-            title={isDownloading ? `Downloading ${downloadProgress}%` : 'Download Video'}
-            onPress={handleDownloadVideo}
-            icon={isDownloading ? undefined : <Svgs.Downloard />}
-            disabled={isDownloading || !video_url}
-          />
-        </View>
+        {!isFullscreen && (
+          <View style={styles.buttonContainer}>
+            <PrimaryButton
+              title="Create New Dub"
+              variant="secondary"
+              onPress={() => navigation.goBack()}
+            />
+            <PrimaryButton
+              title={isDownloading ? `Downloading ${downloadProgress}%` : 'Download Video'}
+              onPress={handleDownloadVideo}
+              icon={isDownloading ? undefined : <Svgs.Downloard />}
+              disabled={isDownloading || !video_url}
+            />
+          </View>
+        )}
       </SafeAreaView>
     </ScreenBackground>
   );
 }
 
-// constants for sizes
-const THUMB_SIZE = metrics.width(14);
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safeArea: { flex: 1 },
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
   contentContainer: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: metrics.width(24),
     paddingBottom: 40,
   },
-  title: {
-    fontFamily: FontFamily.spaceGrotesk.bold,
-    fontSize: metrics.width(22),
-    color: colors.white,
-    marginTop: metrics.width(24),
-    marginBottom: metrics.width(20),
-    textAlign: 'center',
-  },
-  buttonContainer: {
-    marginHorizontal: 24,
-    gap: metrics.width(10),
-    marginBottom: metrics.width(40),
-  },
-  downloadProgressContainer: {
-    width: '100%',
-    marginTop: metrics.width(10),
-  },
-  downloadProgressBar: {
-    height: metrics.width(4),
-  },
-
-  nativeVideoWrapper: {
-    width: '100%',
-    height: metrics.width(200),
-    borderRadius: metrics.width(18),
-    overflow: 'hidden',
-    marginTop: metrics.width(12),
-    marginBottom: metrics.width(16),
+  videoContainer: {
+    height: metrics.width(250),
     backgroundColor: colors.black,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: metrics.width(20),
   },
-  nativeVideo: {
+  fullscreenVideo: {
+    width: height,
+    height: width,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  video: {
     width: '100%',
     height: '100%',
-  },
-  nativeTimerMask: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: metrics.width(50),
     backgroundColor: colors.black,
-    zIndex: 1,
   },
-
-  videoContainer: {
-    height: metrics.screenWidth * 0.6,
-    width: '100%',
+  loaderContainer: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: colors.black,
-    marginBottom: metrics.width(20),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
-  videoTouchable: { width: '100%', height: '100%' },
-  video: { width: '100%', height: '100%' },
-
-  // Animated controls container (covers whole video)
-  controlsContainer: {
+  errorContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  errorText: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(16),
+    color: colors.white,
+  },
+  controlsWrapper: {
     position: 'absolute',
+    bottom: 0,
     left: 0,
     right: 0,
-    top: 0,
-    bottom: 0,
     zIndex: 10,
-    justifyContent: 'space-between',
   },
-
-  centerControls: {
+  controls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  controlButton: {
+    padding: metrics.width(5),
+  },
+  slider: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'transparent',
+    height: 10,
+    transform: [{ scaleY: 1.5 }],
   },
-
-  playPauseButtonTouchable: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  timeText: {
+    fontSize: metrics.width(13),
+    color: colors.subtitle,
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    marginHorizontal: metrics.width(8),
   },
-
-  playPauseCircle: {
-    width: metrics.width(72),
-    height: metrics.width(72),
-    borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    justifyContent: 'center',
+  controlsInner: {
+    backgroundColor: colors.white5,
+    flexDirection: 'row',
+    margin: metrics.width(12),
     alignItems: 'center',
+    borderRadius: 16,
+    padding: metrics.width(10),
+    gap: metrics.width(7),
+    flex: 1,
   },
-
+  controlsInner2: {
+    marginBottom: 30,
+  },
   pauseIcon: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: metrics.width(6),
+    gap: metrics.width(4),
   },
   pauseBar: {
-    width: metrics.width(5),
-    height: metrics.width(24),
+    width: metrics.width(4),
+    height: metrics.width(16),
     backgroundColor: colors.white,
     borderRadius: metrics.width(2),
   },
-
-  // Bottom bar
-  bottomBar: {
-    paddingHorizontal: metrics.width(12),
-    paddingBottom: metrics.width(12),
-    paddingTop: metrics.width(8),
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-
-  progressTouchable: {
-    width: '100%',
-    height: metrics.width(26),
-    justifyContent: 'center',
-    marginBottom: metrics.width(8),
-  },
-
-  progressBackground: {
-    width: '100%',
-    height: metrics.width(4),
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: metrics.width(3),
-    overflow: 'hidden',
-  },
-
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-  },
-
-  thumb: {
-    position: 'absolute',
-    top: (metrics.width(26) - THUMB_SIZE) / 2 - 2,
-    width: THUMB_SIZE,
-    height: THUMB_SIZE,
-    borderRadius: THUMB_SIZE / 2,
-    backgroundColor: colors.primary,
-    borderWidth: 2,
-    borderColor: '#fff',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-  },
-
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  timeText: {
-    fontFamily: FontFamily.spaceGrotesk.medium,
-    fontSize: metrics.width(12),
-    color: colors.white,
-  },
-
-  rightButtons: { flexDirection: 'row', alignItems: 'center' },
-
-  iconButton: {
-    marginLeft: metrics.width(8),
-  },
-
-  fullscreenIconContainer: {
-    borderRadius: metrics.width(8),
-    padding: metrics.width(6),
-    width: metrics.width(36),
-    height: metrics.width(36),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  fullscreenIcon: {
+  maximizeIcon: {
     width: metrics.width(20),
     height: metrics.width(20),
     position: 'relative',
@@ -672,64 +470,47 @@ const styles = StyleSheet.create({
     borderColor: colors.white,
     borderWidth: 2,
   },
-  topLeft: { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0 },
-  topRight: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0 },
-  bottomLeft: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0 },
-  bottomRight: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0 },
-
-  // overlays
-  touchOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
+  topLeft: {
     top: 0,
-    bottom: 0,
-    zIndex: 5,
-    backgroundColor: 'transparent',
+    left: 0,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
   },
-  loadingOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
+  topRight: {
     top: 0,
+    right: 0,
+    borderLeftWidth: 0,
+    borderBottomWidth: 0,
+  },
+  bottomLeft: {
     bottom: 0,
+    left: 0,
+    borderRightWidth: 0,
+    borderTopWidth: 0,
+  },
+  bottomRight: {
+    bottom: 0,
+    right: 0,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+  },
+  minimizeIcon: {
+    width: metrics.width(20),
+    height: metrics.width(20),
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    zIndex: 20,
   },
-  loadingText: {
-    marginTop: metrics.width(10),
-    fontFamily: FontFamily.spaceGrotesk.regular,
-    color: colors.white,
+  minimizeLine: {
+    width: metrics.width(12),
+    height: metrics.width(2),
+    backgroundColor: colors.white,
+    borderRadius: metrics.width(1),
   },
-
-  errorOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    zIndex: 30,
-    padding: metrics.width(20),
+  buttonContainer: {
+    marginHorizontal: metrics.width(24),
+    gap: metrics.width(10),
+    marginBottom: metrics.width(40),
   },
-  errorText: {
-    fontFamily: FontFamily.spaceGrotesk.bold,
-    fontSize: metrics.width(16),
-    color: colors.white,
-    marginBottom: metrics.width(10),
-    textAlign: 'center',
-  },
-  videoUrlText: {
-    fontFamily: FontFamily.spaceGrotesk.regular,
-    fontSize: metrics.width(12),
-    color: colors.subtitle,
-    textAlign: 'center',
-  },
-
   noVideoContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -741,5 +522,14 @@ const styles = StyleSheet.create({
     fontSize: metrics.width(16),
     color: colors.subtitle,
     textAlign: 'center',
+  },
+  touchOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 5,
+    backgroundColor: 'transparent',
   },
 });
