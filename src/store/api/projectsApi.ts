@@ -74,6 +74,62 @@ export interface ProjectVideo {
   updatedAt: string;
 }
 
+// Photo Avatar Generation interface
+export interface PhotoAvatarGeneration {
+  id: string;
+  userId: string;
+  projectId: string;
+  generation_id: string;
+  photo_id: string;
+  name: string;
+  age: string;
+  gender: string;
+  ethnicity: string;
+  orientation: string;
+  pose: string;
+  style: string;
+  appearance: string;
+  callback_url?: string;
+  callback_id?: string;
+  status: string;
+  photo_url: string;
+  image_url_list: string[];
+  image_key_list: string[];
+  metadata?: {
+    webhook_data?: any;
+    event_type?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Video Translation interface
+export interface VideoTranslation {
+  id: string;
+  userId: string;
+  projectId: string;
+  video_translate_id: string;
+  original_video_url: string;
+  video_id: string;
+  title: string;
+  output_language: string;
+  translate_audio_only: boolean;
+  speaker_num: string;
+  keep_the_same_format: boolean;
+  mode: string;
+  status: string;
+  translated_video_url: string;
+  gcs_video_url: string;
+  gcs_signed_url: string;
+  gcs_file_name: string;
+  metadata?: {
+    webhook_data?: any;
+    event_type?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 /**
  * Projects API slice
  */
@@ -150,6 +206,42 @@ export const projectsApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Project'],
     }),
+
+    // Get Photo Avatar Generations by Project
+    getPhotoAvatarGenerations: builder.query<PhotoAvatarGeneration[], string>({
+      query: projectId => ({
+        url: API_ENDPOINTS.HEYGEN.PHOTO_AVATAR_GENERATIONS(projectId),
+        method: 'GET',
+      }),
+      transformResponse: (response: PhotoAvatarGeneration[] | { data: PhotoAvatarGeneration[] }) => {
+        if (Array.isArray(response)) {
+          return response;
+        }
+        if ('data' in response && Array.isArray(response.data)) {
+          return response.data;
+        }
+        return [];
+      },
+      providesTags: ['Project'],
+    }),
+
+    // Get Video Translations by Project
+    getVideoTranslations: builder.query<VideoTranslation[], string>({
+      query: projectId => ({
+        url: API_ENDPOINTS.HEYGEN.VIDEO_TRANSLATIONS(projectId),
+        method: 'GET',
+      }),
+      transformResponse: (response: VideoTranslation[] | { data: VideoTranslation[] }) => {
+        if (Array.isArray(response)) {
+          return response;
+        }
+        if ('data' in response && Array.isArray(response.data)) {
+          return response.data;
+        }
+        return [];
+      },
+      providesTags: ['Project'],
+    }),
   }),
 });
 
@@ -160,6 +252,8 @@ export const {
   useGetProjectQuery,
   useGetProjectVideosQuery,
   useLazyGetProjectVideosQuery,
+  useGetPhotoAvatarGenerationsQuery,
+  useGetVideoTranslationsQuery,
   useUpdateProjectMutation,
   useDeleteProjectMutation,
 } = projectsApi;

@@ -18,9 +18,11 @@ import { Svgs } from '../../assets/icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, Shimmer } from '../../components/ui';
+import { Header, Shimmer, LiquidGlassBackground } from '../../components/ui';
 import { API_BASE_URL, API_VERSION_PREFIX, API_ENDPOINTS } from '../../constants/api';
 import { tokenStorage } from '../../utils/tokenStorage';
+import { downloadImage, ImageDownloadProgress } from '../../utils/imageDownloader';
+import { showToast } from '../../utils/toast';
 
 type GeneratedCharactersNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -32,11 +34,13 @@ export default function GeneratedCharacters() {
   const route = useRoute<RouteProp<RootStackParamList, 'GeneratedCharacters'>>();
   const generationId = route.params?.generationId;
   const initialImageUrls = route.params?.imageUrls;
+  const initialImageKeys = route.params?.imageKeys;
   const projectId = route.params?.projectId;
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [imageUrls, setImageUrls] = useState<string[]>(initialImageUrls || []);
-  const [imageKeys, setImageKeys] = useState<string[]>([]);
+  const [imageKeys, setImageKeys] = useState<string[]>(initialImageKeys || []);
   const [isProcessing, setIsProcessing] = useState(!initialImageUrls || initialImageUrls.length === 0);
+  const [downloadingImageId, setDownloadingImageId] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Poll photo generation status using direct fetch (no RTK Query, no caching)
@@ -156,6 +160,44 @@ export default function GeneratedCharacters() {
     setSelectedImageIndex(index);
   };
 
+  // Handle image download
+  const handleDownloadImage = async (imageUrl: string, imageIndex: number) => {
+    if (!imageUrl) {
+      showToast.error('Error', 'No image URL available');
+      return;
+    }
+
+    if (downloadingImageId === `image-${imageIndex}`) {
+      return; // Prevent multiple simultaneous downloads
+    }
+
+    setDownloadingImageId(`image-${imageIndex}`);
+
+    try {
+      const fileName = `character_${imageIndex}_${Date.now()}.jpg`;
+      const result = await downloadImage(
+        imageUrl,
+        fileName,
+        (progress: ImageDownloadProgress) => {
+          // Optional: Track progress if needed
+          const percent = Math.round(progress.progress * 100);
+          console.log(`Download progress: ${percent}%`);
+        }
+      );
+
+      if (result.success && result.filePath) {
+        showToast.success('Success', 'Image downloaded successfully!');
+      } else {
+        showToast.error('Error', result.error || 'Failed to download image');
+      }
+    } catch (error: any) {
+      console.error('[GeneratedCharacters] Image download error:', error);
+      showToast.error('Error', error?.message || 'Failed to download image');
+    } finally {
+      setDownloadingImageId(null);
+    }
+  };
+
   const renderShimmerRow = () => {
     return (
       <View style={styles.columnRow}>
@@ -200,7 +242,27 @@ export default function GeneratedCharacters() {
                 style={styles.generatedImage}
                 resizeMode="cover"
               />
-              
+              {!isProcessing && (
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleDownloadImage(imageUrl, globalIndex);
+                  }}
+                  style={styles.downloadIconTouchable}
+                  disabled={downloadingImageId === `image-${globalIndex}`}
+                  activeOpacity={0.7}
+                >
+                  <LiquidGlassBackground style={styles.downloadIcon}>
+                    <View style={styles.downloadIconContainer}>
+                      {downloadingImageId === `image-${globalIndex}` ? (
+                        <Text style={styles.downloadProgressText}>...</Text>
+                      ) : (
+                        <Svgs.Downloard />
+                      )}
+                    </View>
+                  </LiquidGlassBackground>
+                </TouchableOpacity>
+              )}
             </TouchableOpacity>
           );
         })}
@@ -250,12 +312,7 @@ export default function GeneratedCharacters() {
         <Header
           title="Generated Characters"
           showBackButton
-          RigthIcon={
-            <Svgs.HistoryIcon
-              height={metrics.width(20)}
-              width={metrics.width(20)}
-            />
-          }
+          
         />
         <FlatList
           data={isProcessing ? shimmerRows : imageRows}
@@ -358,6 +415,30 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderWidth: 1,
     borderColor: colors.white15,
+  },
+  downloadIconTouchable: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+    zIndex: 10,
+  },
+  downloadIcon: {
+    height: 28,
+    width: 28,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  downloadIconContainer: {
+    height: 28,
+    width: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  downloadProgressText: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(10),
+    color: colors.white,
   },
 });
 

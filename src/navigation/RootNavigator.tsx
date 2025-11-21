@@ -80,7 +80,7 @@ export type RootStackParamList = {
   VoiceSelection: { avatarId: string; screenFrom?: string; projectId?: string };
   DescribeCharacter: { avatarId: string; voiceId: string; screenFrom?: string; projectId?: string };
   GeneratingCharacterVideo: { videoId: string,screenFrom?: string };
-  GeneratedCharacters: { generationId?: string; imageUrls?: string[]; projectId?: string };
+  GeneratedCharacters: { generationId?: string; imageUrls?: string[]; imageKeys?: string[]; projectId?: string };
   RecentProjects:undefined;
   ProjectVedios: { projectId: string };
   NewProject:undefined;

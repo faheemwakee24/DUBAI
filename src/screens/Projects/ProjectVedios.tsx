@@ -24,9 +24,18 @@ import {
   Shimmer,
 } from '../../components/ui';
 import { Images } from '../../assets/images';
-import { useGetProjectVideosQuery } from '../../store/api/projectsApi';
-import type { ProjectVideo } from '../../store/api/projectsApi';
+import {
+  useGetProjectVideosQuery,
+  useGetPhotoAvatarGenerationsQuery,
+  useGetVideoTranslationsQuery,
+} from '../../store/api/projectsApi';
+import type {
+  ProjectVideo,
+  PhotoAvatarGeneration,
+  VideoTranslation,
+} from '../../store/api/projectsApi';
 import { downloadVideo, DownloadProgress } from '../../utils/videoDownloader';
+import { downloadImage, ImageDownloadProgress } from '../../utils/imageDownloader';
 import { showToast } from '../../utils/toast';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
@@ -34,19 +43,58 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
   'Signup'
 >;
 
+type TabType = 'videos' | 'avatars' | 'translations';
+
 export default function ProjectVedios() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'ProjectVedios'>>();
   const { projectId } = route.params || {};
 
+  // State for active tab
+  const [activeTab, setActiveTab] = useState<TabType>('videos');
+
   // State for tracking downloads
   const [downloadingVideoId, setDownloadingVideoId] = useState<string | null>(null);
+  const [downloadingImageId, setDownloadingImageId] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
 
-  // Fetch project videos from API
-  const { data: videos, isLoading, error } = useGetProjectVideosQuery(projectId || '', {
-    skip: !projectId,
+  // Fetch data based on active tab
+  const {
+    data: videos,
+    isLoading: isLoadingVideos,
+    error: videosError,
+  } = useGetProjectVideosQuery(projectId || '', {
+    skip: !projectId || activeTab !== 'videos',
   });
+
+  const {
+    data: avatars,
+    isLoading: isLoadingAvatars,
+    error: avatarsError,
+  } = useGetPhotoAvatarGenerationsQuery(projectId || '', {
+    skip: !projectId || activeTab !== 'avatars',
+  });
+
+  const {
+    data: translations,
+    isLoading: isLoadingTranslations,
+    error: translationsError,
+  } = useGetVideoTranslationsQuery(projectId || '', {
+    skip: !projectId || activeTab !== 'translations',
+  });
+
+  // Get current data and loading state based on active tab
+  const isLoading = useMemo(() => {
+    if (activeTab === 'videos') return isLoadingVideos;
+    if (activeTab === 'avatars') return isLoadingAvatars;
+    return isLoadingTranslations;
+  }, [activeTab, isLoadingVideos, isLoadingAvatars, isLoadingTranslations]);
+
+  const error = useMemo(() => {
+    if (activeTab === 'videos') return videosError;
+    if (activeTab === 'avatars') return avatarsError;
+    return translationsError;
+  }, [activeTab, videosError, avatarsError, translationsError]);
 
   // Format time ago
   const formatTimeAgo = (dateString: string) => {
@@ -71,29 +119,27 @@ export default function ProjectVedios() {
     return statusMap[status.toLowerCase()] || status;
   };
 
-  // Handle video download
-  const handleDownloadVideo = async (video: ProjectVideo) => {
-    const videoUrl = video.video_url || video.gcs_signed_url;
-    
+  // Handle video download (for videos and translations)
+  const handleDownloadVideo = async (videoUrl: string, fileName: string, itemId: string) => {
     if (!videoUrl) {
       showToast.error('Error', 'No video URL available');
       return;
     }
 
-    if (downloadingVideoId === video.id) {
+    if (downloadingVideoId === itemId) {
       return; // Prevent multiple simultaneous downloads
     }
 
-    setDownloadingVideoId(video.id);
-    setDownloadProgress(prev => ({ ...prev, [video.id]: 0 }));
+    setDownloadingVideoId(itemId);
+    setDownloadProgress(prev => ({ ...prev, [itemId]: 0 }));
 
     try {
       const result = await downloadVideo(
         videoUrl,
-        `project_video_${video.video_id}_${Date.now()}.mp4`,
+        fileName,
         (progress: DownloadProgress) => {
           const percent = Math.round(progress.progress * 100);
-          setDownloadProgress(prev => ({ ...prev, [video.id]: percent }));
+          setDownloadProgress(prev => ({ ...prev, [itemId]: percent }));
         }
       );
 
@@ -109,7 +155,7 @@ export default function ProjectVedios() {
       setDownloadingVideoId(null);
       setDownloadProgress(prev => {
         const newProgress = { ...prev };
-        delete newProgress[video.id];
+        delete newProgress[itemId];
         return newProgress;
       });
     }
@@ -119,6 +165,7 @@ export default function ProjectVedios() {
   const renderVideoItem = ({ item }: { item: ProjectVideo }) => {
     const statusDisplay = getStatusDisplay(item.status);
     const isCompleted = item.status.toLowerCase() === 'completed';
+    const videoUrl = item.video_url || item.gcs_signed_url;
     
     return (
       <LiquidGlassBackground style={styles.projectCard}>
@@ -127,9 +174,9 @@ export default function ProjectVedios() {
           style={styles.projectIcon}
           imageStyle={{ borderRadius: 12 }}
         >
-          {isCompleted && (
+          {isCompleted && videoUrl && (
             <TouchableOpacity
-              onPress={() => handleDownloadVideo(item)}
+              onPress={() => handleDownloadVideo(videoUrl, `project_video_${item.video_id}_${Date.now()}.mp4`, item.id)}
               style={styles.downloadIconTouchable}
               disabled={downloadingVideoId === item.id}
               activeOpacity={0.7}
@@ -173,9 +220,211 @@ export default function ProjectVedios() {
           <PrimaryButton
             title="Play"
             onPress={() => {
-              if (isCompleted && item.video_url) {
+              if (isCompleted && videoUrl) {
                 navigation.navigate('PreViewVedio', {
-                  video_url: item.video_url,
+                  video_url: videoUrl,
+                });
+              }
+            }}
+            extraContainerStyle={styles.buttonContainer}
+            textStyle={styles.text}
+            disabled={!isCompleted}
+          />
+        </View>
+      </LiquidGlassBackground>
+    );
+  };
+
+  // Handle image download
+  const handleDownloadImage = async (imageUrl: string, itemId: string, imageIndex: number = 0) => {
+    if (!imageUrl) {
+      showToast.error('Error', 'No image URL available');
+      return;
+    }
+
+    if (downloadingImageId === `${itemId}-${imageIndex}`) {
+      return; // Prevent multiple simultaneous downloads
+    }
+
+    setDownloadingImageId(`${itemId}-${imageIndex}`);
+
+    try {
+      const fileName = `avatar_${itemId}_${imageIndex}_${Date.now()}.jpg`;
+      const result = await downloadImage(
+        imageUrl,
+        fileName,
+        (progress: ImageDownloadProgress) => {
+          // Optional: Track progress if needed
+          const percent = Math.round(progress.progress * 100);
+          console.log(`Download progress: ${percent}%`);
+        }
+      );
+
+      if (result.success && result.filePath) {
+        showToast.success('Success', 'Image downloaded successfully!');
+      } else {
+        showToast.error('Error', result.error || 'Failed to download image');
+      }
+    } catch (error: any) {
+      console.error('[ProjectVedios] Image download error:', error);
+      showToast.error('Error', error?.message || 'Failed to download image');
+    } finally {
+      setDownloadingImageId(null);
+    }
+  };
+
+  // Handle avatar preview
+  const handleAvatarPreview = (item: PhotoAvatarGeneration) => {
+    const imageUrls = item.image_url_list && item.image_url_list.length > 0 
+      ? item.image_url_list 
+      : item.photo_url 
+        ? [item.photo_url] 
+        : [];
+    
+    if (imageUrls.length === 0) {
+      showToast.error('Error', 'No images available for preview');
+      return;
+    }
+
+    // Navigate to GeneratedCharacters screen with the avatar images
+    // Pass imageKeys if available so user can select and continue to video generation
+    navigation.navigate('GeneratedCharacters', {
+      imageUrls: imageUrls,
+      imageKeys: item.image_key_list || [],
+      projectId: projectId,
+    });
+  };
+
+  // Render avatar item function for FlatList
+  const renderAvatarItem = ({ item }: { item: PhotoAvatarGeneration }) => {
+    const statusDisplay = getStatusDisplay(item.status);
+    const isCompleted = item.status.toLowerCase() === 'completed';
+    const firstImage = item.image_url_list?.[0] || item.photo_url;
+    const hasMultipleImages = item.image_url_list && item.image_url_list.length > 1;
+    
+    return (
+      <LiquidGlassBackground style={styles.projectCard}>
+        <ImageBackground 
+          source={{ uri: firstImage }} 
+          style={styles.projectIcon}
+          imageStyle={{ borderRadius: 12 }}
+        >
+          {isCompleted && firstImage && (
+            <TouchableOpacity
+              onPress={() => handleDownloadImage(firstImage, item.id, 0)}
+              style={styles.downloadIconTouchable}
+              disabled={downloadingImageId === `${item.id}-0`}
+              activeOpacity={0.7}
+            >
+              <LiquidGlassBackground style={styles.downloadIcon}>
+                <View style={styles.downloadIconContainer}>
+                  {downloadingImageId === `${item.id}-0` ? (
+                    <Text style={styles.downloadProgressText}>...</Text>
+                  ) : (
+                    <Svgs.Downloard />
+                  )}
+                </View>
+              </LiquidGlassBackground>
+            </TouchableOpacity>
+          )}
+        </ImageBackground>
+        <View style={styles.projectBodyCotainer}>
+          <Text
+            style={styles.projectTitle}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {item.name || 'Avatar'}
+          </Text>
+          <Text style={styles.subtitle}>{item.age} • {item.gender}</Text>
+          <View style={styles.rowSpaceBetween}>
+            <Text
+              style={[
+                styles.status,
+                statusDisplay === 'Completed' && { color: colors.sucessGreen },
+                statusDisplay === 'Processing' && { color: colors.primary },
+                statusDisplay === 'Failed' && { color: '#FF6B6B' },
+              ]}
+            >
+              {statusDisplay}
+            </Text>
+            <Text style={styles.statusTime}>{formatTimeAgo(item.updatedAt)}</Text>
+          </View>
+          {isCompleted && (
+            <PrimaryButton
+              title={hasMultipleImages ? "Preview All" : "Preview"}
+              onPress={() => handleAvatarPreview(item)}
+              extraContainerStyle={styles.buttonContainer}
+              textStyle={styles.text}
+            />
+          )}
+        </View>
+      </LiquidGlassBackground>
+    );
+  };
+
+  // Render translation item function for FlatList
+  const renderTranslationItem = ({ item }: { item: VideoTranslation }) => {
+    const statusDisplay = getStatusDisplay(item.status);
+    const isCompleted = item.status.toLowerCase() === 'completed';
+    const videoUrl = item.translated_video_url || item.gcs_signed_url;
+    
+    return (
+      <LiquidGlassBackground style={styles.projectCard}>
+        <ImageBackground 
+          source={Images.VedioIcon2} 
+          style={styles.projectIcon}
+          imageStyle={{ borderRadius: 12 }}
+        >
+          {isCompleted && videoUrl && (
+            <TouchableOpacity
+              onPress={() => handleDownloadVideo(videoUrl, `translation_${item.video_translate_id}_${Date.now()}.mp4`, item.id)}
+              style={styles.downloadIconTouchable}
+              disabled={downloadingVideoId === item.id}
+              activeOpacity={0.7}
+            >
+              <LiquidGlassBackground style={styles.downloadIcon}>
+                <View style={styles.downloadIconContainer}>
+                  {downloadingVideoId === item.id ? (
+                    <Text style={styles.downloadProgressText}>
+                      {downloadProgress[item.id] || 0}%
+                    </Text>
+                  ) : (
+                    <Svgs.Downloard />
+                  )}
+                </View>
+              </LiquidGlassBackground>
+            </TouchableOpacity>
+          )}
+        </ImageBackground>
+        <View style={styles.projectBodyCotainer}>
+          <Text
+            style={styles.projectTitle}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {item.title || 'Translation'}
+          </Text>
+          <Text style={styles.subtitle}>{item.output_language} • {item.mode}</Text>
+          <View style={styles.rowSpaceBetween}>
+            <Text
+              style={[
+                styles.status,
+                statusDisplay === 'Completed' && { color: colors.sucessGreen },
+                statusDisplay === 'Processing' && { color: colors.primary },
+                statusDisplay === 'Failed' && { color: '#FF6B6B' },
+              ]}
+            >
+              {statusDisplay}
+            </Text>
+            <Text style={styles.statusTime}>{formatTimeAgo(item.updatedAt)}</Text>
+          </View>
+          <PrimaryButton
+            title="Play"
+            onPress={() => {
+              if (isCompleted && videoUrl) {
+                navigation.navigate('PreViewVedio', {
+                  video_url: videoUrl,
                 });
               }
             }}
@@ -208,10 +457,83 @@ export default function ProjectVedios() {
     </LiquidGlassBackground>
   );
 
+  // Get current data based on active tab
+  const getCurrentData = () => {
+    if (activeTab === 'videos') return videos || [];
+    if (activeTab === 'avatars') return avatars || [];
+    return translations || [];
+  };
+
+  const currentData = getCurrentData();
+
+  // Render item based on active tab
+  const renderItem = ({ item }: { item: any }) => {
+    if (activeTab === 'videos') return renderVideoItem({ item: item as ProjectVideo });
+    if (activeTab === 'avatars') return renderAvatarItem({ item: item as PhotoAvatarGeneration });
+    return renderTranslationItem({ item: item as VideoTranslation });
+  };
+
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <Header title="Project Videos" showBackButton />
+
+        {/* Tab Bar */}
+        <View style={styles.tabContainer}>
+          {activeTab === 'videos' ? (
+            <TouchableOpacity
+              style={[styles.tab, styles.activeTab]}
+              onPress={() => setActiveTab('videos')}
+            >
+              <Text style={[styles.tabText, styles.activeTabText]}>Videos</Text>
+            </TouchableOpacity>
+          ) : (
+            <LiquidGlassBackground style={styles.tab}>
+              <TouchableOpacity
+                style={styles.tabContent}
+                onPress={() => setActiveTab('videos')}
+              >
+                <Text style={styles.tabText}>Videos</Text>
+              </TouchableOpacity>
+            </LiquidGlassBackground>
+          )}
+          
+          {activeTab === 'avatars' ? (
+            <TouchableOpacity
+              style={[styles.tab, styles.activeTab]}
+              onPress={() => setActiveTab('avatars')}
+            >
+              <Text style={[styles.tabText, styles.activeTabText]}>Avatars</Text>
+            </TouchableOpacity>
+          ) : (
+            <LiquidGlassBackground style={styles.tab}>
+              <TouchableOpacity
+                style={styles.tabContent}
+                onPress={() => setActiveTab('avatars')}
+              >
+                <Text style={styles.tabText}>Avatars</Text>
+              </TouchableOpacity>
+            </LiquidGlassBackground>
+          )}
+          
+          {activeTab === 'translations' ? (
+            <TouchableOpacity
+              style={[styles.tab, styles.activeTab]}
+              onPress={() => setActiveTab('translations')}
+            >
+              <Text style={[styles.tabText, styles.activeTabText]}>Translations</Text>
+            </TouchableOpacity>
+          ) : (
+            <LiquidGlassBackground style={styles.tab}>
+              <TouchableOpacity
+                style={styles.tabContent}
+                onPress={() => setActiveTab('translations')}
+              >
+                <Text style={styles.tabText}>Translations</Text>
+              </TouchableOpacity>
+            </LiquidGlassBackground>
+          )}
+        </View>
 
         {isLoading ? (
           <FlatList
@@ -227,12 +549,12 @@ export default function ProjectVedios() {
           />
         ) : error ? (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>Failed to load videos</Text>
+            <Text style={styles.errorText}>Failed to load {activeTab}</Text>
           </View>
-        ) : videos && videos.length > 0 ? (
+        ) : currentData.length > 0 ? (
           <FlatList
-            data={videos}
-            renderItem={renderVideoItem}
+            data={currentData}
+            renderItem={renderItem}
             keyExtractor={item => item.id}
             numColumns={2}
             columnWrapperStyle={styles.row}
@@ -243,7 +565,7 @@ export default function ProjectVedios() {
           />
         ) : (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No videos found</Text>
+            <Text style={styles.emptyText}>No {activeTab} found</Text>
           </View>
         )}
       </SafeAreaView>
@@ -402,5 +724,46 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.spaceGrotesk.regular,
     fontSize: metrics.width(16),
     color: colors.subtitle,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginTop: metrics.width(20),
+    marginBottom: metrics.width(20),
+    gap: metrics.width(10),
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  tab: {
+    flex: 1,
+    borderRadius: 8,
+    minWidth: 0, // Allow flex to shrink if needed
+  },
+  tabContent: {
+    paddingVertical: metrics.width(12),
+    paddingHorizontal: metrics.width(10),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeTab: {
+    backgroundColor: colors.primary,
+    paddingVertical: metrics.width(12),
+    paddingHorizontal: metrics.width(10),
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    minWidth: 0, // Allow flex to shrink if needed
+  },
+  tabText: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(12),
+    color: colors.white,
+    textAlign: 'center',
+  },
+  activeTabText: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(12),
+    color: colors.white,
+    textAlign: 'center',
   },
 });
