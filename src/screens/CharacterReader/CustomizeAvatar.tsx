@@ -48,7 +48,24 @@ export default function CustomizeAvatar() {
   const { data: projects = [], isLoading: isLoadingProjects } =
     useGetProjectsQuery();
 
-  // Options for all dropdowns
+  // Utility function to format snake_case to Title Case
+  const formatDisplayValue = (value: string): string => {
+    if (!value) return '';
+    return value
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  // Utility function to convert Title Case back to snake_case
+  const formatValueToSnakeCase = (displayValue: string): string => {
+    return displayValue
+      .split(' ')
+      .map(word => word.toLowerCase())
+      .join('_');
+  };
+
+  // Options for all dropdowns (actual values)
   const ageOptions = [
     'Young Adult',
     'Early Middle Age',
@@ -80,6 +97,10 @@ export default function CustomizeAvatar() {
     'Cyberpunk',
     'Unspecified',
   ];
+
+  // Display options (formatted for display)
+  const orientationDisplayOptions = orientationOptions.map(formatDisplayValue);
+  const personalityDisplayOptions = personalityOptions.map(formatDisplayValue);
   const handleCharacterSelect = (characterId: number) => {};
 
   // Handler functions for all dropdowns
@@ -92,11 +113,15 @@ export default function CustomizeAvatar() {
   const handleEthnicitySelect = (ethnicity: string) => {
     setSelectedEthnicity(ethnicity);
   };
-  const handleOrientationSelect = (orientation: string) => {
-    setSelectedOrientation(orientation);
+  const handleOrientationSelect = (displayValue: string) => {
+    // Convert display value back to actual value
+    const actualValue = formatValueToSnakeCase(displayValue);
+    setSelectedOrientation(actualValue);
   };
-  const handlePersonalitySelect = (personality: string) => {
-    setSelectedPersonality(personality);
+  const handlePersonalitySelect = (displayValue: string) => {
+    // Convert display value back to actual value
+    const actualValue = formatValueToSnakeCase(displayValue);
+    setSelectedPersonality(actualValue);
   };
   const handleStyleSelect = (style: string) => {
     setSelectedStyle(style);
@@ -299,16 +324,16 @@ export default function CustomizeAvatar() {
 
               <CustomDropdown
                 title="Orientation"
-                options={orientationOptions}
-                selectedValue={selectedOrientation}
+                options={orientationDisplayOptions}
+                selectedValue={formatDisplayValue(selectedOrientation)}
                 onSelect={handleOrientationSelect}
                 placeholder="Select Orientation"
               />
 
               <CustomDropdown
                 title="Personality"
-                options={personalityOptions}
-                selectedValue={selectedPersonality}
+                options={personalityDisplayOptions}
+                selectedValue={formatDisplayValue(selectedPersonality)}
                 onSelect={handlePersonalitySelect}
                 placeholder="Select Personality"
               />

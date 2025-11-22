@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     fontFamily:FontFamily.spaceGrotesk.regular,
     fontSize:metrics.width(13),
     color:colors.primary,
-    maxWidth:'85%'
+    maxWidth:metrics.screenWidth*0.6
   },
   dot:{
     height:metrics.width(4),

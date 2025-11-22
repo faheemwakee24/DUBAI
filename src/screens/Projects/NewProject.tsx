@@ -55,6 +55,7 @@ const languageOptions = Object.keys(languageMap);
 export default function NewProject() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const [projectName, setProjectName] = useState('');
+  const [description, setDescription] = useState('');
   // State for all dropdowns
   const [selectedHairStyle, setSelectedHairStyle] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('enå');
@@ -91,15 +92,15 @@ export default function NewProject() {
       return;
     }
 
-    if (!selectedHairStyle) {
-      showToast.error('Error', 'Please select a project description');
+    if (!description.trim()) {
+      showToast.error('Error', 'Please enter a project description');
       return;
     }
 
-    if (!selectedLanguage) {
-      showToast.error('Error', 'Please select a language');
-      return;
-    }
+    // if (!selectedLanguage) {
+    //   showToast.error('Error', 'Please select a language');
+    //   return;
+    // }
 
     // Map category from project type
     const category = selectedProjectType === 'video-dubbing' ? 'video' : 'character';
@@ -110,7 +111,7 @@ export default function NewProject() {
     try {
       const result = await createProject({
         name: projectName.trim(),
-        description: selectedHairStyle,
+        description: description.trim(),
         metadata: {
           category,
           language: languageCode,
@@ -153,7 +154,25 @@ export default function NewProject() {
               fullWidth={true}
               required
             />
-            <View style={styles.tempCharacherContainer}>
+            <View style={styles.descriptionContainer}>
+              <Input
+                label="Description"
+                placeholder="Enter project description"
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+                fullWidth={true}
+                required
+                inputStyle={{
+                  height: metrics.width(80),
+                }}
+                containerStyle={{ alignItems: 'flex-start' }}
+                
+              />
+            </View>
+            {/* <View style={styles.tempCharacherContainer}>
               <CustomDropdown
                 title="Project"
                 options={hairStyleOptions}
@@ -161,11 +180,12 @@ export default function NewProject() {
                 onSelect={handleHairStyleSelect}
                 placeholder="Select Project"
               />
-            </View>
+            </View> */}
 
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => handleProjectTypeSelect('video-dubbing')}
+              disabled
             >
               <LiquidGlassBackground
                 style={[
@@ -187,6 +207,7 @@ export default function NewProject() {
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => handleProjectTypeSelect('character-reader')}
+              disabled
             >
               <LiquidGlassBackground
                 style={[
@@ -420,6 +441,9 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   tempCharacherContainer: {},
+  descriptionContainer: {
+    marginTop: metrics.width(15),
+  },
   textContainer: {
     gap: metrics.width(5),
   },

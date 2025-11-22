@@ -278,7 +278,7 @@ export default function ChoseCharacter() {
           ItemSeparatorComponent={() => <View style={{ height: metrics.width(15) }} />}
           refreshControl={
             <RefreshControl
-              refreshing={isFetching && currentPage === 1}
+              refreshing={isFetching && currentPage === 1&&avatars.length>0}
               onRefresh={handleRefresh}
               tintColor={colors.primary}
             />

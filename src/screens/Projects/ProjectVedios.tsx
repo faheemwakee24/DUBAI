@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ImageBackground,
   Image,
+  RefreshControl,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -68,6 +69,8 @@ export default function ProjectVedios() {
     data: videos,
     isLoading: isLoadingVideos,
     error: videosError,
+    refetch: refetchVideos,
+    isFetching: isFetchingVideos,
   } = useGetProjectVideosQuery(projectId || '', {
     skip: !projectId || activeTab !== 'videos',
   });
@@ -76,6 +79,8 @@ export default function ProjectVedios() {
     data: avatars,
     isLoading: isLoadingAvatars,
     error: avatarsError,
+    refetch: refetchAvatars,
+    isFetching: isFetchingAvatars,
   } = useGetPhotoAvatarGenerationsQuery(projectId || '', {
     skip: !projectId || activeTab !== 'avatars',
   });
@@ -84,6 +89,8 @@ export default function ProjectVedios() {
     data: translations,
     isLoading: isLoadingTranslations,
     error: translationsError,
+    refetch: refetchTranslations,
+    isFetching: isFetchingTranslations,
   } = useGetVideoTranslationsQuery(projectId || '', {
     skip: !projectId || activeTab !== 'translations',
   });
@@ -100,6 +107,28 @@ export default function ProjectVedios() {
     if (activeTab === 'avatars') return avatarsError;
     return translationsError;
   }, [activeTab, videosError, avatarsError, translationsError]);
+
+  // Get current refetch function and fetching state based on active tab
+  const refetch = useMemo(() => {
+    if (activeTab === 'videos') return refetchVideos;
+    if (activeTab === 'avatars') return refetchAvatars;
+    return refetchTranslations;
+  }, [activeTab, refetchVideos, refetchAvatars, refetchTranslations]);
+
+  const isRefreshing = useMemo(() => {
+    if (activeTab === 'videos') return isFetchingVideos;
+    if (activeTab === 'avatars') return isFetchingAvatars;
+    return isFetchingTranslations;
+  }, [activeTab, isFetchingVideos, isFetchingAvatars, isFetchingTranslations]);
+
+  // Handle pull to refresh
+  const onRefresh = async () => {
+    try {
+      await refetch();
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    }
+  };
 
   // Format time ago
   const formatTimeAgo = (dateString: string) => {
@@ -652,6 +681,14 @@ export default function ProjectVedios() {
             contentContainerStyle={styles.contentContainer}
             showsVerticalScrollIndicator={false}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing&&currentData.length>0}
+                onRefresh={onRefresh}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
+              />
+            }
           />
         ) : error ? (
           <View style={styles.errorContainer}>
@@ -668,6 +705,14 @@ export default function ProjectVedios() {
             contentContainerStyle={styles.contentContainer}
             showsVerticalScrollIndicator={false}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing&&currentData.length>0}
+                onRefresh={onRefresh}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
+              />
+            }
           />
         ) : (
           <View style={styles.emptyContainer}>
