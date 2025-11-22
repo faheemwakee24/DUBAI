@@ -27,10 +27,11 @@ type DescribeCharacterNavigationProp = NativeStackNavigationProp<
 export default function DescribeCharacter() {
   const navigation = useNavigation<DescribeCharacterNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'DescribeCharacter'>>();
-  const { avatarId, voiceId, screenFrom, projectId } = route.params;
+  const { avatarId, voiceId, screenFrom, projectId,avatar_photo_url } = route.params;
   console.log('screenFrom', screenFrom);
   console.log('avatarId', avatarId);
   console.log('voiceId', voiceId);
+  console.log('avatar_photo_url', avatar_photo_url);
 
   const [generateVideo, { isLoading: isGenerating }] =
     useGenerateVideoMutation();
@@ -135,6 +136,7 @@ export default function DescribeCharacter() {
           custom_motion_prompt: 'just go with the text', // Default as per example
           enhance_custom_motion_prompt: false,
           project_id: selectedProject || projectId || undefined,
+          avatar_photo_url:avatar_photo_url ,
         }).unwrap();
 
         // Handle AV4 response structure
@@ -160,7 +162,8 @@ export default function DescribeCharacter() {
           input_text: message,
           emotion: selectedVoiceTone,
           speed: speed.replace('x', ''), // Remove 'x' from speed (e.g., '1x' -> '1')
-          project_id: projectId || undefined,
+          project_id: selectedProject || undefined,
+          avatar_photo_url:avatar_photo_url ,
         }).unwrap();
 
         // Handle original response structure

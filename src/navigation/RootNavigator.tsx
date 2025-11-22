@@ -77,8 +77,8 @@ export type RootStackParamList = {
   CustomizeAvatar: undefined;
   CharacherReader: { character: number, body: string, hair: string, accessories: string, background: string, emotion: string };
   PreviewCharacherVedio: { character: number, body: string, hair: string, accessories: string, background: string, emotion: string, message: string, speed: string, voiceTone: string } | { avatarId: string, voiceId: string, message: string, speed: string, voiceTone: string, backgroundType?: string, backgroundColor?: string };
-  VoiceSelection: { avatarId: string; screenFrom?: string; projectId?: string };
-  DescribeCharacter: { avatarId: string; voiceId: string; screenFrom?: string; projectId?: string };
+  VoiceSelection: { avatarId: string; screenFrom?: string; projectId?: string,avatar_photo_url?: string };
+  DescribeCharacter: { avatarId: string; voiceId: string; screenFrom?: string; projectId?: string,avatar_photo_url?: string };
   GeneratingCharacterVideo: { videoId: string,screenFrom?: string };
   GeneratedCharacters: { generationId?: string; imageUrls?: string[]; imageKeys?: string[]; projectId?: string };
   RecentProjects:undefined;

@@ -18,11 +18,7 @@ import { Svgs } from '../../assets/icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  Header,
-  LiquidGlassBackground,
-  Shimmer,
-} from '../../components/ui';
+import { Header, LiquidGlassBackground, Shimmer } from '../../components/ui';
 import { Images } from '../../assets/images';
 import {
   useGetProjectVideosQuery,
@@ -35,7 +31,10 @@ import type {
   VideoTranslation,
 } from '../../store/api/projectsApi';
 import { downloadVideo, DownloadProgress } from '../../utils/videoDownloader';
-import { downloadImage, ImageDownloadProgress } from '../../utils/imageDownloader';
+import {
+  downloadImage,
+  ImageDownloadProgress,
+} from '../../utils/imageDownloader';
 import { showToast } from '../../utils/toast';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
@@ -54,9 +53,15 @@ export default function ProjectVedios() {
   const [activeTab, setActiveTab] = useState<TabType>('videos');
 
   // State for tracking downloads
-  const [downloadingVideoId, setDownloadingVideoId] = useState<string | null>(null);
-  const [downloadingImageId, setDownloadingImageId] = useState<string | null>(null);
-  const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
+  const [downloadingVideoId, setDownloadingVideoId] = useState<string | null>(
+    null,
+  );
+  const [downloadingImageId, setDownloadingImageId] = useState<string | null>(
+    null,
+  );
+  const [downloadProgress, setDownloadProgress] = useState<
+    Record<string, number>
+  >({});
 
   // Fetch data based on active tab
   const {
@@ -101,10 +106,12 @@ export default function ProjectVedios() {
     const date = new Date(dateString);
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
+
     if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 3600)
+      return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400)
+      return `${Math.floor(diffInSeconds / 3600)} hours ago`;
     return `${Math.floor(diffInSeconds / 86400)} days ago`;
   };
 
@@ -120,7 +127,11 @@ export default function ProjectVedios() {
   };
 
   // Handle video download (for videos and translations)
-  const handleDownloadVideo = async (videoUrl: string, fileName: string, itemId: string) => {
+  const handleDownloadVideo = async (
+    videoUrl: string,
+    fileName: string,
+    itemId: string,
+  ) => {
     if (!videoUrl) {
       showToast.error('Error', 'No video URL available');
       return;
@@ -140,7 +151,7 @@ export default function ProjectVedios() {
         (progress: DownloadProgress) => {
           const percent = Math.round(progress.progress * 100);
           setDownloadProgress(prev => ({ ...prev, [itemId]: percent }));
-        }
+        },
       );
 
       if (result.success && result.filePath) {
@@ -166,17 +177,25 @@ export default function ProjectVedios() {
     const statusDisplay = getStatusDisplay(item.status);
     const isCompleted = item.status.toLowerCase() === 'completed';
     const videoUrl = item.video_url || item.gcs_signed_url;
-    
+console.log('videoUrl', videoUrl);
+console.log('item', item);
+
     return (
       <LiquidGlassBackground style={styles.projectCard}>
-        <ImageBackground 
-          source={{ uri: item.avatar_photo_url }} 
+        <ImageBackground
+          source={{ uri: item.avatar_photo_url }}
           style={styles.projectIcon}
           imageStyle={{ borderRadius: 12 }}
         >
           {isCompleted && videoUrl && (
             <TouchableOpacity
-              onPress={() => handleDownloadVideo(videoUrl, `project_video_${item.video_id}_${Date.now()}.mp4`, item.id)}
+              onPress={() =>
+                handleDownloadVideo(
+                  videoUrl,
+                  `project_video_${item.video_id}_${Date.now()}.mp4`,
+                  item.id,
+                )
+              }
               style={styles.downloadIconTouchable}
               disabled={downloadingVideoId === item.id}
               activeOpacity={0.7}
@@ -203,7 +222,9 @@ export default function ProjectVedios() {
           >
             {item.input_text.substring(0, 50)}...
           </Text>
-          <Text style={styles.subtitle}>{item.emotion} • {item.speed}x</Text>
+          <Text style={styles.subtitle}>
+            {item.emotion} • {item.speed}x
+          </Text>
           <View style={styles.rowSpaceBetween}>
             <Text
               style={[
@@ -215,7 +236,9 @@ export default function ProjectVedios() {
             >
               {statusDisplay}
             </Text>
-            <Text style={styles.statusTime}>{formatTimeAgo(item.updatedAt)}</Text>
+            <Text style={styles.statusTime}>
+              {formatTimeAgo(item.updatedAt)}
+            </Text>
           </View>
           <PrimaryButton
             title="Play"
@@ -234,9 +257,13 @@ export default function ProjectVedios() {
       </LiquidGlassBackground>
     );
   };
-
+  console.log('project id', projectId);
   // Handle image download
-  const handleDownloadImage = async (imageUrl: string, itemId: string, imageIndex: number = 0) => {
+  const handleDownloadImage = async (
+    imageUrl: string,
+    itemId: string,
+    imageIndex: number = 0,
+  ) => {
     if (!imageUrl) {
       showToast.error('Error', 'No image URL available');
       return;
@@ -257,7 +284,7 @@ export default function ProjectVedios() {
           // Optional: Track progress if needed
           const percent = Math.round(progress.progress * 100);
           console.log(`Download progress: ${percent}%`);
-        }
+        },
       );
 
       if (result.success && result.filePath) {
@@ -275,12 +302,13 @@ export default function ProjectVedios() {
 
   // Handle avatar preview
   const handleAvatarPreview = (item: PhotoAvatarGeneration) => {
-    const imageUrls = item.image_url_list && item.image_url_list.length > 0 
-      ? item.image_url_list 
-      : item.photo_url 
-        ? [item.photo_url] 
+    const imageUrls =
+      item.image_url_list && item.image_url_list.length > 0
+        ? item.image_url_list
+        : item.photo_url
+        ? [item.photo_url]
         : [];
-    
+
     if (imageUrls.length === 0) {
       showToast.error('Error', 'No images available for preview');
       return;
@@ -300,12 +328,13 @@ export default function ProjectVedios() {
     const statusDisplay = getStatusDisplay(item.status);
     const isCompleted = item.status.toLowerCase() === 'completed';
     const firstImage = item.image_url_list?.[0] || item.photo_url;
-    const hasMultipleImages = item.image_url_list && item.image_url_list.length > 1;
-    
+    const hasMultipleImages =
+      item.image_url_list && item.image_url_list.length > 1;
+
     return (
       <LiquidGlassBackground style={styles.projectCard}>
-        <ImageBackground 
-          source={{ uri: firstImage }} 
+        <ImageBackground
+          source={{ uri: firstImage }}
           style={styles.projectIcon}
           imageStyle={{ borderRadius: 12 }}
         >
@@ -336,7 +365,13 @@ export default function ProjectVedios() {
           >
             {item.name || 'Avatar'}
           </Text>
-          <Text style={styles.subtitle}>{item.age} • {item.gender}</Text>
+          <Text
+            style={styles.subtitle}
+            numberOfLines={1}
+            ellipsizeMode="middle"
+          >
+            {item.age} • {item.gender}
+          </Text>
           <View style={styles.rowSpaceBetween}>
             <Text
               style={[
@@ -348,11 +383,13 @@ export default function ProjectVedios() {
             >
               {statusDisplay}
             </Text>
-            <Text style={styles.statusTime}>{formatTimeAgo(item.updatedAt)}</Text>
+            <Text style={styles.statusTime}>
+              {formatTimeAgo(item.updatedAt)}
+            </Text>
           </View>
           {isCompleted && (
             <PrimaryButton
-              title={hasMultipleImages ? "Preview All" : "Preview"}
+              title={hasMultipleImages ? 'Preview All' : 'Preview'}
               onPress={() => handleAvatarPreview(item)}
               extraContainerStyle={styles.buttonContainer}
               textStyle={styles.text}
@@ -368,17 +405,23 @@ export default function ProjectVedios() {
     const statusDisplay = getStatusDisplay(item.status);
     const isCompleted = item.status.toLowerCase() === 'completed';
     const videoUrl = item.translated_video_url || item.gcs_signed_url;
-    
+
     return (
       <LiquidGlassBackground style={styles.projectCard}>
-        <ImageBackground 
-          source={Images.VedioIcon2} 
+        <ImageBackground
+          source={Images.VedioIcon2}
           style={styles.projectIcon}
           imageStyle={{ borderRadius: 12 }}
         >
           {isCompleted && videoUrl && (
             <TouchableOpacity
-              onPress={() => handleDownloadVideo(videoUrl, `translation_${item.video_translate_id}_${Date.now()}.mp4`, item.id)}
+              onPress={() =>
+                handleDownloadVideo(
+                  videoUrl,
+                  `translation_${item.video_translate_id}_${Date.now()}.mp4`,
+                  item.id,
+                )
+              }
               style={styles.downloadIconTouchable}
               disabled={downloadingVideoId === item.id}
               activeOpacity={0.7}
@@ -405,7 +448,9 @@ export default function ProjectVedios() {
           >
             {item.title || 'Translation'}
           </Text>
-          <Text style={styles.subtitle}>{item.output_language} • {item.mode}</Text>
+          <Text style={styles.subtitle}>
+            {item.output_language} • {item.mode}
+          </Text>
           <View style={styles.rowSpaceBetween}>
             <Text
               style={[
@@ -417,7 +462,9 @@ export default function ProjectVedios() {
             >
               {statusDisplay}
             </Text>
-            <Text style={styles.statusTime}>{formatTimeAgo(item.updatedAt)}</Text>
+            <Text style={styles.statusTime}>
+              {formatTimeAgo(item.updatedAt)}
+            </Text>
           </View>
           <PrimaryButton
             title="Play"
@@ -440,19 +487,33 @@ export default function ProjectVedios() {
   // Render shimmer placeholder
   const renderShimmerItem = () => (
     <LiquidGlassBackground style={styles.projectCard}>
-      <Shimmer
-        width="100%"
-        height={metrics.width(140)}
-        borderRadius={12}
-      />
+      <Shimmer width="100%" height={metrics.width(140)} borderRadius={12} />
       <View style={styles.projectBodyCotainer}>
         <Shimmer width="100%" height={metrics.width(18)} borderRadius={4} />
-        <Shimmer width="60%" height={metrics.width(14)} borderRadius={4} style={{ marginTop: metrics.width(5) }} />
+        <Shimmer
+          width="60%"
+          height={metrics.width(14)}
+          borderRadius={4}
+          style={{ marginTop: metrics.width(5) }}
+        />
         <View style={[styles.rowSpaceBetween, { marginTop: metrics.width(5) }]}>
-          <Shimmer width={metrics.width(60)} height={metrics.width(12)} borderRadius={4} />
-          <Shimmer width={metrics.width(80)} height={metrics.width(12)} borderRadius={4} />
+          <Shimmer
+            width={metrics.width(60)}
+            height={metrics.width(12)}
+            borderRadius={4}
+          />
+          <Shimmer
+            width={metrics.width(80)}
+            height={metrics.width(12)}
+            borderRadius={4}
+          />
         </View>
-        <Shimmer width="100%" height={metrics.width(35)} borderRadius={8} style={{ marginTop: metrics.width(10) }} />
+        <Shimmer
+          width="100%"
+          height={metrics.width(35)}
+          borderRadius={8}
+          style={{ marginTop: metrics.width(10) }}
+        />
       </View>
     </LiquidGlassBackground>
   );
@@ -468,8 +529,10 @@ export default function ProjectVedios() {
 
   // Render item based on active tab
   const renderItem = ({ item }: { item: any }) => {
-    if (activeTab === 'videos') return renderVideoItem({ item: item as ProjectVideo });
-    if (activeTab === 'avatars') return renderAvatarItem({ item: item as PhotoAvatarGeneration });
+    if (activeTab === 'videos')
+      return renderVideoItem({ item: item as ProjectVideo });
+    if (activeTab === 'avatars')
+      return renderAvatarItem({ item: item as PhotoAvatarGeneration });
     return renderTranslationItem({ item: item as VideoTranslation });
   };
 
@@ -497,13 +560,15 @@ export default function ProjectVedios() {
               </TouchableOpacity>
             </LiquidGlassBackground>
           )}
-          
+
           {activeTab === 'avatars' ? (
             <TouchableOpacity
               style={[styles.tab, styles.activeTab]}
               onPress={() => setActiveTab('avatars')}
             >
-              <Text style={[styles.tabText, styles.activeTabText]}>Avatars</Text>
+              <Text style={[styles.tabText, styles.activeTabText]}>
+                Avatars
+              </Text>
             </TouchableOpacity>
           ) : (
             <LiquidGlassBackground style={styles.tab}>
@@ -515,13 +580,15 @@ export default function ProjectVedios() {
               </TouchableOpacity>
             </LiquidGlassBackground>
           )}
-          
+
           {activeTab === 'translations' ? (
             <TouchableOpacity
               style={[styles.tab, styles.activeTab]}
               onPress={() => setActiveTab('translations')}
             >
-              <Text style={[styles.tabText, styles.activeTabText]}>Translations</Text>
+              <Text style={[styles.tabText, styles.activeTabText]}>
+                Translations
+              </Text>
             </TouchableOpacity>
           ) : (
             <LiquidGlassBackground style={styles.tab}>
@@ -539,7 +606,7 @@ export default function ProjectVedios() {
           <FlatList
             data={[1, 2, 3, 4]}
             renderItem={renderShimmerItem}
-            keyExtractor={(item) => `shimmer-${item}`}
+            keyExtractor={item => `shimmer-${item}`}
             numColumns={2}
             columnWrapperStyle={styles.row}
             style={styles.flatList}
@@ -592,7 +659,7 @@ const styles = StyleSheet.create({
     height: 15,
   },
   row: {
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     gap: metrics.width(10),
   },
   projectInnerContainer: {
@@ -639,7 +706,7 @@ const styles = StyleSheet.create({
   },
   projectCard: {
     gap: metrics.width(11),
-    flex: 1,
+    width: (metrics.screenWidth - metrics.width(50) - metrics.width(10)) / 2, // Screen width minus margins and gap, divided by 2
     borderRadius: 12,
   },
   projectBodyCotainer: {
@@ -681,22 +748,22 @@ const styles = StyleSheet.create({
     right: 10,
     height: 28,
     width: 28,
-    top:10,
+    top: 10,
     borderRadius: 8,
-    justifyContent:'center',
-    alignItems:'center',
-    position:'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
   },
   downloadIconTouchable: {
     position: 'absolute',
     right: 10,
     top: 10,
   },
-  downloadIconContainer:{
+  downloadIconContainer: {
     height: 28,
     width: 28,
-    justifyContent:'center',
-    alignItems:'center'
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   downloadProgressText: {
     fontFamily: FontFamily.spaceGrotesk.medium,

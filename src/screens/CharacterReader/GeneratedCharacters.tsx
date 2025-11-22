@@ -294,12 +294,14 @@ export default function GeneratedCharacters() {
       return;
     }
     const selectedImageKey = imageKeys[selectedImageIndex];
+    const selectedImageUrl = imageUrls[selectedImageIndex];
     // Navigate to next screen with selected image key
     if (selectedImageKey) {
       navigation.navigate('VoiceSelection', { 
         avatarId: selectedImageKey, 
         screenFrom: 'GeneratedCharacters',
         projectId: projectId,
+        avatar_photo_url: selectedImageUrl,
       });
     } else {
       Alert.alert('Error', 'Image key not available. Please try again.');

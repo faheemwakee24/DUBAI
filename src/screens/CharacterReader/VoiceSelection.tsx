@@ -32,7 +32,7 @@ const ITEMS_PER_PAGE = 10;
 export default function VoiceSelection() {
   const navigation = useNavigation<VoiceSelectionNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'VoiceSelection'>>();
-  const { avatarId, screenFrom, projectId } = route?.params as { avatarId: string; screenFrom?: string; projectId?: string };
+  const { avatarId, screenFrom, projectId,avatar_photo_url } = route?.params as { avatarId: string; screenFrom?: string; projectId?: string,avatar_photo_url  ?: string };
   console.log('avatarId', avatarId);
   console.log('screenFrom', screenFrom);
   const [currentPage, setCurrentPage] = useState(1);
@@ -195,6 +195,7 @@ export default function VoiceSelection() {
             voiceId: voice.voice_id,
             screenFrom,
             projectId,
+            avatar_photo_url,
           });
         }}
         activeOpacity={0.7}

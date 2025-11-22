@@ -2953,6 +2953,11 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RNNotifee (9.1.8):
+    - React-Core
+    - RNNotifee/NotifeeCore (= 9.1.8)
+  - RNNotifee/NotifeeCore (9.1.8):
+    - React-Core
   - RNScreens (4.18.0):
     - boost
     - DoubleConversion
@@ -3270,6 +3275,7 @@ DEPENDENCIES:
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - RNFS (from `../node_modules/react-native-fs`)
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
+  - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSoundPlayer (from `../node_modules/react-native-sound-player`)
   - RNSVG (from `../node_modules/react-native-svg`)
@@ -3496,6 +3502,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-fs"
   RNGoogleSignin:
     :path: "../node_modules/@react-native-google-signin/google-signin"
+  RNNotifee:
+    :path: "../node_modules/@notifee/react-native"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   RNSoundPlayer:
@@ -3620,6 +3628,7 @@ SPEC CHECKSUMS:
   RNFBMessaging: c304c1d8949f996d3eed1cf4eeba33148d13b4ea
   RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNGoogleSignin: 85c82d6e1494bd4a039804959362e63771f7ad5a
+  RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
   RNScreens: 98771ad898d1c0528fc8139606bbacf5a2e9d237
   RNSoundPlayer: 7961678d02c7339d9e9cfb78b9f3e8fde17f9df2
   RNSVG: 6765c72b6cc74f8e475fabcdc3040b934c786d9d

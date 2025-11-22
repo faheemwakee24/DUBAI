@@ -44,14 +44,10 @@ export default function RecentProjects() {
       <View style={styles.projectInnerContainer}>
         <Image source={Images.ProjectIcon} style={styles.projectIcon} />
         <View style={styles.projectDataContainer}>
-          <Text style={styles.projectTitle}>{item.name}</Text>
+          <Text style={styles.projectTitle} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
           <View style={styles.projectSubTitleContainer}>
-            <Text style={styles.projectSubTitle}>
+            <Text style={styles.projectSubTitle} numberOfLines={1} ellipsizeMode="tail">
               {item.description}
-            </Text>
-            <View style={styles.dot} />
-            <Text style={styles.vediocCout}>
-              0 videos
             </Text>
           </View>
         </View>
@@ -72,8 +68,7 @@ export default function RecentProjects() {
           <Shimmer width={metrics.width(150)} height={metrics.width(18)} borderRadius={4} />
           <View style={styles.projectSubTitleContainer}>
             <Shimmer width={metrics.width(80)} height={metrics.width(14)} borderRadius={4} />
-            <View style={styles.dot} />
-            <Shimmer width={metrics.width(60)} height={metrics.width(14)} borderRadius={4} />
+           
           </View>
         </View>
       </View>
@@ -168,6 +163,7 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.spaceGrotesk.bold,
     fontSize: metrics.width(15),
     color: colors.white,
+    maxWidth:'85%'
   },
   projectSubTitleContainer: {
     flexDirection: 'row',
@@ -177,7 +173,8 @@ const styles = StyleSheet.create({
   projectSubTitle:{
     fontFamily:FontFamily.spaceGrotesk.regular,
     fontSize:metrics.width(13),
-    color:colors.primary
+    color:colors.primary,
+    maxWidth:'85%'
   },
   dot:{
     height:metrics.width(4),

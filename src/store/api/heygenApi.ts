@@ -61,6 +61,7 @@ export interface GenerateVideoRequest {
   emotion: string;
   speed: string;
   project_id?: string;
+  avatar_photo_url?: string;
 }
 
 export interface GenerateVideoResponse {
@@ -83,6 +84,7 @@ export interface GenerateAv4VideoRequest {
   custom_motion_prompt: string;
   enhance_custom_motion_prompt: boolean;
   project_id?: string;
+  avatar_photo_url?: string;
 }
 
 export interface GenerateAv4VideoResponse {

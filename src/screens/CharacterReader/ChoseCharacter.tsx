@@ -67,6 +67,7 @@ export default function ChoseCharacter() {
 
   const avatars = allAvatars;
   const [selectedCharacter, setSelectedCharacter] = useState<string | null>(null);
+  const [selectedCharacterPhoto, setSelectedCharacterPhoto] = useState<string | undefined>(undefined);
   // Track which images failed to load
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
@@ -101,7 +102,7 @@ export default function ChoseCharacter() {
       return;
     }
 
-    navigation.navigate('VoiceSelection', { avatarId: selectedCharacter });
+    navigation.navigate('VoiceSelection', { avatarId: selectedCharacter,avatar_photo_url:selectedCharacterPhoto });
   };
 
   const handleLoadMore = () => {
@@ -166,7 +167,9 @@ export default function ChoseCharacter() {
           return (
             <TouchableOpacity
               key={character.avatar_id}
-              onPress={() => handleCharacterSelect(character.avatar_id)}
+              onPress={() =>{ handleCharacterSelect(character.avatar_id)
+                setSelectedCharacterPhoto(character.preview_image_url)
+              }}
               style={[
                 styles.tempCharacher,
                 isSelected && styles.selectedCharacter,
