@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  RefreshControl,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -19,6 +20,12 @@ import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground } from '../../components/ui';
 import { Images } from '../../assets/images';
+import {
+  useGetNotificationsQuery,
+  useMarkAllNotificationsAsReadMutation,
+  type Notification,
+} from '../../store/api/notificationsApi';
+import { showToast } from '../../utils/toast';
 
 type NotificationsNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -30,34 +37,80 @@ export default function Notifications() {
   const [activeTab, setActiveTab] = useState<'notifications' | 'history'>(
     'notifications',
   );
+  const [page, setPage] = useState(1);
+  const limit = 20;
 
-  // Notification data
-  const notificationData = [
-    {
-      id: '1',
-      type: 'success',
-      icon: Images.TickIcon,
-      title: 'Video Ready',
-      description: 'Video dubbed successfully',
-      timestamp: '2 min ago',
-    },
-    {
-      id: '2',
-      type: 'error',
-      icon: Images.CrossImage,
-      title: 'Upload Failed',
-      description: 'Video dubbed successfully',
-      timestamp: '10:00 am',
-    },
-    {
-      id: '3',
-      type: 'processing',
-      icon: Images.ProcessingImage,
-      title: 'Character Processing',
-      description: 'Avatar SARAH is being generated...',
-      timestamp: '5 Oct',
-    },
-  ];
+  // Fetch notifications from API
+  const {
+    data: notificationsResponse,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useGetNotificationsQuery({ page, limit });
+
+  const [markAllAsRead, { isLoading: isMarkingAllAsRead }] =
+    useMarkAllNotificationsAsReadMutation();
+
+  // Get notifications array from response
+  const notifications = useMemo(() => {
+    return notificationsResponse?.notifications || [];
+  }, [notificationsResponse]);
+
+  // Format time ago
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600)
+      return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400)
+      return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  };
+
+  // Get notification icon based on type/status
+  const getNotificationIcon = (notification: Notification) => {
+    if (notification.image) {
+      return { uri: notification.image };
+    }
+
+    const status = notification.status?.toLowerCase();
+    const type = notification.type?.toLowerCase();
+
+    if (status === 'completed' || type?.includes('completed')) {
+      return Images.TickIcon;
+    }
+    if (status === 'failed' || type?.includes('failed')) {
+      return Images.CrossImage;
+    }
+    if (
+      status === 'processing' ||
+      type?.includes('started') ||
+      type?.includes('processing')
+    ) {
+      return Images.ProcessingImage;
+    }
+    return Images.TickIcon; // Default
+  };
+
+  // Get notification type for styling
+  const getNotificationType = (
+    notification: Notification,
+  ): 'success' | 'error' | 'processing' => {
+    const status = notification.status?.toLowerCase();
+    const type = notification.type?.toLowerCase();
+
+    if (status === 'completed' || type?.includes('completed')) {
+      return 'success';
+    }
+    if (status === 'failed' || type?.includes('failed')) {
+      return 'error';
+    }
+    return 'processing';
+  };
 
   // History data
   const historyData = [
@@ -136,19 +189,46 @@ export default function Notifications() {
     }
   };
 
-  const renderNotificationItem = (item: (typeof notificationData)[0]) => (
-    <LiquidGlassBackground key={item.id} style={styles.notificationCard}>
-      <View style={styles.notificationRow}>
-        <Image source={item.icon} style={styles.notificationIcon} />
+  const renderNotificationItem = (item: Notification) => {
+    const icon = getNotificationIcon(item);
+    const isImageUri = typeof icon === 'object' && 'uri' in icon;
 
-        <View style={styles.notificationContent}>
-          <Text style={styles.notificationTitle}>{item.title}</Text>
-          <Text style={styles.notificationDescription}>{item.description}</Text>
+    return (
+      <LiquidGlassBackground key={item._id} style={styles.notificationCard}>
+        <View style={styles.notificationRow}>
+          {isImageUri ? (
+            <Image source={icon} style={styles.notificationIconImage} />
+          ) : (
+            <Image source={icon} style={styles.notificationIcon} />
+          )}
+
+          <View style={styles.notificationContent}>
+            <View style={
+              {flexDirection:'row', justifyContent:'space-between',width:'100%'}
+            }>
+              <Text
+                style={styles.notificationTitle}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {item.title}
+              </Text>
+              <Text style={styles.notificationTimestamp}>
+                {formatTimeAgo(item.createdAt)}
+              </Text>
+            </View>
+            <Text
+              style={styles.notificationDescription}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {item.body}
+            </Text>
+          </View>
         </View>
-        <Text style={styles.notificationTimestamp}>{item.timestamp}</Text>
-      </View>
-    </LiquidGlassBackground>
-  );
+      </LiquidGlassBackground>
+    );
+  };
 
   const renderHistoryItem = (item: (typeof historyData)[0]) => (
     <LiquidGlassBackground key={item.id} style={styles.historyCard}>
@@ -174,8 +254,29 @@ export default function Notifications() {
     </LiquidGlassBackground>
   );
 
-  const handleMarkAllAsRead = () => {
-    console.log('Mark all as read pressed');
+  const handleMarkAllAsRead = async () => {
+    try {
+      const result = await markAllAsRead().unwrap();
+      showToast.success(
+        'Success',
+        `Marked ${result.count || 'all'} notifications as read`,
+      );
+      // Refetch notifications to update the UI
+      await refetch();
+    } catch (error: any) {
+      console.error('Error marking all as read:', error);
+      const errorMessage =
+        error?.data?.message || error?.message || 'Failed to mark all as read';
+      showToast.error('Error', errorMessage);
+    }
+  };
+
+  const onRefresh = async () => {
+    try {
+      await refetch();
+    } catch (error) {
+      console.error('Error refreshing notifications:', error);
+    }
   };
 
   return (
@@ -184,61 +285,35 @@ export default function Notifications() {
         <Header title="Activity Center" showBackButton />
 
         {/* Tab Bar */}
-        <View style={styles.tabContainer}>
-          {activeTab === 'notifications' ? (
-            <TouchableOpacity
-              style={[styles.tab, styles.activeTab]}
-              onPress={() => setActiveTab('notifications')}
-            >
-              <Text style={[styles.tabText, styles.activeTabText]}>
-                Notifications
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <LiquidGlassBackground style={styles.tab}>
-              <TouchableOpacity
-                style={styles.tabContent}
-                onPress={() => setActiveTab('notifications')}
-              >
-                <Text style={styles.tabText}>
-                  Notifications
-                </Text>
-              </TouchableOpacity>
-            </LiquidGlassBackground>
-          )}
-          
-          {activeTab === 'history' ? (
-            <TouchableOpacity
-              style={[styles.tab, styles.activeTab]}
-              onPress={() => setActiveTab('history')}
-            >
-              <Text style={[styles.tabText, styles.activeTabText]}>
-                History
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <LiquidGlassBackground style={styles.tab}>
-              <TouchableOpacity
-                style={styles.tabContent}
-                onPress={() => setActiveTab('history')}
-              >
-                <Text style={styles.tabText}>
-                  History
-                </Text>
-              </TouchableOpacity>
-            </LiquidGlassBackground>
-          )}
-        </View>
+        
 
         {/* Content */}
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isFetching && notifications.length > 0}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
         >
           {activeTab === 'notifications' ? (
             <View style={styles.notificationsList}>
-              {notificationData.map(renderNotificationItem)}
+              {isLoading ? (
+                <Text style={styles.loadingText}>Loading notifications...</Text>
+              ) : error ? (
+                <Text style={styles.errorText}>
+                  Failed to load notifications
+                </Text>
+              ) : notifications.length > 0 ? (
+                notifications.map(renderNotificationItem)
+              ) : (
+                <Text style={styles.emptyText}>No notifications found</Text>
+              )}
             </View>
           ) : (
             <View style={styles.historyList}>
@@ -248,13 +323,14 @@ export default function Notifications() {
         </ScrollView>
 
         {/* Mark All as Read Button */}
-        {activeTab === 'notifications' && (
+        {activeTab === 'notifications' && notifications.length > 0 && (
           <View style={styles.markAllButtonContainer}>
             <PrimaryButton
-              title="Mark All as read"
+              title={isMarkingAllAsRead ? 'Marking...' : 'Mark All as read'}
               onPress={handleMarkAllAsRead}
               variant="primary"
               extraContainerStyle={styles.markAllButton}
+              disabled={isMarkingAllAsRead}
             />
           </View>
         )}
@@ -275,12 +351,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: metrics.width(20),
     marginBottom: metrics.width(20),
-    alignItems:'center',
-    justifyContent:'space-between'
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   tab: {
     borderRadius: 8,
-    width:'49%'
+    width: '49%',
   },
   tabContent: {
     paddingVertical: metrics.width(12),
@@ -294,7 +370,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: metrics.width(20),
     borderRadius: 8,
     alignItems: 'center',
-    width:'49%'
+    width: '49%',
   },
   tabText: {
     fontFamily: FontFamily.spaceGrotesk.medium,
@@ -337,6 +413,12 @@ const styles = StyleSheet.create({
     height: metrics.width(42),
     resizeMode: 'contain',
   },
+  notificationIconImage: {
+    width: metrics.width(42),
+    height: metrics.width(42),
+    borderRadius: metrics.width(21),
+    resizeMode: 'cover',
+  },
   notificationContent: {
     flex: 1,
     gap: metrics.width(4),
@@ -345,6 +427,7 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.spaceGrotesk.bold,
     fontSize: metrics.width(15),
     color: colors.white,
+    width: '60%',
   },
   notificationDescription: {
     fontFamily: FontFamily.spaceGrotesk.regular,
@@ -427,5 +510,26 @@ const styles = StyleSheet.create({
   markAllButtonContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+  },
+  loadingText: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(14),
+    color: colors.subtitle,
+    textAlign: 'center',
+    marginTop: metrics.width(20),
+  },
+  errorText: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(14),
+    color: '#FF6B6B',
+    textAlign: 'center',
+    marginTop: metrics.width(20),
+  },
+  emptyText: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(14),
+    color: colors.subtitle,
+    textAlign: 'center',
+    marginTop: metrics.width(20),
   },
 });

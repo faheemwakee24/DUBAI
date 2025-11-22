@@ -36,6 +36,7 @@ export const baseApi = createApi({
     'Subscription',
     'PaymentMethod',
     'HeygenAvatar',
+    'Notification',
   ],
   endpoints: () => ({}), // Endpoints will be injected by other API slices
 });

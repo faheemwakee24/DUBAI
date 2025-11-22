@@ -94,5 +94,11 @@ export const API_ENDPOINTS = {
     CREATE_VIDEO: '/character-speaking/create-video',
     VIDEO_STATUS: (talkId: string) => `/character-speaking/video-status/${talkId}`,
   },
+  // Notifications endpoints
+  NOTIFICATIONS: {
+    LIST: '/notifications',
+    MARK_AS_READ: (id: string) => `/notifications/${id}/read`,
+    MARK_ALL_AS_READ: '/notifications/read-all',
+  },
 } as const;
 
