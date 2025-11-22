@@ -1,5 +1,5 @@
 import messaging from '@react-native-firebase/messaging';
-import notifee, { AndroidImportance, EventType, Event } from '@notifee/react-native';
+import notifee, { AndroidImportance, AndroidVisibility, EventType, Event } from '@notifee/react-native';
 import { Platform, PermissionsAndroid } from 'react-native';
 import { tokenStorage } from '../utils/tokenStorage';
 
@@ -197,21 +197,42 @@ class PushNotificationService {
       messagingInstance.onMessage(async (remoteMessage) => {
         console.log('[PushNotifications] Foreground message received:', JSON.stringify(remoteMessage, null, 2));
         
-        const notification: PushNotificationData = {
-          id: remoteMessage.messageId || Date.now().toString(),
-          type: this.getNotificationType(remoteMessage.data),
-          title: remoteMessage.notification?.title || 'Notification',
-          body: remoteMessage.notification?.body || '',
-          timestamp: new Date().toISOString(),
-          data: remoteMessage.data,
-        };
+        try {
+          // Extract notification data - handle both notification payload and data-only messages
+          const title = remoteMessage.notification?.title 
+            || (typeof remoteMessage.data?.title === 'string' ? remoteMessage.data.title : null)
+            || 'Notification';
+          const body = remoteMessage.notification?.body 
+            || (typeof remoteMessage.data?.body === 'string' ? remoteMessage.data.body : null)
+            || (typeof remoteMessage.data?.message === 'string' ? remoteMessage.data.message : null)
+            || 'You have a new notification';
+          
+          const notification: PushNotificationData = {
+            id: remoteMessage.messageId || `fcm-${Date.now()}`,
+            type: this.getNotificationType(remoteMessage.data),
+            title: String(title),
+            body: String(body),
+            timestamp: new Date().toISOString(),
+            data: remoteMessage.data,
+          };
 
-        // Display notification using Notifee
-        await this.displayNotification(notification);
+          console.log('[PushNotifications] Processing notification:', notification);
 
-        // Notify subscribers
-        console.log('[PushNotifications] Notifying subscribers with:', notification);
-        this.notifySubscribers(notification);
+          // Display notification using Notifee (this will show the notification banner)
+          const notificationId = await this.displayNotification(notification);
+          
+          if (notificationId) {
+            console.log('[PushNotifications] Notification displayed successfully with ID:', notificationId);
+          } else {
+            console.warn('[PushNotifications] Failed to display notification');
+          }
+
+          // Notify subscribers (for in-app notification list)
+          console.log('[PushNotifications] Notifying subscribers with:', notification);
+          this.notifySubscribers(notification);
+        } catch (error) {
+          console.error('[PushNotifications] Error handling foreground message:', error);
+        }
       });
 
       // Handle background/quit state messages
@@ -325,8 +346,18 @@ class PushNotificationService {
         await notifee.createChannel({
           id: 'processing',
           name: 'Processing Notifications',
-          importance: AndroidImportance.DEFAULT,
+          importance: AndroidImportance.HIGH, // Changed to HIGH to show in foreground
           sound: 'default',
+          vibration: true,
+        });
+
+        // Create info channel for general notifications
+        await notifee.createChannel({
+          id: 'info',
+          name: 'Info Notifications',
+          importance: AndroidImportance.HIGH,
+          sound: 'default',
+          vibration: true,
         });
 
         console.log('[PushNotifications] Notification channels created:', channelId);
@@ -363,38 +394,88 @@ class PushNotificationService {
    */
   async displayNotification(notification: PushNotificationData): Promise<string | null> {
     try {
-      const channelId = Platform.OS === 'android' 
-        ? (notification.type || 'default')
-        : undefined;
+      // Ensure we have valid title and body
+      if (!notification.title || !notification.body) {
+        console.warn('[PushNotifications] Invalid notification data - missing title or body:', notification);
+        return null;
+      }
+
+      // Map notification type to channel ID, default to 'default' if type doesn't have a channel
+      let channelId = 'default';
+      if (Platform.OS === 'android') {
+        const type = notification.type || 'info';
+        // Only use type as channel if it's one we've created
+        const validChannels = ['default', 'success', 'error', 'processing', 'info'];
+        channelId = validChannels.includes(type) ? type : 'default';
+      }
+
+      // Ensure channel exists on Android before displaying
+      if (Platform.OS === 'android') {
+        try {
+          await notifee.createChannel({
+            id: channelId,
+            name: `${channelId.charAt(0).toUpperCase() + channelId.slice(1)} Notifications`,
+            importance: AndroidImportance.HIGH,
+            sound: 'default',
+            vibration: true,
+          });
+        } catch (error) {
+          // Channel might already exist, that's okay
+          console.log('[PushNotifications] Channel creation result (may already exist):', channelId);
+        }
+      }
 
       // Convert all data values to strings (Notifee requirement)
       const stringData = this.convertDataToStrings(notification.data);
 
-      const notificationId = await notifee.displayNotification({
+      console.log('[PushNotifications] Displaying notification with Notifee:', {
         title: notification.title,
         body: notification.body,
+        channelId,
+        platform: Platform.OS,
+      });
+
+      const notificationId = await notifee.displayNotification({
+        title: String(notification.title),
+        body: String(notification.body),
         data: stringData,
         android: {
-          channelId: channelId || 'default',
+          channelId: channelId,
           importance: AndroidImportance.HIGH,
           pressAction: {
             id: 'default',
           },
           // Use notification icon (monochrome white icon)
-          // This should be a simple white/transparent icon in drawable folder
           smallIcon: 'ic_notification',
           // Large icon shows full-color app icon in expanded notification
           largeIcon: 'ic_launcher',
+          // Enable vibration pattern
+          vibrationPattern: [300, 500],
+          // Auto cancel when tapped
+          autoCancel: true,
+          // Show timestamp
+          showTimestamp: true,
+          // Make sure notification is visible (public)
+          visibility: AndroidVisibility.PUBLIC,
         },
         ios: {
           sound: 'default',
+          // Show notification even when app is in foreground
+          foregroundPresentationOptions: {
+            alert: true,
+            badge: true,
+            sound: true,
+          },
         },
       });
 
-      console.log('[PushNotifications] Notification displayed with ID:', notificationId);
+      console.log('[PushNotifications] Notification displayed successfully with ID:', notificationId);
       return notificationId;
     } catch (error) {
       console.error('[PushNotifications] Error displaying notification:', error);
+      if (error instanceof Error) {
+        console.error('[PushNotifications] Error details:', error.message, error.stack);
+      }
       return null;
     }
   }

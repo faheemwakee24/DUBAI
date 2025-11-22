@@ -20,6 +20,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/users/${id}`,
     PROFILE: '/users/profile',
     UPDATE_PROFILE: '/users/profile',
+    FCM_TOKEN: '/users/fcm-token',
   },
   // Auth endpoints
   AUTH: {

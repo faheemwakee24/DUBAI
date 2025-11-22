@@ -27,7 +27,9 @@ import { tokenStorage } from '../../utils/tokenStorage';
 import { useGetProfileQuery } from '../../store/api/authApi';
 import { User } from '../../store/api/authApi';
 import { useGetProjectsQuery } from '../../store/api/projectsApi';
+import { useUpdateFcmTokenMutation } from '../../store/api/usersApi';
 import { showToast } from '../../utils/toast';
+import { pushNotificationService } from '../../services/pushNotificationService';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -39,6 +41,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
   const { data: projects = [], isLoading: isLoadingProjects } = useGetProjectsQuery();
+  const [updateFcmToken] = useUpdateFcmTokenMutation();
 
   useEffect(() => {
     // Load user from storage on mount
@@ -55,6 +58,35 @@ export default function Dashboard() {
 
     loadUser();
   }, []);
+
+  // Send FCM token to backend when dashboard is visited
+  useEffect(() => {
+    const sendFcmToken = async () => {
+      try {
+        // Get FCM token from push notification service
+        const fcmToken = await pushNotificationService.getToken();
+        
+        if (fcmToken) {
+          console.log('[Dashboard] Sending FCM token to backend:', fcmToken);
+          
+          // Send FCM token to backend
+          await updateFcmToken({
+            fcmToken: fcmToken,
+          }).unwrap();
+          
+          console.log('[Dashboard] FCM token sent successfully');
+        } else {
+          console.warn('[Dashboard] FCM token not available');
+        }
+      } catch (error) {
+        console.error('[Dashboard] Error sending FCM token:', error);
+        // Don't show error toast as this is a background operation
+      }
+    };
+
+    // Send FCM token when component mounts
+    sendFcmToken();
+  }, [updateFcmToken]);
 
   // Update user when profile data is fetched
   useEffect(() => {

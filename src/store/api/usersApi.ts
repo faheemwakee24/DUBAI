@@ -41,6 +41,16 @@ export interface UpdateProfileResponse {
   authProvider?: string;
 }
 
+// FCM Token Request/Response
+export interface UpdateFcmTokenRequest {
+  fcmToken: string;
+}
+
+export interface UpdateFcmTokenResponse {
+  message?: string;
+  success?: boolean;
+}
+
 export interface UsersResponse {
   data: User[];
   total?: number;
@@ -122,6 +132,15 @@ export const usersApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['User'],
     }),
+
+    // Update FCM Token
+    updateFcmToken: builder.mutation<UpdateFcmTokenResponse, UpdateFcmTokenRequest>({
+      query: body => ({
+        url: API_ENDPOINTS.USER.FCM_TOKEN,
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 });
 
@@ -133,5 +152,6 @@ export const {
   useUpdateUserMutation,
   useDeleteUserMutation,
   useUpdateProfileMutation,
+  useUpdateFcmTokenMutation,
 } = usersApi;
 

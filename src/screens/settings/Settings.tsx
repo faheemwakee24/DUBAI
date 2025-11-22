@@ -84,9 +84,9 @@ export default function Settings() {
 
   // Get user avatar
   const getUserAvatar = () => {
-    if (user?.avatar) {
-      return { uri: user.avatar };
-    }
+    // if (user?.avatar) {
+    //   return { uri: user.avatar };
+    // }
     return Images.DefaultProfile;
   };
 
