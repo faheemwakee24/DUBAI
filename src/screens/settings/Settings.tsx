@@ -20,7 +20,7 @@ import { LiquidGlassContainerView } from '@callstack/liquid-glass';
 import { tokenStorage } from '../../utils/tokenStorage';
 import { useGetProfileQuery, useLogoutMutation, User } from '../../store/api/authApi';
 import { showToast } from '../../utils/toast';
-
+import notifee from '@notifee/react-native';
 type SettingsNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   'Signup'
@@ -127,7 +127,29 @@ export default function Settings() {
       });
     }
   };
-
+  //  async function showTestNotification() {
+  //   await notifee.requestPermission();
+  
+  //   await notifee.displayNotification({
+  //     title: '🔔 Test Notification',
+  //     body: 'This is a test push notification!',
+  //     android: {
+  //       channelId: 'default',
+  //       importance: 4,
+  //     },
+  //   });
+  // }
+  
+  //  async function createChannel() {
+  //   await notifee.createChannel({
+  //     id: 'default',
+  //     name: 'Default Channel',
+  //   });
+  // }
+  // useEffect(() => {
+  //   createChannel();
+  //   showTestNotification();
+  // }, []);
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>

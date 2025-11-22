@@ -1,45 +1,45 @@
 {
   "project_info": {
-    "project_number": "315596728489",
-    "project_id": "dub-nxt",
-    "storage_bucket": "dub-nxt.firebasestorage.app"
+    "project_number": "5903335579",
+    "project_id": "dubnext",
+    "storage_bucket": "dubnext.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:315596728489:android:5f7f3849089af61dfb21b8",
+        "mobilesdk_app_id": "1:5903335579:android:f4ada9825f4ba521dfc63e",
         "android_client_info": {
           "package_name": "com.dubai"
         }
       },
       "oauth_client": [
         {
-          "client_id": "315596728489-rh9b9bmakvr3gr5ql60figt6rq4g1fof.apps.googleusercontent.com",
+          "client_id": "5903335579-qarbihgknij8evc8sh16oo0jaiurlr2k.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.dubai",
-            "certificate_hash": "356dcf3ef2929163a4885a00736c21cb0bb2648b"
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
           }
         },
         {
-          "client_id": "315596728489-i3tmpkkb55i80k34i3d5ebuakp4ql3ja.apps.googleusercontent.com",
+          "client_id": "5903335579-gvuclhdvjhi9j8kq9rkqc89jjufj96rn.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBdtEOcRC4u69r5Xt7BvGHwIovddxobcJg"
+          "current_key": "AIzaSyCTNFJigzXbDkQD7H7oWnadLdmbf0QdfK4"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "315596728489-i3tmpkkb55i80k34i3d5ebuakp4ql3ja.apps.googleusercontent.com",
+              "client_id": "5903335579-gvuclhdvjhi9j8kq9rkqc89jjufj96rn.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "315596728489-10d6tmcv38fqord7sis2206kr78jlg0k.apps.googleusercontent.com",
+              "client_id": "5903335579-re1mivq2d5t40s73iljf550oatipscsn.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
                 "bundle_id": "com.dubai"

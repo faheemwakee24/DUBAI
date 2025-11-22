@@ -16,11 +16,17 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { toastConfig } from './src/components/ui/ToastConfig';
 import SplashScreen from './src/screens/auth/SplashScreen';
 import { STRIPE_CONFIG } from './src/constants/stripe';
+import { pushNotificationService } from './src/services/pushNotificationService';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
+    // Initialize push notifications
+    pushNotificationService.initialize().catch((error) => {
+      console.error('Failed to initialize push notifications:', error);
+    });
+
     // Show splash screen for minimum duration, then hide it
     const timer = setTimeout(() => {
       setShowSplash(false);

@@ -7,9 +7,9 @@ import {Platform} from 'react-native';
 // Use Web Client ID (client_type: 3) which works for both iOS and Android
 GoogleSignin.configure({
   webClientId:
-    '315596728489-i3tmpkkb55i80k34i3d5ebuakp4ql3ja.apps.googleusercontent.com', // ✅ from client_type 3
+    '5903335579-gvuclhdvjhi9j8kq9rkqc89jjufj96rn.apps.googleusercontent.com', // ✅ from client_type 3
   // androidClientId (optional)
-  // androidClientId: '315596728489-rh9b9bmakvr3gr5ql60figt6rq4g1fof.apps.googleusercontent.com',
+  // androidClientId: '5903335579-qarbihgknij8evc8sh16oo0jaiurlr2k.apps.googleusercontent.com',
   offlineAccess: true,
 });
 
