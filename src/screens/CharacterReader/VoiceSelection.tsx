@@ -276,7 +276,7 @@ export default function VoiceSelection() {
 
   const renderListEmpty = () => {
     // Shimmer is now shown in the FlatList data, so we don't need it here
-    if (isLoading && voices.length === 0) {
+    if (isLoading && voices.length === 0||data?.data?.length != 0) {
       return null;
     }
 

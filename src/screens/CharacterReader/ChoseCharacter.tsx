@@ -224,7 +224,7 @@ export default function ChoseCharacter() {
 
   const renderListEmpty = () => {
     // Shimmer is now shown in the FlatList data, so we don't need it here
-    if (isLoading && avatars.length === 0) {
+    if (isLoading && avatars.length === 0||data?.data?.length === 0) {
       return null;
     }
 

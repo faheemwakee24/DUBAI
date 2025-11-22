@@ -215,7 +215,7 @@ export default function PreViewVideo() {
                       ref={videoRef}
                       source={{ uri: video_url }}
                       style={[styles.video, isFullscreen && styles.fullscreenVideo]}
-                      resizeMode={isFullscreen ? 'contain' : 'cover'}
+                      resizeMode={isFullscreen ? 'contain' : 'contain'}
                       paused={paused}
                       onProgress={handleProgress}
                       onLoadStart={() => setVideoLoading(true)}
@@ -263,7 +263,7 @@ export default function PreViewVideo() {
                     pointerEvents={showControls ? 'auto' : 'none'}
                   >
                     <LinearGradient
-                      colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.7)']}
+                      colors={['rgba(0,0,0,0.0)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)']}
                       style={styles.controls}
                     >
                       {showControls && (
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     marginHorizontal: metrics.width(8),
   },
   controlsInner: {
-    backgroundColor: colors.white5,
+
     flexDirection: 'row',
     margin: metrics.width(12),
     alignItems: 'center',

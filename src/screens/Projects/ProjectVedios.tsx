@@ -177,43 +177,82 @@ export default function ProjectVedios() {
     const statusDisplay = getStatusDisplay(item.status);
     const isCompleted = item.status.toLowerCase() === 'completed';
     const videoUrl = item.video_url || item.gcs_signed_url;
-console.log('videoUrl', videoUrl);
-console.log('item', item);
+    const gifUrl = item.gcs_gif_signed_url || item.gif_download_url;
+    const hasGif = !!gifUrl;
+    console.log('item', item);
 
     return (
       <LiquidGlassBackground style={styles.projectCard}>
-        <ImageBackground
-          source={{ uri: item.avatar_photo_url }}
-          style={styles.projectIcon}
-          imageStyle={{ borderRadius: 12 }}
-        >
-          {isCompleted && videoUrl && (
-            <TouchableOpacity
-              onPress={() =>
-                handleDownloadVideo(
-                  videoUrl,
-                  `project_video_${item.video_id}_${Date.now()}.mp4`,
-                  item.id,
-                )
-              }
-              style={styles.downloadIconTouchable}
-              disabled={downloadingVideoId === item.id}
-              activeOpacity={0.7}
-            >
-              <LiquidGlassBackground style={styles.downloadIcon}>
-                <View style={styles.downloadIconContainer}>
-                  {downloadingVideoId === item.id ? (
-                    <Text style={styles.downloadProgressText}>
-                      {downloadProgress[item.id] || 0}%
-                    </Text>
-                  ) : (
-                    <Svgs.Downloard />
-                  )}
-                </View>
-              </LiquidGlassBackground>
-            </TouchableOpacity>
-          )}
-        </ImageBackground>
+        {hasGif ? (
+          // Show GIF if available - use View with Image for proper GIF animation
+          <View style={styles.projectIconContainer}>
+            <Image
+              source={{ uri: gifUrl }}
+              style={styles.projectIconImage}
+              resizeMode="cover"
+            />
+            {isCompleted && videoUrl && (
+              <TouchableOpacity
+                onPress={() =>
+                  handleDownloadVideo(
+                    videoUrl,
+                    `project_video_${item.video_id}_${Date.now()}.mp4`,
+                    item.id,
+                  )
+                }
+                style={styles.downloadIconTouchable}
+                disabled={downloadingVideoId === item.id}
+                activeOpacity={0.7}
+              >
+                <LiquidGlassBackground style={styles.downloadIcon}>
+                  <View style={styles.downloadIconContainer}>
+                    {downloadingVideoId === item.id ? (
+                      <Text style={styles.downloadProgressText}>
+                        {downloadProgress[item.id] || 0}%
+                      </Text>
+                    ) : (
+                      <Svgs.Downloard />
+                    )}
+                  </View>
+                </LiquidGlassBackground>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          // Show static image if no GIF
+          <ImageBackground
+            source={{ uri: item.avatar_photo_url }}
+            style={styles.projectIcon}
+            imageStyle={{ borderRadius: 12 }}
+          >
+            {isCompleted && videoUrl && (
+              <TouchableOpacity
+                onPress={() =>
+                  handleDownloadVideo(
+                    videoUrl,
+                    `project_video_${item.video_id}_${Date.now()}.mp4`,
+                    item.id,
+                  )
+                }
+                style={styles.downloadIconTouchable}
+                disabled={downloadingVideoId === item.id}
+                activeOpacity={0.7}
+              >
+                <LiquidGlassBackground style={styles.downloadIcon}>
+                  <View style={styles.downloadIconContainer}>
+                    {downloadingVideoId === item.id ? (
+                      <Text style={styles.downloadProgressText}>
+                        {downloadProgress[item.id] || 0}%
+                      </Text>
+                    ) : (
+                      <Svgs.Downloard />
+                    )}
+                  </View>
+                </LiquidGlassBackground>
+              </TouchableOpacity>
+            )}
+          </ImageBackground>
+        )}
         <View style={styles.projectBodyCotainer}>
           <Text
             style={styles.projectTitle}
@@ -257,7 +296,7 @@ console.log('item', item);
       </LiquidGlassBackground>
     );
   };
-  console.log('project id', projectId);
+
   // Handle image download
   const handleDownloadImage = async (
     imageUrl: string,
@@ -674,6 +713,18 @@ const styles = StyleSheet.create({
   projectIcon: {
     height: metrics.width(140),
     width: '100%',
+  },
+  projectIconContainer: {
+    height: metrics.width(140),
+    width: '100%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  projectIconImage: {
+    height: metrics.width(140),
+    width: '100%',
+    borderRadius: 12,
   },
   projectDataContainer: {
     gap: metrics.width(7),

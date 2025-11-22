@@ -210,7 +210,7 @@ export default function Settings() {
             <Text style={styles.sectionTitle}>Preferences</Text>
 
             {/* Language Option */}
-            <LiquidGlassBackground style={styles.optionCard}>
+            {/* <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={handleLanguage}
@@ -220,7 +220,7 @@ export default function Settings() {
                   
                 />
               </TouchableOpacity>
-            </LiquidGlassBackground>
+            </LiquidGlassBackground> */}
             {/* <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
@@ -232,7 +232,7 @@ export default function Settings() {
                 />
               </TouchableOpacity>
             </LiquidGlassBackground> */}
-             <LiquidGlassBackground style={styles.optionCard}>
+             {/* <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={()=>   {
@@ -256,7 +256,7 @@ export default function Settings() {
                   
                 />
               </TouchableOpacity>
-            </LiquidGlassBackground> 
+            </LiquidGlassBackground>  */}
 
             {/* Notifications Option */}
             <LiquidGlassBackground style={styles.optionCard}>
