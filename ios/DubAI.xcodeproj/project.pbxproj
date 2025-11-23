@@ -18,6 +18,7 @@
 		F1A2B3C4D5E6F7A8B9C0D1E6 /* SpaceGrotesk-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F7A8B9C0D1E7 /* SpaceGrotesk-Medium.ttf */; };
 		F1A2B3C4D5E6F7A8B9C0D1E8 /* SpaceGrotesk-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F7A8B9C0D1E9 /* SpaceGrotesk-Regular.ttf */; };
 		F1A2B3C4D5E6F7A8B9C0D1EA /* SpaceGrotesk-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F7A8B9C0D1EB /* SpaceGrotesk-SemiBold.ttf */; };
+		F2A3B4C5D6E7F8A9B0C1D2E3 /* SplashScreenImage.png in Resources */ = {isa = PBXBuildFile; fileRef = F2A3B4C5D6E7F8A9B0C1D2E4 /* SplashScreenImage.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,7 @@
 		F1A2B3C4D5E6F7A8B9C0D1E7 /* SpaceGrotesk-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "SpaceGrotesk-Medium.ttf"; path = "DubAI/SpaceGrotesk-Medium.ttf"; sourceTree = "<group>"; };
 		F1A2B3C4D5E6F7A8B9C0D1E9 /* SpaceGrotesk-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "SpaceGrotesk-Regular.ttf"; path = "DubAI/SpaceGrotesk-Regular.ttf"; sourceTree = "<group>"; };
 		F1A2B3C4D5E6F7A8B9C0D1EB /* SpaceGrotesk-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "SpaceGrotesk-SemiBold.ttf"; path = "DubAI/SpaceGrotesk-SemiBold.ttf"; sourceTree = "<group>"; };
+		F2A3B4C5D6E7F8A9B0C1D2E4 /* SplashScreenImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SplashScreenImage.png; path = DubAI/SplashScreenImage.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +69,7 @@
 				F1A2B3C4D5E6F7A8B9C0D1E7 /* SpaceGrotesk-Medium.ttf */,
 				F1A2B3C4D5E6F7A8B9C0D1E9 /* SpaceGrotesk-Regular.ttf */,
 				F1A2B3C4D5E6F7A8B9C0D1EB /* SpaceGrotesk-SemiBold.ttf */,
+				F2A3B4C5D6E7F8A9B0C1D2E4 /* SplashScreenImage.png */,
 			);
 			name = DubAI;
 			sourceTree = "<group>";
@@ -188,6 +191,7 @@
 				F1A2B3C4D5E6F7A8B9C0D1E6 /* SpaceGrotesk-Medium.ttf in Resources */,
 				F1A2B3C4D5E6F7A8B9C0D1E8 /* SpaceGrotesk-Regular.ttf in Resources */,
 				F1A2B3C4D5E6F7A8B9C0D1EA /* SpaceGrotesk-SemiBold.ttf in Resources */,
+				F2A3B4C5D6E7F8A9B0C1D2E3 /* SplashScreenImage.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
