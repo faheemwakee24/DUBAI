@@ -1,8 +1,13 @@
 import { Platform } from 'react-native';
 
 // Font family constants with proper iOS font names
+// On iOS with separate font files, use the exact PostScript name from the font file
+// Common PostScript names for Space Grotesk: "SpaceGrotesk-Light", "SpaceGrotesk-Regular", etc.
+// If this doesn't work, try using "SpaceGrotesk" (base name) with fontWeight instead
 export const FontFamily = {
     // SpaceGrotesk font family
+    // iOS: Try PostScript names first (most common with separate font files)
+    // Android: Use specific font file names
     spaceGrotesk: {
         light: Platform.OS === 'ios' ? 'SpaceGrotesk-Light' : 'SpaceGrotesk-Light',
         regular: Platform.OS === 'ios' ? 'SpaceGrotesk-Regular' : 'SpaceGrotesk-Regular',
@@ -34,7 +39,65 @@ export function getFontFamily(
     }
     
     return fontFamily;
-};
+}
+
+// Helper to get complete font style with fontFamily and fontWeight
+// Use this when you need both fontFamily and fontWeight (especially on iOS)
+export function getFontStyleWithWeight(
+    family: keyof typeof FontFamily,
+    weight: keyof (typeof FontFamily)[keyof typeof FontFamily]
+) {
+    const fontFamily = FontFamily[family][weight];
+    const weightMap: Record<string, string> = {
+        light: FontWeight.light,
+        regular: FontWeight.regular,
+        medium: FontWeight.medium,
+        semiBold: FontWeight.semiBold,
+        bold: FontWeight.bold,
+    };
+    
+    return {
+        fontFamily,
+        fontWeight: weightMap[weight] || FontWeight.regular,
+    };
+}
+
+// Helper to get font style with proper weight handling
+// On iOS: Uses "SpaceGrotesk" with fontWeight
+// On Android: Uses specific font file names
+export function getFontStyle(
+    family: keyof typeof FontFamily,
+    weight: keyof (typeof FontFamily)[keyof typeof FontFamily],
+    fontSize?: number,
+    lineHeight?: number
+) {
+    const fontFamily = FontFamily[family][weight];
+    const style: any = {
+        fontFamily,
+    };
+    
+    if (fontSize) {
+        style.fontSize = fontSize;
+    }
+    
+    if (lineHeight) {
+        style.lineHeight = lineHeight;
+    }
+    
+    // Add fontWeight for both platforms
+    // iOS uses "SpaceGrotesk" with fontWeight to select the correct font file
+    // Android also needs fontWeight for proper rendering
+    const weightMap: Record<string, string> = {
+        light: FontWeight.light,
+        regular: FontWeight.regular,
+        medium: FontWeight.medium,
+        semiBold: FontWeight.semiBold,
+        bold: FontWeight.bold,
+    };
+    style.fontWeight = weightMap[weight] || FontWeight.regular;
+    
+    return style;
+}
 
 // Font weight constants
 export const FontWeight = {
@@ -70,41 +133,43 @@ export const LineHeight = {
 // Typography presets
 export const Typography = {
     // Headings
+    // On iOS: Using PostScript names (e.g., "SpaceGrotesk-Bold") - don't include fontWeight
+    // On Android: Use specific font file names with fontWeight
     h1: {
         fontFamily: FontFamily.spaceGrotesk.bold,
         fontSize: FontSize['4xl'],
         lineHeight: FontSize['4xl'] * LineHeight.tight,
-        fontWeight: FontWeight.bold,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.bold }),
     },
     h2: {
         fontFamily: FontFamily.spaceGrotesk.bold,
         fontSize: FontSize['3xl'],
         lineHeight: FontSize['3xl'] * LineHeight.tight,
-        fontWeight: FontWeight.bold,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.bold }),
     },
     h3: {
         fontFamily: FontFamily.spaceGrotesk.semiBold,
         fontSize: FontSize['2xl'],
         lineHeight: FontSize['2xl'] * LineHeight.tight,
-        fontWeight: FontWeight.semiBold,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.semiBold }),
     },
     h4: {
         fontFamily: FontFamily.spaceGrotesk.semiBold,
         fontSize: FontSize.xl,
         lineHeight: FontSize.xl * LineHeight.normal,
-        fontWeight: FontWeight.semiBold,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.semiBold }),
     },
     h5: {
         fontFamily: FontFamily.spaceGrotesk.medium,
         fontSize: FontSize.lg,
         lineHeight: FontSize.lg * LineHeight.normal,
-        fontWeight: FontWeight.medium,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.medium }),
     },
     h6: {
         fontFamily: FontFamily.spaceGrotesk.medium,
         fontSize: FontSize.base,
         lineHeight: FontSize.base * LineHeight.normal,
-        fontWeight: FontWeight.medium,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.medium }),
     },
 
     // Body text
@@ -112,19 +177,19 @@ export const Typography = {
         fontFamily: FontFamily.spaceGrotesk.regular,
         fontSize: FontSize.base,
         lineHeight: FontSize.base * LineHeight.normal,
-        fontWeight: FontWeight.regular,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.regular }),
     },
     bodyLarge: {
         fontFamily: FontFamily.spaceGrotesk.regular,
         fontSize: FontSize.lg,
         lineHeight: FontSize.lg * LineHeight.normal,
-        fontWeight: FontWeight.regular,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.regular }),
     },
     bodySmall: {
         fontFamily: FontFamily.spaceGrotesk.regular,
         fontSize: FontSize.sm,
         lineHeight: FontSize.sm * LineHeight.normal,
-        fontWeight: FontWeight.regular,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.regular }),
     },
 
     // Captions and labels
@@ -132,13 +197,13 @@ export const Typography = {
         fontFamily: FontFamily.spaceGrotesk.regular,
         fontSize: FontSize.xs,
         lineHeight: FontSize.xs * LineHeight.normal,
-        fontWeight: FontWeight.regular,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.regular }),
     },
     label: {
         fontFamily: FontFamily.spaceGrotesk.medium,
         fontSize: FontSize.sm,
         lineHeight: FontSize.sm * LineHeight.normal,
-        fontWeight: FontWeight.medium,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.medium }),
     },
 
     // Buttons
@@ -146,33 +211,37 @@ export const Typography = {
         fontFamily: FontFamily.spaceGrotesk.medium,
         fontSize: FontSize.base,
         lineHeight: FontSize.base * LineHeight.tight,
-        fontWeight: FontWeight.medium,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.medium }),
     },
     buttonLarge: {
         fontFamily: FontFamily.spaceGrotesk.medium,
         fontSize: FontSize.lg,
         lineHeight: FontSize.lg * LineHeight.tight,
-        fontWeight: FontWeight.medium,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.medium }),
     },
     buttonSmall: {
         fontFamily: FontFamily.spaceGrotesk.medium,
         fontSize: FontSize.sm,
         lineHeight: FontSize.sm * LineHeight.tight,
-        fontWeight: FontWeight.medium,
+        ...(Platform.OS === 'android' && { fontWeight: FontWeight.medium }),
     },
 } as const;
 
 // (removed duplicate getFontFamily)
 
 // Helper function to create custom typography
+// On iOS: Uses "SpaceGrotesk" with fontWeight
+// On Android: Can use specific font file names or base name with fontWeight
 export const createTypography = (
     fontFamily: string,
     fontSize: number,
     fontWeight: string = FontWeight.regular,
     lineHeight?: number
-) => ({
-    fontFamily,
-    fontSize,
-    fontWeight,
-    lineHeight: lineHeight || fontSize * LineHeight.normal,
-});
+) => {
+    return {
+        fontFamily,
+        fontSize,
+        fontWeight,
+        lineHeight: lineHeight || fontSize * LineHeight.normal,
+    };
+};
