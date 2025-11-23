@@ -73,12 +73,12 @@ export default function CharacherReader() {
         <Header
           title="Character Reader"
           showBackButton
-          RigthIcon={
-            <Svgs.HistoryIcon
-              height={metrics.width(20)}
-              width={metrics.width(20)}
-            />
-          }
+          // RigthIcon={
+          //   <Svgs.HistoryIcon
+          //     height={metrics.width(20)}
+          //     width={metrics.width(20)}
+          //   />
+          // }
         />
         <ScrollView
           style={styles.scrollView}

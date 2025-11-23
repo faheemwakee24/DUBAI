@@ -107,14 +107,14 @@ export default function UploadVedio() {
           <Header
             title="Video Dubbing"
             showBackButton
-            RigthIcon={
-              <TouchableOpacity onPress={()=>navigation.navigate('VideoHistory')}>
-                <Svgs.HistoryIcon
-                  height={metrics.width(20)}
-                  width={metrics.width(20)}
-                />
-              </TouchableOpacity>
-            }
+            // RigthIcon={
+            //   <TouchableOpacity onPress={()=>navigation.navigate('VideoHistory')}>
+            //     <Svgs.HistoryIcon
+            //       height={metrics.width(20)}
+            //       width={metrics.width(20)}
+            //     />
+            //   </TouchableOpacity>
+            // }
           />
           <LiquidGlassBackground style={styles.liquidCotaier}>
             <View style={styles.imageContainer}>
