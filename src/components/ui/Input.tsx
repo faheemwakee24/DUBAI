@@ -282,8 +282,9 @@ const styles = StyleSheet.create({
         color: colors.white,
         fontFamily: FontFamily.spaceGrotesk.regular,
         fontSize: metrics.width(16),
-        height: Platform.OS == 'android' ? metrics.width(40) : '100%',
+        height: Platform.OS == 'android' ? metrics.width(40) : metrics.width(42),
         lineHeight: metrics.width(24),
+        marginBottom:Platform.OS=='ios'?metrics.width(2):0,
     },
     multilineInput: {
         textAlignVertical: 'top',

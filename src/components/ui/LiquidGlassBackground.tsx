@@ -31,6 +31,10 @@ export default function LiquidGlassBackground({
   onPress,
   disabled = true,
 }: LiquidGlassBackgroundProps) {
+  // Extract borderRadius from style prop or use default
+  const flattenedStyle = StyleSheet.flatten([styles.container, style]);
+  const borderRadius = flattenedStyle?.borderRadius || styles.container.borderRadius;
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -39,13 +43,11 @@ export default function LiquidGlassBackground({
       style={[styles.container, style]}
     >
       <BlurView
-        style={[StyleSheet.absoluteFill,]}
-        blurType={Platform.OS === 'ios' ? 'ultraThinMaterialDark' : 'dark'}
+        style={[StyleSheet.absoluteFill, { overflow: 'hidden', borderRadius:borderRadius==100?0:borderRadius }]}
+        blurType={Platform.OS=='ios'?'extraDark': 'dark'}
         blurAmount={5}
-      
-
       />
-      <View style={styles.childrenContainer}>{children}</View>
+      <View style={[styles.childrenContainer]}>{children}</View>
     </TouchableOpacity>
   );
 }
@@ -65,3 +67,4 @@ const styles = StyleSheet.create({
     backgroundColor:'transparent',
   },
 });
+

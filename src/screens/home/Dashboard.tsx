@@ -309,6 +309,7 @@ const styles = StyleSheet.create({
   },
   headerRightIconBackground: {
     padding: metrics.width(10),
+    borderRadius:100
   },
   dashboardContainer: {
     flex: 1,

@@ -88,7 +88,7 @@ export default function Header({
   const rederRightIcon = () => {
     return (
       <TouchableOpacity
-        style={styles.backButton}
+        style={[styles.backButton, { borderRadius:100 }]}
         onPress={hadlrRightIconPress}
         activeOpacity={0.7}
       >
@@ -205,6 +205,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: metrics.width(8),
+    borderRadius:100
   },
   titleContainer: {
     alignItems: 'center',
@@ -225,5 +226,6 @@ const styles = StyleSheet.create({
     width: metrics.width(35),
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius:100
   },
 });
