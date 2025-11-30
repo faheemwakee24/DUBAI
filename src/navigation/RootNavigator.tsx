@@ -19,14 +19,29 @@ import {
   GeneratingClone,
 } from '../screens/vedioDub';
 import Dashboard from '../screens/home/Dashboard';
-import { CharacherReader, ChoseCharacter, CustomizeAvatar, VoiceSelection, DescribeCharacter, GeneratingCharacterVideo, GeneratedCharacters } from '../screens/CharacterReader';
+import {
+  CharacherReader,
+  ChoseCharacter,
+  CustomizeAvatar,
+  VoiceSelection,
+  DescribeCharacter,
+  GeneratingCharacterVideo,
+  GeneratedCharacters,
+} from '../screens/CharacterReader';
 import PreviewCharacherVedio from '../screens/CharacterReader/PreviewCharacherVedio';
 import { NewProject, ProjectVedios, RecentProjects } from '../screens/Projects';
-import { Subscription, SubsCriptionDetail, BillingDetail, PaymentMethodScreen } from '../screens/Subscriptions';
-import { Settings, EditAccount, Language } from '../screens/settings';
+import {
+  Subscription,
+  SubsCriptionDetail,
+  BillingDetail,
+  PaymentMethodScreen,
+} from '../screens/Subscriptions';
+import { Settings, EditAccount, Language, PrivacyAndPolicy } from '../screens/settings';
+import SelectProfileImage from '../screens/settings/SelectProfileImage';
 import { Notifications } from '../screens/notifications';
 import { VideoHistory } from '../screens/history';
 import { AvatarCustomization } from '../screens/AvatarCustomization';
+import ImageDubbing from '../screens/imageDub/ImageDubbing';
 import { tokenStorage } from '../utils/tokenStorage';
 import SplashScreen from '../screens/auth/SplashScreen';
 import { StyleSheet } from 'react-native';
@@ -38,8 +53,14 @@ export type RootStackParamList = {
   Home: undefined;
   Profile: undefined;
   Settings: undefined;
-  EditAccount: undefined;
+  EditAccount: { selectedImageUrl?: string } | undefined;
+  SelectProfileImage: {
+    images?: Array<{ id: string; url: string; key: string }>;
+    selectedImageUrl?: string;
+    setSelectedImageUrl?: (imageUrl: string) => void;
+  };
   Language: undefined;
+  PrivacyAndPolicy: undefined;
   Notifications: undefined;
   VideoHistory: undefined;
   Signup: undefined;
@@ -48,7 +69,7 @@ export type RootStackParamList = {
   ResetPin: { email?: string };
   Onboarding: undefined;
   UploadVedio: undefined;
-  SelectVedioDescription: { 
+  SelectVedioDescription: {
     video: {
       uri: string;
       type: string;
@@ -75,20 +96,76 @@ export type RootStackParamList = {
   Dashboard: undefined;
   ChoseCharacter: undefined;
   CustomizeAvatar: undefined;
-  CharacherReader: { character: number, body: string, hair: string, accessories: string, background: string, emotion: string };
-  PreviewCharacherVedio: { character: number, body: string, hair: string, accessories: string, background: string, emotion: string, message: string, speed: string, voiceTone: string } | { avatarId: string, voiceId: string, message: string, speed: string, voiceTone: string, backgroundType?: string, backgroundColor?: string };
-  VoiceSelection: { avatarId: string; screenFrom?: string; projectId?: string,avatar_photo_url?: string };
-  DescribeCharacter: { avatarId: string; voiceId: string; screenFrom?: string; projectId?: string,avatar_photo_url?: string };
-  GeneratingCharacterVideo: { videoId: string,screenFrom?: string };
-  GeneratedCharacters: { generationId?: string; imageUrls?: string[]; imageKeys?: string[]; projectId?: string };
-  RecentProjects:undefined;
+  CharacherReader: {
+    character: number;
+    body: string;
+    hair: string;
+    accessories: string;
+    background: string;
+    emotion: string;
+  };
+  PreviewCharacherVedio:
+    | {
+        character: number;
+        body: string;
+        hair: string;
+        accessories: string;
+        background: string;
+        emotion: string;
+        message: string;
+        speed: string;
+        voiceTone: string;
+      }
+    | {
+        avatarId: string;
+        voiceId: string;
+        message: string;
+        speed: string;
+        voiceTone: string;
+        backgroundType?: string;
+        backgroundColor?: string;
+      };
+  VoiceSelection: {
+    avatarId: string;
+    screenFrom?: string;
+    projectId?: string;
+    avatar_photo_url?: string;
+    isCustomImageSelected?: boolean;
+    image?: {
+      uri: string;
+      type: string;
+      name: string;
+    };
+  };
+  DescribeCharacter: {
+    avatarId: string;
+    voiceId: string;
+    screenFrom?: string;
+    projectId?: string;
+    avatar_photo_url?: string;
+    isCustomImageSelected?: boolean;
+    image?: {
+      uri: string;
+      type: string;
+      name: string;
+    };
+  };
+  GeneratingCharacterVideo: { videoId: string; screenFrom?: string };
+  GeneratedCharacters: {
+    generationId?: string;
+    imageUrls?: string[];
+    imageKeys?: string[];
+    projectId?: string;
+  };
+  RecentProjects: undefined;
   ProjectVedios: { projectId: string };
-  NewProject:undefined;
-  Subscription:undefined;
-  SubsCriptionDetail:{ plan: SubscriptionPlan };
-  BillingDetail:undefined;
-  PaymentMethodScreen:undefined;
-  AvatarCustomization:undefined;
+  NewProject: undefined;
+  Subscription: undefined;
+  SubsCriptionDetail: { plan: SubscriptionPlan };
+  BillingDetail: undefined;
+  PaymentMethodScreen: undefined;
+  AvatarCustomization: undefined;
+  ImageDubbing: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -113,9 +190,7 @@ export default function RootNavigator() {
 
   // Show loading indicator while checking auth status
   if (isLoggedIn === null) {
-    return (
-      <SplashScreen />
-    );
+    return <SplashScreen />;
   }
 
   return (
@@ -175,29 +250,53 @@ export default function RootNavigator() {
         <Stack.Screen name="GeneratingClone" component={GeneratingClone} />
         <Stack.Screen name="Dashboard" component={Dashboard} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
-       
+
         <Stack.Screen name="PreViewVedio" component={PreViewVedio} />
         <Stack.Screen name="ChoseCharacter" component={ChoseCharacter} />
         <Stack.Screen name="CustomizeAvatar" component={CustomizeAvatar} />
         <Stack.Screen name="CharacherReader" component={CharacherReader} />
-        <Stack.Screen name="PreviewCharacherVedio" component={PreviewCharacherVedio} />
+        <Stack.Screen
+          name="PreviewCharacherVedio"
+          component={PreviewCharacherVedio}
+        />
         <Stack.Screen name="VoiceSelection" component={VoiceSelection} />
         <Stack.Screen name="DescribeCharacter" component={DescribeCharacter} />
-        <Stack.Screen name="GeneratingCharacterVideo" component={GeneratingCharacterVideo} />
-        <Stack.Screen name="GeneratedCharacters" component={GeneratedCharacters} />
+        <Stack.Screen
+          name="GeneratingCharacterVideo"
+          component={GeneratingCharacterVideo}
+        />
+        <Stack.Screen
+          name="GeneratedCharacters"
+          component={GeneratedCharacters}
+        />
         <Stack.Screen name="RecentProjects" component={RecentProjects} />
         <Stack.Screen name="ProjectVedios" component={ProjectVedios} />
         <Stack.Screen name="NewProject" component={NewProject} />
         <Stack.Screen name="Subscription" component={Subscription} />
-        <Stack.Screen name="SubsCriptionDetail" component={SubsCriptionDetail} />
+        <Stack.Screen
+          name="SubsCriptionDetail"
+          component={SubsCriptionDetail}
+        />
         <Stack.Screen name="BillingDetail" component={BillingDetail} />
-        <Stack.Screen name="PaymentMethodScreen" component={PaymentMethodScreen} />
+        <Stack.Screen
+          name="PaymentMethodScreen"
+          component={PaymentMethodScreen}
+        />
         <Stack.Screen name="Settings" component={Settings} />
         <Stack.Screen name="EditAccount" component={EditAccount} />
+        <Stack.Screen
+          name="SelectProfileImage"
+          component={SelectProfileImage}
+        />
         <Stack.Screen name="Language" component={Language} />
+        <Stack.Screen name="PrivacyAndPolicy" component={PrivacyAndPolicy} />
         <Stack.Screen name="Notifications" component={Notifications} />
         <Stack.Screen name="VideoHistory" component={VideoHistory} />
-        <Stack.Screen name="AvatarCustomization" component={AvatarCustomization} />
+        <Stack.Screen
+          name="AvatarCustomization"
+          component={AvatarCustomization}
+        />
+        <Stack.Screen name="ImageDubbing" component={ImageDubbing} />
       </Stack.Navigator>
     </NavigationContainer>
   );

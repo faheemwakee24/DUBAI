@@ -28,8 +28,9 @@ export interface UpdateUserDto {
 
 // Update Profile Request/Response
 export interface UpdateProfileRequest {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
+  profile_image?: string;
 }
 
 export interface UpdateProfileResponse {

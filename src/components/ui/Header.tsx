@@ -226,6 +226,6 @@ const styles = StyleSheet.create({
     width: metrics.width(35),
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius:100
+    borderRadius:18
   },
 });

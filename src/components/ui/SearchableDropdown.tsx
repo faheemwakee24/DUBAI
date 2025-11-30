@@ -7,6 +7,7 @@ import {
   TextInput,
   FlatList,
 } from 'react-native';
+import Tooltip from 'react-native-walkthrough-tooltip';
 import LiquidGlassBackground from './LiquidGlassBackground';
 import { Svgs } from '../../assets/icons';
 import { FontFamily } from '../../constants/fonts';
@@ -31,6 +32,7 @@ interface SearchableDropdownProps {
   required?: boolean;
   style?: any;
   searchPlaceholder?: string;
+  tooltip?: string;
 }
 
 export default function SearchableDropdown({
@@ -42,9 +44,11 @@ export default function SearchableDropdown({
   required = false,
   style,
   searchPlaceholder = 'Search...',
+  tooltip,
 }: SearchableDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showTooltip, setShowTooltip] = useState(false);
 
   // Filter options based on search query
   const filteredOptions = useMemo(() => {
@@ -78,6 +82,43 @@ export default function SearchableDropdown({
     }
   };
 
+  const renderTooltipIcon = () => {
+    if (!tooltip) return null;
+
+    const tooltipIcon = (
+      <View style={styles.tooltipIcon}>
+        <Svgs.Info height={metrics.width(17)} width={metrics.width(17)} />
+      </View>
+    );
+
+    return (
+      <Tooltip
+        isVisible={showTooltip}
+        content={
+          <View style={styles.tooltipContent}>
+            <Text style={styles.tooltipText}>{tooltip}</Text>
+          </View>
+        }
+        placement="bottom"
+        onClose={() => setShowTooltip(false)}
+        showChildInTooltip={false}
+        backgroundColor="transparent"
+        contentStyle={styles.tooltipBubble}
+        tooltipStyle={styles.tooltipWrapper}
+        closeOnContentInteraction={false}
+        closeOnChildInteraction={false}
+      >
+        <TouchableOpacity
+          style={styles.tooltipIconContainer}
+          onPress={() => setShowTooltip(!showTooltip)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          {tooltipIcon}
+        </TouchableOpacity>
+      </Tooltip>
+    );
+  };
+
   const renderItem = ({ item }: { item: SearchableDropdownOption }) => {
     const isSelected = selectedValue === item.value || selectedValue === item.label;
     return (
@@ -104,10 +145,13 @@ export default function SearchableDropdown({
           style={styles.descriptionContainer}
           onPress={toggleDropdown}
         >
-          <Text style={styles.title}>
-            {title}
-            {required && ' *'}
-          </Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>
+              {title}
+              {required && ' *'}
+            </Text>
+            {renderTooltipIcon()}
+          </View>
           <View style={styles.row}>
             <Text style={styles.value} numberOfLines={1}>
               {selectedOption?.label || selectedValue || placeholder}
@@ -239,6 +283,38 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.spaceGrotesk.regular,
     fontSize: metrics.width(14),
     color: colors.subtitle,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: metrics.width(8),
+  },
+  tooltipIconContainer: {
+    marginLeft: metrics.width(4),
+  },
+  tooltipIcon: {
+    marginTop: metrics.width(2),
+  },
+  tooltipContent: {
+    padding: 0,
+  },
+  tooltipBubble: {
+    backgroundColor: colors.black,
+    borderRadius: 8,
+    padding: metrics.width(12),
+    minWidth: metrics.width(200),
+    maxWidth: metrics.width(280),
+    borderWidth: 1,
+    borderColor: colors.primary40,
+  },
+  tooltipWrapper: {
+    borderRadius: 8,
+  },
+  tooltipText: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(12),
+    color: colors.white,
+    lineHeight: metrics.width(18),
   },
 });
 

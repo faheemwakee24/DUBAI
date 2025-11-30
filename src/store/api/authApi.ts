@@ -87,6 +87,7 @@ export interface ProfileResponse {
   lastName: string;
   isEmailVerified: boolean;
   authProvider: string;
+  avatar: string;
 }
 
 // Forgot Password Request/Response

@@ -10,7 +10,7 @@ export const STRIPE_PUBLISHABLE_KEY =
 // Stripe Configuration Options
 export const STRIPE_CONFIG = {
   publishableKey: STRIPE_PUBLISHABLE_KEY,
-  merchantIdentifier: 'merchant.com.dubai', // Optional: For Apple Pay
+  merchantIdentifier: 'merchant.com.dubnxt', // Optional: For Apple Pay
   // Set to true when ready for production
   // setUrlSchemeOnAndroid: true,
 };

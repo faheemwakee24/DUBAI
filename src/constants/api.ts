@@ -87,6 +87,8 @@ export const API_ENDPOINTS = {
     PHOTO_GENERATION: (generationId: string) => `/heygen/photo/generation/${generationId}`,
     PHOTO_AVATAR_GENERATIONS: (projectId: string) => `/heygen/photo-avatar-generations/project/${projectId}`,
     VIDEO_TRANSLATIONS: (projectId: string) => `/heygen/video-translations/project/${projectId}`,
+    UPLOAD_ASSET: '/heygen/asset/upload',
+    RECENT_CREATIONS: '/heygen/recent-creations',
   },
   // Character endpoints
   CHARACTER: {

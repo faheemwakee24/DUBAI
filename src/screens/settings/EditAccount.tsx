@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { metrics } from '../../constants/metrics';
 import colors from '../../constants/colors';
 import { Svgs } from '../../assets/icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground, Input } from '../../components/ui';
@@ -32,6 +32,7 @@ type EditAccountNavigationProp = NativeStackNavigationProp<
 
 export default function EditAccount() {
   const navigation = useNavigation<EditAccountNavigationProp>();
+  const route = useRoute<RouteProp<RootStackParamList, 'EditAccount'>>();
   const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
   const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
 
@@ -41,6 +42,7 @@ export default function EditAccount() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState<User | null>(null);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
 
   // Load user data on mount
   useEffect(() => {
@@ -73,8 +75,18 @@ export default function EditAccount() {
     }
   }, [profileData]);
 
+  // Handle selected image from SelectProfileImage screen
+  useEffect(() => {
+    if (route.params?.selectedImageUrl) {
+      setSelectedImageUrl(route.params.selectedImageUrl);
+    }
+  }, [route.params]);
+
   // Get user avatar
   const getUserAvatar = () => {
+    if (selectedImageUrl) {
+      return { uri: selectedImageUrl };
+    }
     if (user?.avatar) {
       return { uri: user.avatar };
     }
@@ -88,11 +100,22 @@ export default function EditAccount() {
       return;
     }
 
+    // Validate profile image is selected
+    if (!selectedImageUrl && !user?.avatar) {
+      showToast.error('Validation Error', 'Please select a profile image');
+      return;
+    }
+
     try {
-      const result = await updateProfile({
+      const updateData: any = {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-      }).unwrap();
+      };
+
+      // Add avatar URL - use selected image or existing user avatar
+      updateData.profilePic = selectedImageUrl || user?.avatar;
+
+      const result = await updateProfile(updateData).unwrap();
 
       // Update local state with the response
       if (result) {
@@ -108,9 +131,11 @@ export default function EditAccount() {
   };
 
   const handleEditProfilePicture = () => {
-    // Handle profile picture edit
-    console.log('Edit profile picture pressed');
-    showToast.info('Feature coming soon', 'Profile picture editing will be available soon');
+    navigation.navigate('SelectProfileImage', {
+      images: [], // Images are now hardcoded in SelectProfileImage component
+      selectedImageUrl: selectedImageUrl || undefined,
+      setSelectedImageUrl: setSelectedImageUrl,
+    });
   };
 
   return (
@@ -221,6 +246,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: metrics.width(30),
     marginBottom: metrics.width(40),
+  },
+  profilePictureLabel: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(14),
+    color: colors.white,
+    marginBottom: metrics.width(15),
+  },
+  required: {
+    color: colors.primary,
+  },
+  errorText: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(12),
+    color: colors.primary,
+    marginTop: metrics.width(8),
   },
   profilePictureContainer: {
     position: 'relative',

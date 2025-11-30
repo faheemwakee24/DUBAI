@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  Image,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -20,9 +21,13 @@ import { Svgs } from '../../assets/icons';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, Shimmer } from '../../components/ui';
+import { Header, LiquidGlassBackground, Shimmer } from '../../components/ui';
 import { Images } from '../../assets/images';
-import { HeygenAvatar, useLazyGetAllAvatarsQuery } from '../../store/api/heygenApi';
+import {
+  HeygenAvatar,
+  useLazyGetAllAvatarsQuery,
+} from '../../store/api/heygenApi';
+import { SelectedImage, selectImage, showToast } from '../../utils';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -37,13 +42,9 @@ export default function ChoseCharacter() {
   const [allAvatars, setAllAvatars] = useState<HeygenAvatar[]>([]);
   const [hasMorePages, setHasMorePages] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  
-  const [getAllAvatars, {
-    data,
-    isLoading,
-    isFetching,
-    isError,
-  }] = useLazyGetAllAvatarsQuery();
+
+  const [getAllAvatars, { data, isLoading, isFetching, isError }] =
+    useLazyGetAllAvatarsQuery();
 
   // Initial load
   useEffect(() => {
@@ -66,16 +67,92 @@ export default function ChoseCharacter() {
   }, [data, currentPage]);
 
   const avatars = allAvatars;
-  const [selectedCharacter, setSelectedCharacter] = useState<string | null>(null);
-  const [selectedCharacterPhoto, setSelectedCharacterPhoto] = useState<string | undefined>(undefined);
+  const [selectedCharacter, setSelectedCharacter] = useState<string | null>(
+    null,
+  );
+  const [selectedCharacterPhoto, setSelectedCharacterPhoto] = useState<
+    string | undefined
+  >(undefined);
   // Track which images failed to load
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(
+    null,
+  );
+  const [isCustomImageSelected, setIsCustomImageSelected] = useState(false);
 
-  const avatarRows = useMemo<HeygenAvatar[][]>(() => {
-    const rows: HeygenAvatar[][] = [];
-    for (let i = 0; i < avatars.length; i += 2) {
-      rows.push(avatars.slice(i, i + 2));
+  const handleSelectImage = async () => {
+    const imageData = await selectImage({
+      quality: 0.8,
+      maxWidth: 1920,
+      maxHeight: 1080,
+      mediaType: 'photo',
+    });
+
+    if (imageData) {
+      setSelectedImage(imageData);
+      setIsCustomImageSelected(true);
+      setSelectedCharacter('custom-image');
+      setSelectedCharacterPhoto(imageData.uri);
     }
+  };
+
+  const handleEditImage = () => {
+    handleSelectImage();
+  };
+
+  const handleCustomImageSelect = () => {
+    if (selectedImage) {
+      setIsCustomImageSelected(true);
+      setSelectedCharacter('custom-image');
+      setSelectedCharacterPhoto(selectedImage.uri);
+    } else {
+      handleSelectImage();
+    }
+  };
+
+  const handleDub = async () => {
+    // Validation
+    if (!selectedImage) {
+      showToast.error('Error', 'Please select an image');
+      return;
+    }
+
+    // Step 1: Upload image if selected but not yet uploaded
+    if (selectedImage) {
+      try {
+        navigation.navigate('VoiceSelection', {
+          avatarId: '1',
+          avatar_photo_url: '',
+          screenFrom: 'imageDubbing',
+          image: selectedImage,
+        });
+      } catch (error: any) {
+        console.error('[ImageDubbing] Image upload error:', error);
+        const errorMessage =
+          error?.data?.message || error?.message || 'Failed to upload image';
+        showToast.error('Error', errorMessage);
+        return; // Stop dubbing if image upload fails
+      } finally {
+      }
+    }
+  };
+  const avatarRows = useMemo<
+    (HeygenAvatar[] | 'custom-upload-with-first')[]
+  >(() => {
+    const rows: (HeygenAvatar[] | 'custom-upload-with-first')[] = [];
+
+    // First row: custom upload + first avatar (if available)
+    if (avatars.length > 0) {
+      rows.push('custom-upload-with-first');
+      // Then add remaining avatars starting from index 1
+      for (let i = 1; i < avatars.length; i += 2) {
+        rows.push(avatars.slice(i, i + 2));
+      }
+    } else {
+      // If no avatars, just show custom upload
+      rows.push('custom-upload-with-first');
+    }
+
     return rows;
   }, [avatars]);
 
@@ -84,25 +161,51 @@ export default function ChoseCharacter() {
     return Array.from({ length: 6 }, () => null);
   }, []);
 
+  // Combine custom upload with shimmer rows for loading state
+  const listData = useMemo<
+    (HeygenAvatar[] | 'custom-upload-with-first' | null)[]
+  >(() => {
+    if (isLoading && avatars.length === 0) {
+      return shimmerRows;
+    }
+    return avatarRows;
+  }, [isLoading, avatars.length, avatarRows, shimmerRows]);
+
   const handleImageError = (avatarId: string) => {
     setFailedImages(prev => new Set(prev).add(avatarId));
   };
 
   const handleCharacterSelect = (characterId: string) => {
     setSelectedCharacter(characterId);
+    setIsCustomImageSelected(false);
   };
 
   const handleNavigateToCustomize = () => {
-
     navigation.navigate('CustomizeAvatar');
   };
   const handleNavigateNext = () => {
     if (!selectedCharacter) {
-      Alert.alert('Select a character', 'Please choose a character to continue.');
+      Alert.alert(
+        'Select a character',
+        'Please choose a character to continue.',
+      );
       return;
     }
 
-    navigation.navigate('VoiceSelection', { avatarId: selectedCharacter,avatar_photo_url:selectedCharacterPhoto });
+    // Handle custom image selection
+    if (selectedCharacter === 'custom-image' && selectedImage) {
+      navigation.navigate('VoiceSelection', {
+        avatarId: 'custom-image',
+        image: selectedImage,
+        isCustomImageSelected: true,
+      });
+    } else {
+      navigation.navigate('VoiceSelection', {
+        avatarId: selectedCharacter,
+        avatar_photo_url: selectedCharacterPhoto,
+        isCustomImageSelected: false,
+      });
+    }
   };
 
   const handleLoadMore = () => {
@@ -145,30 +248,140 @@ export default function ChoseCharacter() {
     );
   };
 
-  const renderRow = ({ item: row }: { item: HeygenAvatar[] | null }) => {
+  const renderCustomUploadItem = (showPlaceholder: boolean = true) => {
+    const isSelected =
+      isCustomImageSelected && selectedCharacter === 'custom-image';
+
+    return (
+      <TouchableOpacity
+        onPress={handleCustomImageSelect}
+        style={[styles.tempCharacher, isSelected && styles.selectedCharacter]}
+        activeOpacity={0.8}
+      >
+        {selectedImage ? (
+          <ImageBackground
+            source={{ uri: selectedImage.uri }}
+            style={styles.tempCharacherImage}
+            resizeMode="cover"
+          >
+            <View style={styles.tempCharacherOverlay}>
+              <Text style={styles.tempCharacherTitle}>Custom Image</Text>
+              <TouchableOpacity
+                style={styles.editButtonOverlay}
+                onPress={e => {
+                  e.stopPropagation();
+                  handleEditImage();
+                }}
+              >
+                <Svgs.EditAccountIcon
+                  width={metrics.width(30)}
+                  height={metrics.width(30)}
+                />
+              </TouchableOpacity>
+            </View>
+          </ImageBackground>
+        ) : (
+          <LiquidGlassBackground style={styles.tempCharacherImage}>
+            <View style={styles.customUploadContent}>
+              <Image style={styles.uploadIcon} source={Images.UploadVedio} />
+            </View>
+          </LiquidGlassBackground>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const renderFirstRowWithAvatar = () => {
+    if (avatars.length === 0) {
+      // If no avatars, show custom upload with placeholder
+      return (
+        <View style={styles.columnRow}>
+          {renderCustomUploadItem()}
+          <View
+            pointerEvents="none"
+            style={[styles.tempCharacher, styles.placeholderCard]}
+          />
+        </View>
+      );
+    }
+
+    const firstAvatar = avatars[0];
+    const isSelected = selectedCharacter === firstAvatar.avatar_id;
+    const hasImageUrl =
+      firstAvatar.preview_image_url &&
+      firstAvatar.preview_image_url.trim() !== '' &&
+      firstAvatar.preview_image_url !== 'null' &&
+      firstAvatar.preview_image_url !== 'undefined';
+    const imageFailed = failedImages.has(firstAvatar.avatar_id);
+    const shouldUseFallback = !hasImageUrl || imageFailed;
+    const imageSource = shouldUseFallback
+      ? Images.TempCharacher
+      : { uri: firstAvatar.preview_image_url };
+
+    return (
+      <View style={styles.columnRow}>
+        {renderCustomUploadItem(false)}
+        <TouchableOpacity
+          onPress={() => {
+            handleCharacterSelect(firstAvatar.avatar_id);
+            setSelectedCharacterPhoto(firstAvatar.preview_image_url);
+          }}
+          style={[styles.tempCharacher, isSelected && styles.selectedCharacter]}
+          activeOpacity={0.8}
+        >
+          <ImageBackground
+            source={imageSource}
+            style={styles.tempCharacherImage}
+            onError={() => handleImageError(firstAvatar.avatar_id)}
+            resizeMode="cover"
+          >
+            <View style={styles.tempCharacherOverlay}>
+              <Text style={styles.tempCharacherTitle}>
+                {firstAvatar.avatar_name}
+              </Text>
+            </View>
+          </ImageBackground>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderRow = ({
+    item: row,
+  }: {
+    item: HeygenAvatar[] | 'custom-upload-with-first' | null;
+  }) => {
     // If row is null, it's a shimmer placeholder
     if (row === null) {
       return renderShimmerRow();
     }
+
+    // If row is 'custom-upload-with-first', render custom upload + first avatar
+    if (row === 'custom-upload-with-first') {
+      return renderFirstRowWithAvatar();
+    }
+
     return (
       <View style={styles.columnRow}>
         {row.map(character => {
           const isSelected = selectedCharacter === character.avatar_id;
-          const hasImageUrl = character.preview_image_url && 
-                            character.preview_image_url.trim() !== '' &&
-                            character.preview_image_url !== 'null' &&
-                            character.preview_image_url !== 'undefined';
+          const hasImageUrl =
+            character.preview_image_url &&
+            character.preview_image_url.trim() !== '' &&
+            character.preview_image_url !== 'null' &&
+            character.preview_image_url !== 'undefined';
           const imageFailed = failedImages.has(character.avatar_id);
           const shouldUseFallback = !hasImageUrl || imageFailed;
-          const imageSource = shouldUseFallback 
+          const imageSource = shouldUseFallback
             ? Images.TempCharacher
             : { uri: character.preview_image_url };
 
           return (
             <TouchableOpacity
               key={character.avatar_id}
-              onPress={() =>{ handleCharacterSelect(character.avatar_id)
-                setSelectedCharacterPhoto(character.preview_image_url)
+              onPress={() => {
+                handleCharacterSelect(character.avatar_id);
+                setSelectedCharacterPhoto(character.preview_image_url);
               }}
               style={[
                 styles.tempCharacher,
@@ -183,7 +396,9 @@ export default function ChoseCharacter() {
                 resizeMode="cover"
               >
                 <View style={styles.tempCharacherOverlay}>
-                  <Text style={styles.tempCharacherTitle}>{character.avatar_name}</Text>
+                  <Text style={styles.tempCharacherTitle}>
+                    {character.avatar_name}
+                  </Text>
                 </View>
               </ImageBackground>
             </TouchableOpacity>
@@ -204,7 +419,7 @@ export default function ChoseCharacter() {
       <View style={styles.dashboardContainer}>
         <Text style={styles.title}>Choose your Character</Text>
         <Text style={styles.subTitle}>
-          Select from our collection of unique characters
+          Select from our collection of unique characters or upload your own
         </Text>
       </View>
     );
@@ -224,7 +439,7 @@ export default function ChoseCharacter() {
 
   const renderListEmpty = () => {
     // Shimmer is now shown in the FlatList data, so we don't need it here
-    if (isLoading && avatars.length === 0||data?.data?.length === 0) {
+    if ((isLoading && avatars.length === 0) || data?.data?.length === 0) {
       return null;
     }
 
@@ -232,7 +447,9 @@ export default function ChoseCharacter() {
       return (
         <View style={styles.stateContainer}>
           <Text style={styles.stateTitle}>Unable to load avatars</Text>
-          <Text style={styles.stateSubtitle}>Check your connection or try again.</Text>
+          <Text style={styles.stateSubtitle}>
+            Check your connection or try again.
+          </Text>
           <PrimaryButton
             title="Retry"
             onPress={handleRefresh}
@@ -258,15 +475,17 @@ export default function ChoseCharacter() {
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header
-          title="Chose Character"
-          showBackButton
-          
-        />
+        <Header title="Chose Character" showBackButton />
+
         <FlatList
-          data={isLoading && avatars.length === 0 ? shimmerRows : avatarRows}
+          data={listData}
           renderItem={renderRow}
-          keyExtractor={(item, index) => `row-${index}`}
+          keyExtractor={(item, index) => {
+            if (item === 'custom-upload-with-first')
+              return 'custom-upload-with-first';
+            if (item === null) return `shimmer-${index}`;
+            return `row-${index}`;
+          }}
           numColumns={1}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contentContainer}
@@ -275,23 +494,25 @@ export default function ChoseCharacter() {
           ListEmptyComponent={renderListEmpty}
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.5}
-          ItemSeparatorComponent={() => <View style={{ height: metrics.width(15) }} />}
-          refreshControl={
-            <RefreshControl
-              refreshing={isFetching && currentPage === 1&&avatars.length>0}
-              onRefresh={handleRefresh}
-              tintColor={colors.primary}
-            />
-          }
+          ItemSeparatorComponent={() => (
+            <View style={{ height: metrics.width(15) }} />
+          )}
+          // refreshControl={
+          //   <RefreshControl
+          //     refreshing={isFetching && currentPage === 1&&avatars.length>0}
+          //     onRefresh={handleRefresh}
+          //     tintColor={colors.primary}
+          //   />
+          // }
         />
         <PrimaryButton
           title="Customize Avatar"
           onPress={handleNavigateToCustomize}
-          variant='secondary'
+          variant="secondary"
           style={{
             marginBottom: metrics.width(15),
           }}
-        //  disabled={!selectedCharacter}
+          //  disabled={!selectedCharacter}
         />
         <PrimaryButton
           title="Next"
@@ -300,7 +521,10 @@ export default function ChoseCharacter() {
           style={{
             marginBottom: metrics.width(25),
           }}
-          disabled={!selectedCharacter}
+          disabled={
+            !selectedCharacter ||
+            (selectedCharacter === 'custom-image' && !selectedImage)
+          }
         />
       </SafeAreaView>
     </ScreenBackground>
@@ -473,7 +697,7 @@ const styles = StyleSheet.create({
   columnRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap:metrics.width(15)
+    gap: metrics.width(15),
   },
   tempCharacherTitle: {
     fontFamily: FontFamily.spaceGrotesk.bold,
@@ -510,7 +734,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   tempCharacherContainer: {
-    gap: metrics.width(15)
+    gap: metrics.width(15),
   },
   stateContainer: {
     borderRadius: 16,
@@ -541,6 +765,44 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.white15 ?? 'rgba(255,255,255,0.15)',
   },
+  customUploadContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: metrics.width(10),
+    padding: metrics.width(20),
+    height: '100%',
+    width: '100%',
+  },
+  uploadIcon: {
+    height: metrics.width(50),
+    width: metrics.width(50),
+    resizeMode: 'contain',
+  },
+  customUploadText: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(14),
+    color: colors.white,
+    textAlign: 'center',
+  },
+  editButtonOverlay: {
+    position: 'absolute',
+    top: metrics.width(7),
+    right: metrics.width(8),
+    backgroundColor: colors.primary,
+    width: metrics.width(32),
+    height: metrics.width(32),
+    borderRadius: metrics.width(16),
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
   loadMoreContainer: {
     marginTop: metrics.width(20),
     marginBottom: metrics.width(10),
@@ -552,5 +814,102 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.spaceGrotesk.regular,
     fontSize: metrics.width(13),
     color: colors.subtitle,
+  },
+  imageUploadContainer: {
+    marginBottom: metrics.width(20),
+  },
+  imageUploadLabel: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(14),
+    color: colors.white,
+    marginBottom: metrics.width(10),
+  },
+  required: {
+    color: colors.primary,
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+    width: '100%',
+    height: metrics.width(200),
+    borderRadius: 12,
+    overflow: 'hidden',
+    alignSelf: 'center',
+    justifyContent: 'center',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  imageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: metrics.width(100),
+  },
+  uploadingText: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(14),
+    color: colors.white,
+  },
+  editImageButton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editIconContainer: {
+    backgroundColor: colors.primary,
+    width: metrics.width(36),
+    height: metrics.width(36),
+    borderRadius: metrics.width(18),
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  imageSelectorContainer: {
+    width: '100%',
+    height: metrics.width(200),
+    borderRadius: 12,
+    overflow: 'hidden',
+    alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageSelectorContent: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: metrics.width(10),
+    padding: metrics.width(15),
+  },
+  image: {
+    height: metrics.width(60),
+    width: metrics.width(60),
+  },
+  imageSelectorText: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(14),
+    color: colors.white,
+    textAlign: 'center',
+  },
+  descriptionContainer: {
+    marginTop: metrics.width(15),
   },
 });

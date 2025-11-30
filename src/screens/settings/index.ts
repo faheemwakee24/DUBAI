@@ -1,4 +1,5 @@
 import Settings from "./Settings";
 import EditAccount from "./EditAccount";
 import Language from "./Language";
-export { Settings, EditAccount, Language };
+import PrivacyAndPolicy from "./PrivacyAndPolicy";
+export { Settings, EditAccount, Language, PrivacyAndPolicy };

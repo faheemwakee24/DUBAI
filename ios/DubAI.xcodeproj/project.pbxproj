@@ -318,8 +318,8 @@
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.debnext;
-				PRODUCT_NAME = DubAI;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.dubnxt;
+				PRODUCT_NAME = DubNxt;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -347,8 +347,8 @@
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.dubai;
-				PRODUCT_NAME = DubAI;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.dubnxt;
+				PRODUCT_NAME = DubNxt;
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};

@@ -59,10 +59,10 @@ export default function PaymentMethodScreen() {
 
       // Step 2: Initialize Stripe PaymentSheet
       const { error: initError } = await initPaymentSheet({
-        merchantDisplayName: 'DubAI',
+        merchantDisplayName: 'Dub nxt',
         setupIntentClientSecret: setupIntentResult.setupIntent.clientSecret,
         allowsDelayedPaymentMethods: false,
-        returnURL: 'dubai://stripe-redirect',
+        returnURL: 'dubnxt://stripe-redirect',
       });
 
       if (initError) {

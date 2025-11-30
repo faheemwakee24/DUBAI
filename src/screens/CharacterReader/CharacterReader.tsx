@@ -97,6 +97,7 @@ export default function CharacherReader() {
                 onChangeText={setMessage}
                 placeholder="Your Message"
                 containerStyle={{height: metrics.width(120),alignItems:'flex-start'}}
+                tooltip="Enter the message you want your character to read. This text will be converted to speech using the selected voice tone and speed."
               />
               <CustomDropdown
                 title="Voice Tone"

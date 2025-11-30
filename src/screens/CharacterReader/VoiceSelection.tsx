@@ -32,9 +32,10 @@ const ITEMS_PER_PAGE = 10;
 export default function VoiceSelection() {
   const navigation = useNavigation<VoiceSelectionNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'VoiceSelection'>>();
-  const { avatarId, screenFrom, projectId,avatar_photo_url } = route?.params as { avatarId: string; screenFrom?: string; projectId?: string,avatar_photo_url  ?: string };
+  const { avatarId, screenFrom, projectId,avatar_photo_url,image,isCustomImageSelected } = route?.params as { avatarId: string; screenFrom?: string; projectId?: string,avatar_photo_url  ?: string,image?: { uri: string; type: string; name: string },isCustomImageSelected?: boolean };
   console.log('avatarId', avatarId);
   console.log('screenFrom', screenFrom);
+  console.log('isCustomImageSelected', isCustomImageSelected);
   const [currentPage, setCurrentPage] = useState(1);
   const [allVoices, setAllVoices] = useState<HeygenVoice[]>([]);
   const [hasMorePages, setHasMorePages] = useState(true);
@@ -196,6 +197,8 @@ export default function VoiceSelection() {
             screenFrom,
             projectId,
             avatar_photo_url,
+            image,
+            isCustomImageSelected,
           });
         }}
         activeOpacity={0.7}

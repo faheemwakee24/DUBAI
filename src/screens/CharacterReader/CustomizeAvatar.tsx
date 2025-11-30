@@ -170,10 +170,6 @@ export default function CustomizeAvatar() {
   // Handle Next button press
   const handleNext = async () => {
     // Validation
-    if (!selectedProject) {
-      showToast.error('Project Required', 'Please select a project.');
-      return;
-    }
     if (!description.trim()) {
       showToast.error('Description Required', 'Please enter a description.');
       return;
@@ -195,7 +191,7 @@ export default function CustomizeAvatar() {
       setImageUrls([]);
 
       // Call first API
-      const response = await makeYourOwnCharacter({
+      const characterPayload: any = {
         name: description.trim() || 'Character',
         age: selectedAge,
         gender: selectedGender,
@@ -204,8 +200,14 @@ export default function CustomizeAvatar() {
         pose: selectedPersonality,
         style: selectedStyle,
         appearance: description.trim(),
-        project_id: selectedProject || undefined,
-      }).unwrap();
+      };
+
+      // Only include project_id if a project is selected
+      if (selectedProject) {
+        characterPayload.project_id = selectedProject;
+      }
+
+      const response = await makeYourOwnCharacter(characterPayload).unwrap();
 
       const genId = response.data?.generation_id;
       if (!genId) {
@@ -218,10 +220,16 @@ export default function CustomizeAvatar() {
 
       // Navigate to GeneratedCharacters screen immediately with generationId
       // The screen will handle polling
-      navigation.navigate('GeneratedCharacters', {
+      const navigationParams: any = {
         generationId: genId,
-        projectId: selectedProject || undefined,
-      });
+      };
+
+      // Only include projectId if a project is selected
+      if (selectedProject) {
+        navigationParams.projectId = selectedProject;
+      }
+
+      navigation.navigate('GeneratedCharacters', navigationParams);
 
       // Continue polling in background (will stop when success)
       pollPhotoGeneration(genId);
@@ -277,6 +285,7 @@ export default function CustomizeAvatar() {
                 }}
                 containerStyle={{ alignItems: 'flex-start' }}
                 multiline
+                tooltip="Enter the description of your character. This description will be used to generate the character."
               />
               <CustomDropdown
                 title="Project"
@@ -296,7 +305,7 @@ export default function CustomizeAvatar() {
                 placeholder={
                   isLoadingProjects ? 'Loading projects...' : 'Select Project'
                 }
-                required
+                tooltip="Select a project to organize your character creation. This is optional."
               />
               <CustomDropdown
                 title="Age"
@@ -304,6 +313,7 @@ export default function CustomizeAvatar() {
                 selectedValue={selectedAge}
                 onSelect={handleAgeSelect}
                 placeholder="Select Age"
+                tooltip="Select the age range for your character. This helps define the character's appearance."
               />
 
               <CustomDropdown
@@ -312,6 +322,7 @@ export default function CustomizeAvatar() {
                 selectedValue={selectedGender}
                 onSelect={handleGenderSelect}
                 placeholder="Select Gender"
+                tooltip="Select the gender for your character. This helps define the character's appearance."
               />
 
               <CustomDropdown
@@ -320,6 +331,7 @@ export default function CustomizeAvatar() {
                 selectedValue={selectedEthnicity}
                 onSelect={handleEthnicitySelect}
                 placeholder="Select Ethnicity"
+                tooltip="Select the ethnicity for your character. This helps define the character's appearance and features."
               />
 
               <CustomDropdown
@@ -328,6 +340,7 @@ export default function CustomizeAvatar() {
                 selectedValue={formatDisplayValue(selectedOrientation)}
                 onSelect={handleOrientationSelect}
                 placeholder="Select Orientation"
+                tooltip="Select the image orientation: Square, Horizontal (landscape), or Vertical (portrait). This determines the aspect ratio of your character image."
               />
 
               <CustomDropdown
@@ -336,6 +349,7 @@ export default function CustomizeAvatar() {
                 selectedValue={formatDisplayValue(selectedPersonality)}
                 onSelect={handlePersonalitySelect}
                 placeholder="Select Personality"
+                tooltip="Select the framing for your character: Half Body, Close Up, or Full Body. This determines how much of the character is visible in the image."
               />
 
               <CustomDropdown
@@ -344,6 +358,7 @@ export default function CustomizeAvatar() {
                 selectedValue={selectedStyle}
                 onSelect={handleStyleSelect}
                 placeholder="Select Style"
+                tooltip="Select the artistic style for your character: Realistic, Pixar, Cinematic, Vintage, Noir, Cyberpunk, or Unspecified. This determines the visual aesthetic of your character."
               />
             </View>
           </View>

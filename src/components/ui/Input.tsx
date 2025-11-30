@@ -10,6 +10,7 @@ import {
     TextStyle,
     Platform,
 } from 'react-native';
+import Tooltip from 'react-native-walkthrough-tooltip';
 import { FontFamily, Typography } from '../../constants/fonts';
 import colors from '../../constants/colors';
 import LiquidGlassBackground from './LiquidGlassBackground';
@@ -34,6 +35,7 @@ export interface InputProps extends Omit<TextInputProps, 'style'> {
     fullWidth?: boolean;
     disabled?: boolean;
     required?: boolean;
+    tooltip?: string;
 }
 
 const Input = forwardRef<TextInput, InputProps>(
@@ -53,6 +55,7 @@ const Input = forwardRef<TextInput, InputProps>(
             fullWidth = false,
             disabled = false,
             required = false,
+            tooltip,
             secureTextEntry,
             ...props
         },
@@ -60,6 +63,7 @@ const Input = forwardRef<TextInput, InputProps>(
     ) => {
         const [isPasswordVisible, setIsPasswordVisible] = useState(false);
         const [isFocused, setIsFocused] = useState(false);
+        const [showTooltip, setShowTooltip] = useState(false);
 
         const handlePasswordToggle = () => {
             setIsPasswordVisible(!isPasswordVisible);
@@ -170,16 +174,57 @@ const Input = forwardRef<TextInput, InputProps>(
             );
         };
 
+        const renderTooltipIcon = () => {
+            if (!tooltip) return null;
+
+            const tooltipIcon = (
+                <View style={styles.tooltipIcon}>
+                    <Svgs.Info height={metrics.width(17)} width={metrics.width(17)}/>
+                </View>
+            );
+
+            return (
+                <Tooltip
+                    isVisible={showTooltip}
+                    content={
+                        <View style={styles.tooltipContent}>
+                            <Text style={styles.tooltipText}>{tooltip}</Text>
+                        </View>
+                    }
+                    placement="bottom"
+                    onClose={() => setShowTooltip(false)}
+                    showChildInTooltip={false}
+                    backgroundColor="transparent"
+                    contentStyle={styles.tooltipBubble}
+                    tooltipStyle={styles.tooltipWrapper}
+                    //arrowStyle={styles.tooltipArrow}
+                    closeOnContentInteraction={false}
+                    closeOnChildInteraction={false}
+                >
+                    <TouchableOpacity
+                        style={styles.tooltipIconContainer}
+                        onPress={() => setShowTooltip(!showTooltip)}
+                        disabled={disabled}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                        {tooltipIcon}
+                    </TouchableOpacity>
+                </Tooltip>
+            );
+        };
+
         return (
             <LiquidGlassBackground style={styles.backgroundContainer}>
-
                 <View style={getContainerStyle()}>
                     <View style={styles.rowww}>
                         <View style={styles.containerr}>
                             {label && (
-                                <Text style={getLabelStyle()}>
-                                    {label}
-                                </Text>
+                                <View style={styles.labelContainer}>
+                                    <Text style={getLabelStyle()}>
+                                        {label}
+                                    </Text>
+                                    {renderTooltipIcon()}
+                                </View>
                             )}
 
                             <View style={getInputContainerStyle()}>
@@ -208,7 +253,6 @@ const Input = forwardRef<TextInput, InputProps>(
                     </View>
                     {renderRightIcon()}
                 </View>
-
             </LiquidGlassBackground>
         );
     }
@@ -223,6 +267,7 @@ const styles = StyleSheet.create({
         minHeight: metrics.width(40),
         flexDirection: 'row',
         alignItems: 'center',
+        overflow: 'visible',
     },
     fullWidth: {
         width: '100%',
@@ -340,9 +385,51 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         flex: 1,
+        overflow: 'visible',
     },
-    containerr: { flex: 1, },
-    backgroundContainer: { borderRadius: 12 }
+    containerr: { 
+        flex: 1,
+        overflow: 'visible',
+    },
+    backgroundContainer: { 
+        borderRadius: 12,
+        overflow: 'visible',
+    },
+    labelContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: metrics.width(8),
+    },
+    tooltipIconContainer: {
+        marginLeft: metrics.width(4),
+    },
+        tooltipIcon: {
+      marginTop: metrics.width(7),
+    },
+    tooltipContent: {
+        padding: 0,
+    },
+    tooltipBubble: {
+        backgroundColor: colors.black,
+        borderRadius: 8,
+        padding: metrics.width(12),
+        minWidth: metrics.width(200),
+        maxWidth: metrics.width(280),
+        borderWidth: 1,
+        borderColor: colors.primary40,
+    },
+    tooltipWrapper: {
+        borderRadius: 8,
+    },
+    tooltipArrow: {
+        borderBottomColor: colors.primary40,
+    },
+    tooltipText: {
+        fontFamily: FontFamily.spaceGrotesk.regular,
+        fontSize: metrics.width(12),
+        color: colors.white,
+        lineHeight: metrics.width(18),
+    },
 });
 
 export default Input;

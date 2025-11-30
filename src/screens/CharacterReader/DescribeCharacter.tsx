@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -14,6 +14,7 @@ import { Header, CustomDropdown, Input } from '../../components/ui';
 import {
   useGenerateVideoMutation,
   useGenerateAv4VideoMutation,
+  useUploadAssetMutation,
 } from '../../store/api/heygenApi';
 import { useGetProjectsQuery } from '../../store/api/projectsApi';
 import type { Project } from '../../store/api/projectsApi';
@@ -27,16 +28,26 @@ type DescribeCharacterNavigationProp = NativeStackNavigationProp<
 export default function DescribeCharacter() {
   const navigation = useNavigation<DescribeCharacterNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'DescribeCharacter'>>();
-  const { avatarId, voiceId, screenFrom, projectId,avatar_photo_url } = route.params;
+  const {
+    avatarId,
+    voiceId,
+    screenFrom,
+    projectId,
+    avatar_photo_url,
+    isCustomImageSelected,
+    image,
+  } = route.params;
   console.log('screenFrom', screenFrom);
   console.log('avatarId', avatarId);
   console.log('voiceId', voiceId);
   console.log('avatar_photo_url', avatar_photo_url);
-
+  console.log('isCustomImageSelected', isCustomImageSelected);
   const [generateVideo, { isLoading: isGenerating }] =
     useGenerateVideoMutation();
   const [generateAv4Video, { isLoading: isGeneratingAv4 }] =
     useGenerateAv4VideoMutation();
+  const [uploadAsset, { isLoading: isUploadingAsset }] =
+    useUploadAssetMutation();
 
   // Fetch projects
   const { data: projects = [], isLoading: isLoadingProjects } =
@@ -99,6 +110,56 @@ export default function DescribeCharacter() {
     setSelectedProject(projectId);
   };
 
+  // Calculate estimated video duration based on text length and speed
+  const estimatedDuration = useMemo(() => {
+    if (!message.trim()) {
+      return 0;
+    }
+
+    // Average speaking rate: 150 words per minute (WPM)
+    const wordsPerMinute = 200;
+
+    // Count words in the message
+    const wordCount = message
+      .trim()
+      .split(/\s+/)
+      .filter(word => word.length > 0).length;
+
+    // Calculate base duration in seconds (words / WPM * 60)
+    const baseDurationSeconds = (wordCount / wordsPerMinute) * 60;
+
+    // Apply speed multiplier
+    // 0.5x = slower (2x duration), 1x = normal, 1.5x = faster (0.67x duration)
+    let speedMultiplier = 1;
+    if (speed === '0.5x') {
+      speedMultiplier = 2;
+    } else if (speed === '1.5x') {
+      speedMultiplier = 1 / 1.5;
+    }
+
+    // For GeneratedCharacters screen, assume normal speed (1x) if speed not selected
+    const finalDuration =
+      screenFrom === 'GeneratedCharacters'
+        ? baseDurationSeconds
+        : baseDurationSeconds * speedMultiplier;
+
+    // Round to 1 decimal place
+    return Math.max(0.5, Math.round(finalDuration * 10) / 10);
+  }, [message, speed, screenFrom]);
+
+  // Format duration for display
+  const formatDuration = (seconds: number): string => {
+    if (seconds < 60) {
+      return `${seconds.toFixed(1)}s`;
+    }
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.round(seconds % 60);
+    if (remainingSeconds === 0) {
+      return `${minutes}m`;
+    }
+    return `${minutes}m ${remainingSeconds}s`;
+  };
+
   const handlePreview = async () => {
     // Validate required fields
     if (!message.trim()) {
@@ -110,14 +171,17 @@ export default function DescribeCharacter() {
       let response: any;
       let videoId: string | undefined;
 
-      if (screenFrom === 'GeneratedCharacters') {
+      if (screenFrom === 'GeneratedCharacters' || isCustomImageSelected) {
         // Validate AV4 specific fields
-        if (!selectedProject) {
-          showToast.error('Validation Error', 'Please select a project.');
-          return;
-        }
+        // if (!selectedProject) {
+        //   showToast.error('Validation Error', 'Please select a project.');
+        //   return;
+        // }
         if (!selectedVideoOrientation) {
-          showToast.error('Validation Error', 'Please select video orientation.');
+          showToast.error(
+            'Validation Error',
+            'Please select video orientation.',
+          );
           return;
         }
         if (!selectedFit) {
@@ -125,9 +189,44 @@ export default function DescribeCharacter() {
           return;
         }
 
+        // Upload custom image if selected
+        let finalImageKey = avatarId;
+        let finalAvatarPhotoUrl = avatar_photo_url;
+
+        if (isCustomImageSelected && image) {
+          try {
+            const uploadPayload: any = {
+              file: {
+                uri: image.uri,
+                type: image.type || 'image/jpeg',
+                name: image.name || 'image.jpg',
+              },
+            };
+
+            // Only include project_id if a project is selected
+            if (selectedProject || projectId) {
+              uploadPayload.project_id = selectedProject || projectId;
+            }
+
+            const uploadResult = await uploadAsset(uploadPayload).unwrap();
+
+            // Use asset_id as image_key
+            finalImageKey = uploadResult.image_key;
+            finalAvatarPhotoUrl = uploadResult.asset_url;
+          } catch (error: any) {
+            console.error('[DescribeCharacter] Asset upload error:', error);
+            const errorMessage =
+              error?.data?.message ||
+              error?.message ||
+              'Failed to upload image';
+            showToast.error('Error', errorMessage);
+            return;
+          }
+        }
+
         // Call AV4 generate API
-        response = await generateAv4Video({
-          image_key: avatarId,
+        const av4Payload: any = {
+          image_key: finalImageKey,
           video_title: 'Generated Character Video', // Default title, can be made configurable
           script: message,
           voice_id: voiceId,
@@ -135,9 +234,15 @@ export default function DescribeCharacter() {
           fit: selectedFit,
           custom_motion_prompt: 'just go with the text', // Default as per example
           enhance_custom_motion_prompt: false,
-          project_id: selectedProject || projectId || undefined,
-          avatar_photo_url:avatar_photo_url ,
-        }).unwrap();
+          avatar_photo_url: finalAvatarPhotoUrl,
+        };
+
+        // Only include project_id if a project is selected
+        if (selectedProject || projectId) {
+          av4Payload.project_id = selectedProject || projectId;
+        }
+
+        response = await generateAv4Video(av4Payload).unwrap();
 
         // Handle AV4 response structure
         videoId =
@@ -154,17 +259,94 @@ export default function DescribeCharacter() {
           showToast.error('Validation Error', 'Please select a speed.');
           return;
         }
+        // Upload custom image if selected
+        let finalAvatarId = avatarId;
+        let finalAvatarPhotoUrl = avatar_photo_url;
 
+        if (isCustomImageSelected && image) {
+          try {
+            showToast.info('Uploading', 'Uploading your image...');
+            const uploadPayload: any = {
+              file: {
+                uri: image.uri,
+                type: image.type || 'image/jpeg',
+                name: image.name || 'image.jpg',
+              },
+            };
+
+            // Only include project_id if a project is selected
+            if (selectedProject || projectId) {
+              uploadPayload.project_id = selectedProject || projectId;
+            }
+
+            const uploadResult = await uploadAsset(uploadPayload).unwrap();
+            console.log('uploadResult-------', uploadResult);
+
+            // const uploadResult ={
+            //   "id": "692adc5c256e78fba16d1dc3",
+            //   "userId": "691f33033d557e445fe96396",
+            //   "asset_id": "0713705b8b844c248024c9e2a86a2121",
+            //   asset_type: "image",
+            //   content_type: "image/jpeg",
+            //   asset_url: "https://resource2.heygen.ai/image/0713705b8b844c248024c9e2a86a2121/original",
+            //   image_key: "image/0713705b8b844c248024c9e2a86a2121/original",
+            //   "metadata": {
+            //     "response": {
+            //       "code": 100,
+            //       "data": {
+            //         "id": "0713705b8b844c248024c9e2a86a2121",
+            //         "name": "0713705b8b844c248024c9e2a86a2121",
+            //         "file_type": "image",
+            //         "folder_id": "",
+            //         "meta": null,
+            //         "created_ts": 1764416604,
+            //         "url": "https://resource2.heygen.ai/image/0713705b8b844c248024c9e2a86a2121/original",
+            //         "image_key": "image/0713705b8b844c248024c9e2a86a2121/original"
+            //       },
+            //       "msg": null,
+            //       "message": null
+            //     },
+            //     "image_key": "image/0713705b8b844c248024c9e2a86a2121/original",
+            //     "original_request": {
+            //       "file_name": "D1AAC7ED-97C8-4FCD-8307-3DBF71C61AD9.jpg",
+            //       "content_type": "image/jpeg",
+            //       "file_size": 299007
+            //     }
+            //   },
+            //   createdAt: "2025-11-29T11:43:24.404Z",
+            //   updatedAt: "2025-11-29T11:43:24.404Z"
+            // }
+            // Use asset_id as avatar_id
+            finalAvatarId = uploadResult.image_key;
+            finalAvatarPhotoUrl = uploadResult.asset_url;
+          } catch (error: any) {
+            console.error('[DescribeCharacter] Asset upload error:', error);
+            const errorMessage =
+              error?.data?.message ||
+              error?.message ||
+              'Failed to upload image';
+            showToast.error('Error', errorMessage);
+            return;
+          }
+        }
         // Call original generate API
-        response = await generateVideo({
-          avatar_id: avatarId,
+        const videoPayload: any = {
+          avatar_id: finalAvatarId,
           voice_id: voiceId,
           input_text: message,
           emotion: selectedVoiceTone,
           speed: speed.replace('x', ''), // Remove 'x' from speed (e.g., '1x' -> '1')
-          project_id: selectedProject || undefined,
-          avatar_photo_url:avatar_photo_url ,
-        }).unwrap();
+          avatar_photo_url: finalAvatarPhotoUrl,
+        };
+
+        // Only include project_id if a project is selected
+        if (selectedProject) {
+          videoPayload.project_id = selectedProject;
+        }
+
+        console.log('body', videoPayload);
+
+        response = await generateVideo(videoPayload).unwrap();
 
         // Handle original response structure
         videoId =
@@ -175,7 +357,7 @@ export default function DescribeCharacter() {
 
       console.log(videoId, 'response-------', response);
       console.log('videoId-------', videoId);
-      
+
       if (videoId) {
         navigation.navigate('GeneratingCharacterVideo', {
           videoId: String(videoId),
@@ -200,11 +382,7 @@ export default function DescribeCharacter() {
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header
-          title="Character Reader"
-          showBackButton
-         
-        />
+        <Header title="Character Reader" showBackButton />
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
@@ -226,16 +404,56 @@ export default function DescribeCharacter() {
                 }}
                 containerStyle={{ alignItems: 'flex-start' }}
                 multiline
+                tooltip="Enter the message you want your character to read. This text will be converted to speech using the selected voice tone and speed."
               />
-              {screenFrom == 'GeneratedCharacters' ? (
+              {message.trim() && (
+                <View style={styles.durationContainer}>
+                  <Text style={styles.durationLabel}>
+                    Estimated Video Duration:
+                  </Text>
+                  <Text style={styles.durationValue}>
+                    {formatDuration(estimatedDuration)}
+                  </Text>
+                </View>
+              )}
+              {screenFrom == 'GeneratedCharacters' || isCustomImageSelected ? (
                 <>
-                  
+                  {isCustomImageSelected && (
+                    <>
+                      <CustomDropdown
+                        title="Project"
+                        options={projects.map(
+                          (project: Project) => project.name,
+                        )}
+                        selectedValue={
+                          projects.find(
+                            (p: Project) => p.id === selectedProject,
+                          )?.name || ''
+                        }
+                        onSelect={(projectName: string) => {
+                          const project = projects.find(
+                            (p: Project) => p.name === projectName,
+                          );
+                          if (project) {
+                            handleProjectSelect(project.id);
+                          }
+                        }}
+                        placeholder={
+                          isLoadingProjects
+                            ? 'Loading projects...'
+                            : 'Select Project'
+                        }
+                        tooltip="Select a project to organize your character video. This is optional."
+                      />
+                    </>
+                  )}
                   <CustomDropdown
                     title="Video Orientation"
                     options={vedioOriettation}
                     selectedValue={selectedVideoOrientation}
                     onSelect={handleVideoOrientationSelect}
                     placeholder="Select Orientation"
+                    tooltip="Select the video orientation: Portrait (vertical) or Landscape (horizontal). This determines the aspect ratio of your video."
                   />
                   <CustomDropdown
                     title="Fit"
@@ -243,11 +461,12 @@ export default function DescribeCharacter() {
                     selectedValue={selectedFit}
                     onSelect={handleFitSelect}
                     placeholder="Select Fit"
+                    tooltip="Select how the image fits in the video: Cover (fills the frame, may crop) or Contain (shows entire image, may have borders)."
                   />
                 </>
               ) : (
                 <>
-                <CustomDropdown
+                  <CustomDropdown
                     title="Project"
                     options={projects.map((project: Project) => project.name)}
                     selectedValue={
@@ -267,34 +486,36 @@ export default function DescribeCharacter() {
                         ? 'Loading projects...'
                         : 'Select Project'
                     }
-                    required
+                    tooltip="Select a project to organize your character video. This is optional."
                   />
-              <CustomDropdown
-                title="Emotios"
-                options={voiceToneOptions}
-                selectedValue={selectedVoiceTone}
-                onSelect={handleVoiceToneSelect}
-                placeholder="Select Tune"
-              />
-              <CustomDropdown
-                title="Voice Speed"
-                options={speedOptions}
-                selectedValue={speed}
-                onSelect={handleSpeed}
-                placeholder="Select Speed"
-              />
+                  <CustomDropdown
+                    title="Emotios"
+                    options={voiceToneOptions}
+                    selectedValue={selectedVoiceTone}
+                    onSelect={handleVoiceToneSelect}
+                    placeholder="Select Tune"
+                    tooltip="Select the emotion or tone for the voice: Excited, Friendly, Serious, Soothing, or Broadcaster. This affects how your character speaks."
+                  />
+                  <CustomDropdown
+                    title="Voice Speed"
+                    options={speedOptions}
+                    selectedValue={speed}
+                    onSelect={handleSpeed}
+                    placeholder="Select Speed"
+                    tooltip="Select the speaking speed: 0.5x (slower), 1x (normal), or 1.5x (faster). This affects how quickly your character speaks the message."
+                  />
                 </>
               )}
             </View>
           </View>
         </ScrollView>
-        
+
         <PrimaryButton
-          title="Preview"
+          title={isUploadingAsset ? 'Generating Video...' : 'Create Video'}
           onPress={handlePreview}
           variant="primary"
-          loading={isGenerating || isGeneratingAv4}
-          disabled={isGenerating || isGeneratingAv4}
+          loading={isGenerating || isGeneratingAv4 || isUploadingAsset}
+          disabled={isGenerating || isGeneratingAv4 || isUploadingAsset}
           style={{
             marginBottom: metrics.width(25),
           }}
@@ -501,6 +722,28 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   tempCharacherContainer: {},
+  durationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: metrics.width(10),
+    paddingHorizontal: metrics.width(15),
+    paddingVertical: metrics.width(12),
+    backgroundColor: colors.white5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary40,
+  },
+  durationLabel: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(14),
+    color: colors.subtitle,
+  },
+  durationValue: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(16),
+    color: colors.primary,
+  },
   textContainer: {
     gap: metrics.width(5),
   },

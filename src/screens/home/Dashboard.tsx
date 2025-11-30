@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   Platform,
   Image,
+  FlatList,
+  ImageBackground,
+  RefreshControl,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -18,7 +21,7 @@ import { metrics } from '../../constants/metrics';
 import colors from '../../constants/colors';
 import { Svgs } from '../../assets/icons';
 import LinearGradient from 'react-native-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Header, LiquidGlassBackground } from '../../components/ui';
@@ -30,6 +33,16 @@ import { useGetProjectsQuery } from '../../store/api/projectsApi';
 import { useUpdateFcmTokenMutation } from '../../store/api/usersApi';
 import { showToast } from '../../utils/toast';
 import { pushNotificationService } from '../../services/pushNotificationService';
+import {
+  useGetRecentCreationsQuery,
+  RecentCreation,
+  PhotoAvatarCreation,
+  ImageUploadCreation,
+  AvatarVideoCreation,
+  VideoTranslationCreation,
+} from '../../store/api/heygenApi';
+import { downloadVideo, DownloadProgress } from '../../utils/videoDownloader';
+import { downloadImage } from '../../utils/imageDownloader';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -42,6 +55,20 @@ export default function Dashboard() {
   const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
   const { data: projects = [], isLoading: isLoadingProjects } = useGetProjectsQuery();
   const [updateFcmToken] = useUpdateFcmTokenMutation();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allCreations, setAllCreations] = useState<RecentCreation[]>([]);
+  const limit = 10;
+  
+  const {
+    data: recentCreationsData,
+    isLoading: isLoadingCreations,
+    refetch: refetchCreations,
+    isFetching: isFetchingCreations,
+  } = useGetRecentCreationsQuery({ page: currentPage, limit });
+  
+  const [downloadingVideoId, setDownloadingVideoId] = useState<string | null>(null);
+  const [downloadingImageId, setDownloadingImageId] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
 
   useEffect(() => {
     // Load user from storage on mount
@@ -58,6 +85,34 @@ export default function Dashboard() {
 
     loadUser();
   }, []);
+
+  // Refetch creations when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      // Reset to page 1 and refetch when screen is focused
+      setCurrentPage(1);
+      setAllCreations([]);
+      refetchCreations();
+    }, [refetchCreations])
+  );
+
+  // Accumulate data from pages
+  useEffect(() => {
+    if (recentCreationsData?.data) {
+      if (currentPage === 1) {
+        // First page - replace all data
+        setAllCreations(recentCreationsData.data);
+      } else {
+        // Subsequent pages - append data
+        setAllCreations(prev => {
+          // Avoid duplicates by checking IDs
+          const existingIds = new Set(prev.map(item => item.id));
+          const newItems = recentCreationsData.data.filter(item => !existingIds.has(item.id));
+          return [...prev, ...newItems];
+        });
+      }
+    }
+  }, [recentCreationsData, currentPage]);
 
   // Send FCM token to backend when dashboard is visited
   useEffect(() => {
@@ -113,9 +168,9 @@ export default function Dashboard() {
 
   // Get user avatar
   const getUserAvatar = () => {
-    // if (user?.avatar) {
-    //   return { uri: user.avatar };
-    // }
+    if (profileData?.avatar) {
+      return { uri: profileData.avatar };
+    }
     return Images.DefaultProfile;
   };
 
@@ -149,6 +204,310 @@ export default function Dashboard() {
       return;
     }
     navigation.navigate('ChoseCharacter');
+  };
+
+  // Format time ago
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600)
+      return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400)
+      return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  };
+
+  // Map status to display format
+  const getStatusDisplay = (status: string) => {
+    const statusMap: Record<string, string> = {
+      completed: 'Completed',
+      processing: 'Processing',
+      failed: 'Failed',
+      pending: 'Processing',
+    };
+    return statusMap[status.toLowerCase()] || status;
+  };
+
+  // Handle video download
+  const handleDownloadVideo = async (
+    videoUrl: string,
+    fileName: string,
+    itemId: string,
+  ) => {
+    if (!videoUrl) {
+      showToast.error('Error', 'No video URL available');
+      return;
+    }
+
+    if (downloadingVideoId === itemId) {
+      return;
+    }
+
+    setDownloadingVideoId(itemId);
+    setDownloadProgress(prev => ({ ...prev, [itemId]: 0 }));
+
+    try {
+      const result = await downloadVideo(
+        videoUrl,
+        fileName,
+        (progress: DownloadProgress) => {
+          const percent = Math.round(progress.progress * 100);
+          setDownloadProgress(prev => ({ ...prev, [itemId]: percent }));
+        },
+      );
+
+      if (result.success && result.filePath) {
+        showToast.success('Success', 'Video downloaded successfully!');
+      } else {
+        showToast.error('Error', result.error || 'Failed to download video');
+      }
+    } catch (error: any) {
+      console.error('[Dashboard] Download error:', error);
+      showToast.error('Error', error?.message || 'Failed to download video');
+    } finally {
+      setDownloadingVideoId(null);
+      setDownloadProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[itemId];
+        return newProgress;
+      });
+    }
+  };
+
+  // Handle image download
+  const handleDownloadImage = async (imageUrl: string, itemId: string) => {
+    if (!imageUrl) {
+      showToast.error('Error', 'No image URL available');
+      return;
+    }
+
+    if (downloadingImageId === itemId) {
+      return;
+    }
+
+    setDownloadingImageId(itemId);
+
+    try {
+      const fileName = `creation_${itemId}_${Date.now()}.jpg`;
+      const result = await downloadImage(imageUrl, fileName, () => {});
+
+      if (result.success && result.filePath) {
+        showToast.success('Success', 'Image downloaded successfully!');
+      } else {
+        showToast.error('Error', result.error || 'Failed to download image');
+      }
+    } catch (error: any) {
+      console.error('[Dashboard] Image download error:', error);
+      showToast.error('Error', error?.message || 'Failed to download image');
+    } finally {
+      setDownloadingImageId(null);
+    }
+  };
+
+  // Get image URL for creation
+  const getCreationImageUrl = (item: RecentCreation): string | null => {
+    if (item.type === 'photo_avatar') {
+      return (item as PhotoAvatarCreation).photo_url;
+    }
+    if (item.type === 'image_upload') {
+      return (item as ImageUploadCreation).asset_url;
+    }
+    if (item.type === 'avatar_video') {
+      return (item as AvatarVideoCreation).avatar_photo_url;
+    }
+    return null;
+  };
+
+  // Get title for creation
+  const getCreationTitle = (item: RecentCreation): string => {
+    if (item.type === 'photo_avatar') {
+      return (item as PhotoAvatarCreation).name || 'Photo Avatar';
+    }
+    if (item.type === 'image_upload') {
+      return (item as ImageUploadCreation).file_name || 'Uploaded Image';
+    }
+    if (item.type === 'avatar_video') {
+      const video = item as AvatarVideoCreation;
+      return video.input_text?.substring(0, 50) || video.video_title || 'Avatar Video';
+    }
+    if (item.type === 'video_translation') {
+      return (item as VideoTranslationCreation).title || 'Video Translation';
+    }
+    return 'Creation';
+  };
+
+  // Get subtitle for creation
+  const getCreationSubtitle = (item: RecentCreation): string => {
+    if (item.type === 'avatar_video') {
+      return `Avatar: ${(item as AvatarVideoCreation).avatar_id}`;
+    }
+    if (item.type === 'video_translation') {
+      return (item as VideoTranslationCreation).output_language;
+    }
+    return item.type.replace('_', ' ').toUpperCase();
+  };
+
+  // Handle load more
+  const handleLoadMore = useCallback(() => {
+    if (recentCreationsData?.pagination?.hasNextPage && !isFetchingCreations) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [recentCreationsData?.pagination?.hasNextPage, isFetchingCreations]);
+
+  // Handle refresh
+  const handleRefresh = useCallback(() => {
+    setCurrentPage(1);
+    setAllCreations([]);
+    refetchCreations();
+  }, [refetchCreations]);
+
+  // Handle creation press
+  const handleCreationPress = (item: RecentCreation) => {
+    if (item.type === 'image_upload') {
+      const image = item as ImageUploadCreation;
+      navigation.navigate('GeneratedCharacters', {
+        imageUrls: [image.asset_url],
+        imageKeys: [image?.metadata?.response?.data?.image_key],
+        projectId: image.projectId,
+      });
+    }
+    if (item.type === 'photo_avatar') {
+      const photo = item as PhotoAvatarCreation;
+      navigation.navigate('GeneratedCharacters', {
+        imageUrls: [photo.photo_url],
+        imageKeys: [photo.photo_url],
+        projectId: photo.projectId,
+      });
+    }
+    if (item.type === 'avatar_video') {
+      const video = item as AvatarVideoCreation;
+      if (video.status.toLowerCase() === 'completed' && video.video_url) {
+        navigation.navigate('PreViewVedio', {
+          video_url: video.video_url,
+        });
+      }
+    } else if (item.type === 'video_translation') {
+      const translation = item as VideoTranslationCreation;
+      if (translation.status.toLowerCase() === 'completed' && translation.translated_video_url) {
+        navigation.navigate('PreViewVedio', {
+          video_url: translation.translated_video_url,
+        });
+      }
+    } else if (item.type === 'photo_avatar' && item.status.toLowerCase() === 'completed') {
+      const photo = item as PhotoAvatarCreation;
+      const imageUrls = photo.metadata?.api_response?.data?.image_url_list || [photo.photo_url];
+      const imageKeys = photo.metadata?.api_response?.data?.image_key_list || [];
+      navigation.navigate('GeneratedCharacters', {
+        imageUrls: imageUrls,
+        imageKeys: imageKeys,
+        projectId: photo.projectId,
+      });
+    }
+  };
+
+  // Render creation item
+  const renderCreationItem = ({ item }: { item: RecentCreation }) => {
+    const statusDisplay = getStatusDisplay(item.status);
+    const isCompleted = item.status.toLowerCase() === 'completed';
+    const imageUrl = getCreationImageUrl(item);
+    const title = getCreationTitle(item);
+    const subtitle = getCreationSubtitle(item);
+    const hasVideo = (item.type === 'avatar_video' || item.type === 'video_translation') && isCompleted;
+    const hasImage = item.type === 'photo_avatar' || item.type === 'image_upload';
+    const videoUrl = item.type === 'avatar_video' 
+      ? (item as AvatarVideoCreation).video_url
+      : item.type === 'video_translation'
+      ? (item as VideoTranslationCreation).translated_video_url
+      : null;
+
+    return (
+      <LiquidGlassBackground style={styles.creationCard}>
+        <ImageBackground
+          source={imageUrl ? { uri: imageUrl } : Images.VedioIcon2}
+          style={styles.creationIcon}
+          imageStyle={{ borderRadius: 12 }}
+        >
+          {isCompleted && (
+            <TouchableOpacity
+              onPress={() => {
+                if (hasVideo && videoUrl) {
+                  handleDownloadVideo(
+                    videoUrl,
+                    `creation_${item.id}_${Date.now()}.mp4`,
+                    item.id,
+                  );
+                } else if (imageUrl) {
+                  handleDownloadImage(imageUrl, item.id);
+                }
+              }}
+              style={styles.downloadIconTouchable}
+              disabled={downloadingVideoId === item.id || downloadingImageId === item.id}
+              activeOpacity={0.7}
+            >
+              <LiquidGlassBackground style={styles.downloadIcon}>
+                <View style={styles.downloadIconContainer}>
+                  {downloadingVideoId === item.id || downloadingImageId === item.id ? (
+                    <Text style={styles.downloadProgressText}>
+                      {downloadProgress[item.id] || 0}%
+                    </Text>
+                  ) : (
+                    <Svgs.Downloard />
+                  )}
+                </View>
+              </LiquidGlassBackground>
+            </TouchableOpacity>
+          )}
+        </ImageBackground>
+        <View style={styles.creationBodyContainer}>
+          <Text
+            style={styles.creationTitle}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {title}
+          </Text>
+          <Text style={styles.creationSubtitle} numberOfLines={1}>
+            {subtitle}
+          </Text>
+          <View style={styles.rowSpaceBetween}>
+            <Text
+              style={[
+                styles.creationStatus,
+                statusDisplay === 'Completed' && { color: colors.sucessGreen },
+                statusDisplay === 'Processing' && { color: colors.primary },
+                statusDisplay === 'Failed' && { color: '#FF6B6B' },
+              ]}
+            >
+              {statusDisplay}
+            </Text>
+            <Text style={styles.creationTime}>
+              {formatTimeAgo(item.updatedAt)}
+            </Text>
+          </View>
+          {hasImage && (
+            <PrimaryButton
+              title="Preview"
+              onPress={() => handleCreationPress(item)}
+              extraContainerStyle={styles.buttonContainer}
+              textStyle={styles.buttonText}
+              disabled={!isCompleted}
+            />
+          )}
+          {hasVideo && (
+            <PrimaryButton
+              title="Play"
+              onPress={() => handleCreationPress(item)}
+              extraContainerStyle={styles.buttonContainer}
+              textStyle={styles.buttonText}
+              disabled={!isCompleted}
+            />
+          )}
+        </View>
+      </LiquidGlassBackground>
+    );
   };
 
   return (
@@ -239,6 +598,40 @@ export default function Dashboard() {
                 style={styles.characherIcon}
               />
             </LiquidGlassBackground>
+            
+            {/* Recent Creations Section */}
+            {allCreations.length > 0 && (
+              <View style={styles.recentCreationsContainer}>
+                <Text style={styles.sectionTitle}>Recent Creations</Text>
+                <FlatList
+                  data={allCreations}
+                  renderItem={renderCreationItem}
+                  keyExtractor={item => item.id}
+                  numColumns={2}
+                  columnWrapperStyle={styles.creationRow}
+                  scrollEnabled={true}
+                  contentContainerStyle={styles.creationsContentContainer}
+                  ItemSeparatorComponent={() => <View style={styles.creationSeparator} />}
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={isFetchingCreations && currentPage === 1}
+                      onRefresh={handleRefresh}
+                      tintColor={colors.primary}
+                      colors={[colors.primary]}
+                    />
+                  }
+                  onEndReached={handleLoadMore}
+                  onEndReachedThreshold={0.5}
+                  ListFooterComponent={
+                    recentCreationsData?.pagination?.hasNextPage && isFetchingCreations ? (
+                      <View style={styles.loadingFooter}>
+                        <Text style={styles.loadingText}>Loading more...</Text>
+                      </View>
+                    ) : null
+                  }
+                />
+              </View>
+            )}
           </View>
         </ScrollView>
         <PrimaryButton
@@ -250,6 +643,7 @@ export default function Dashboard() {
             marginBottom: metrics.width(25),
           }}
         />
+
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -309,7 +703,7 @@ const styles = StyleSheet.create({
   },
   headerRightIconBackground: {
     padding: metrics.width(10),
-    borderRadius:100
+    borderRadius:17
   },
   dashboardContainer: {
     flex: 1,
@@ -423,5 +817,109 @@ const styles = StyleSheet.create({
 
     elevation: 7,
     backgroundColor: colors.primary3,
+  },
+  recentCreationsContainer: {
+    marginTop: metrics.width(30),
+  },
+  sectionTitle: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(18),
+    color: colors.white,
+    marginBottom: metrics.width(15),
+  },
+  creationCard: {
+    gap: metrics.width(11),
+    width: (metrics.screenWidth - metrics.width(48) - metrics.width(10)) / 2,
+    borderRadius: 12,
+  },
+  creationIcon: {
+    height: metrics.width(140),
+    width: '100%',
+  },
+  creationBodyContainer: {
+    margin: metrics.width(10),
+    gap: metrics.width(5),
+  },
+  creationTitle: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(13),
+    color: colors.white,
+  },
+  creationSubtitle: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(11),
+    color: colors.subtitle,
+  },
+  rowSpaceBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  creationStatus: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(10),
+    color: colors.sucessGreen,
+  },
+  creationTime: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(10),
+    color: colors.subtitle,
+  },
+  creationRow: {
+    justifyContent: 'flex-start',
+    gap: metrics.width(10),
+  },
+  creationsContentContainer: {
+    paddingBottom: 20,
+  },
+  creationSeparator: {
+    height: 15,
+  },
+  downloadIconTouchable: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+  },
+  downloadIcon: {
+    right: 10,
+    height: 28,
+    width: 28,
+    top: 10,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+  },
+  downloadIconContainer: {
+    height: 28,
+    width: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  downloadProgressText: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(10),
+    color: colors.white,
+  },
+  buttonContainer: {
+    paddingVertical: metrics.width(6),
+    minHeight: 15,
+    borderRadius: 8,
+    marginTop: metrics.width(10),
+  },
+  buttonText: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(12),
+    color: colors.white,
+  },
+  loadingFooter: {
+    paddingVertical: metrics.width(20),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(14),
+    color: colors.subtitle,
   },
 });

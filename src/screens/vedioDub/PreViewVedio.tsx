@@ -424,8 +424,7 @@ const styles = StyleSheet.create({
   slider: {
     flex: 1,
     backgroundColor: 'transparent',
-    height: 10,
-    transform: [{ scaleY: 1.5 }],
+    height: 40,
   },
   timeText: {
     fontSize: metrics.width(13),

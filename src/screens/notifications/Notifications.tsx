@@ -18,7 +18,7 @@ import { Svgs } from '../../assets/icons';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, LiquidGlassBackground } from '../../components/ui';
+import { Header, LiquidGlassBackground, Shimmer } from '../../components/ui';
 import { Images } from '../../assets/images';
 import {
   useGetNotificationsQuery,
@@ -254,6 +254,39 @@ export default function Notifications() {
     </LiquidGlassBackground>
   );
 
+  // Render shimmer placeholder for notification item
+  const renderShimmerItem = () => (
+    <LiquidGlassBackground style={styles.notificationCard}>
+      <View style={styles.notificationRow}>
+        <Shimmer
+          width={metrics.width(42)}
+          height={metrics.width(42)}
+          borderRadius={metrics.width(21)}
+        />
+        <View style={styles.notificationContent}>
+          <View style={styles.shimmerHeaderRow}>
+            <Shimmer
+              width={metrics.width(150)}
+              height={metrics.width(18)}
+              borderRadius={4}
+            />
+            <Shimmer
+              width={metrics.width(60)}
+              height={metrics.width(14)}
+              borderRadius={4}
+            />
+          </View>
+          <Shimmer
+            width="100%"
+            height={metrics.width(16)}
+            borderRadius={4}
+            style={{ marginTop: metrics.width(4) }}
+          />
+        </View>
+      </View>
+    </LiquidGlassBackground>
+  );
+
   const handleMarkAllAsRead = async () => {
     try {
       const result = await markAllAsRead().unwrap();
@@ -304,7 +337,11 @@ export default function Notifications() {
           {activeTab === 'notifications' ? (
             <View style={styles.notificationsList}>
               {isLoading ? (
-                <Text style={styles.loadingText}>Loading notifications...</Text>
+                <>
+                  {[1, 2, 3, 4, 5].map((index) => (
+                    <View key={index}>{renderShimmerItem()}</View>
+                  ))}
+                </>
               ) : error ? (
                 <Text style={styles.errorText}>
                   Failed to load notifications
@@ -531,5 +568,11 @@ const styles = StyleSheet.create({
     color: colors.subtitle,
     textAlign: 'center',
     marginTop: metrics.width(20),
+  },
+  shimmerHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    alignItems: 'center',
   },
 });

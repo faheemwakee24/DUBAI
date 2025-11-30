@@ -13,6 +13,7 @@ export interface Project {
   description: string;
   userId?: string;
   isActive?: boolean;
+  imageUrl: string;
   metadata: {
     category: string;
     language: string;
@@ -25,6 +26,7 @@ export interface Project {
 export interface CreateProjectRequest {
   name: string;
   description: string;
+  imageUrl: string;
   metadata: {
     category: string;
     language: string;
@@ -36,6 +38,7 @@ export interface CreateProjectResponse {
   id: string;
   name: string;
   description: string;
+  imageUrl: string;
   metadata: {
     category: string;
     language: string;

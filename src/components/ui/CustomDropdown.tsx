@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+import Tooltip from 'react-native-walkthrough-tooltip';
 import LiquidGlassBackground from './LiquidGlassBackground';
 import { Svgs } from '../../assets/icons';
 import { FontFamily } from '../../constants/fonts';
@@ -19,6 +20,7 @@ interface CustomDropdownProps {
   placeholder?: string;
   required?: boolean;
   style?: any;
+  tooltip?: string;
 }
 
 export default function CustomDropdown({
@@ -29,8 +31,10 @@ export default function CustomDropdown({
   placeholder = 'Select Option',
   required = false,
   style,
+  tooltip,
 }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const handleSelect = (value: string) => {
     onSelect(value);
@@ -41,6 +45,43 @@ export default function CustomDropdown({
     setIsOpen(!isOpen);
   };
 
+  const renderTooltipIcon = () => {
+    if (!tooltip) return null;
+
+    const tooltipIcon = (
+      <View style={styles.tooltipIcon}>
+        <Svgs.Info height={metrics.width(17)} width={metrics.width(17)} />
+      </View>
+    );
+
+    return (
+      <Tooltip
+        isVisible={showTooltip}
+        content={
+          <View style={styles.tooltipContent}>
+            <Text style={styles.tooltipText}>{tooltip}</Text>
+          </View>
+        }
+        placement="bottom"
+        onClose={() => setShowTooltip(false)}
+        showChildInTooltip={false}
+        backgroundColor="transparent"
+        contentStyle={styles.tooltipBubble}
+        tooltipStyle={styles.tooltipWrapper}
+        closeOnContentInteraction={false}
+        closeOnChildInteraction={false}
+      >
+        <TouchableOpacity
+          style={styles.tooltipIconContainer}
+          onPress={() => setShowTooltip(!showTooltip)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          {tooltipIcon}
+        </TouchableOpacity>
+      </Tooltip>
+    );
+  };
+
   return (
     <View style={[styles.container, style]}>
       <LiquidGlassBackground style={styles.liquidContainer}>
@@ -48,10 +89,13 @@ export default function CustomDropdown({
           style={styles.descriptionContainer}
           onPress={toggleDropdown}
         >
-          <Text style={styles.title}>
-            {title}
-            {required && ' *'}
-          </Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>
+              {title}
+              {required && ' *'}
+            </Text>
+            {renderTooltipIcon()}
+          </View>
           <View style={styles.row}>
             <Text style={styles.value}>
               {selectedValue || placeholder}
@@ -141,5 +185,37 @@ const styles = StyleSheet.create({
   selectedItem: {
     color: colors.white,
     fontFamily: FontFamily.spaceGrotesk.bold,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: metrics.width(8),
+  },
+  tooltipIconContainer: {
+    marginLeft: metrics.width(4),
+  },
+  tooltipIcon: {
+    marginTop: metrics.width(2),
+  },
+  tooltipContent: {
+    padding: 0,
+  },
+  tooltipBubble: {
+    backgroundColor: colors.black,
+    borderRadius: 8,
+    padding: metrics.width(12),
+    minWidth: metrics.width(200),
+    maxWidth: metrics.width(280),
+    borderWidth: 1,
+    borderColor: colors.primary40,
+  },
+  tooltipWrapper: {
+    borderRadius: 8,
+  },
+  tooltipText: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(12),
+    color: colors.white,
+    lineHeight: metrics.width(18),
   },
 });

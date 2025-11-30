@@ -1,5 +1,5 @@
 {
-  "name": "DubAI",
+  "name": "DubNxt",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -40,6 +40,7 @@
     "react-native-toast-message": "^2.3.3",
     "react-native-video": "^6.17.0",
     "react-native-view-shot": "^4.0.3",
+    "react-native-walkthrough-tooltip": "^1.6.0",
     "react-redux": "^9.2.0"
   },
   "devDependencies": {

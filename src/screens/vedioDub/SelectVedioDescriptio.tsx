@@ -40,10 +40,7 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
   'Signup'
 >;
 
-
-
 const modeOptions = ['fast', 'quality'];
-
 
 export default function SelectVedioDescription() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -115,7 +112,7 @@ export default function SelectVedioDescription() {
   };
 
   const handleGenerateDub = async () => {
-    if (!selectedLanguage || !selectedMode || !selectedProject) {
+    if (!selectedLanguage || !selectedMode) {
       showToast.error('Validation Error', 'Please fill all required fields.');
       return;
     }
@@ -146,9 +143,8 @@ export default function SelectVedioDescription() {
         uploadResult.videoUrl ||
         uploadResult.url ||
         uploadResult?.signedUrl ||
-        (video.uri.startsWith('http') ? video.uri : null)
-        ;
-console.log('videoUrl', videoUrl);
+        (video.uri.startsWith('http') ? video.uri : null);
+      console.log('videoUrl', videoUrl);
       if (!videoUrl) {
         showToast.error('Error', 'Failed to get video URL. Please try again.');
         return;
@@ -164,8 +160,8 @@ console.log('videoUrl', videoUrl);
         keep_the_same_format: false,
         mode: selectedMode,
       });
-      
-      const translateResult = await translateVideo({
+
+      const translatePayload: any = {
         video_url: videoUrl,
         title: video.name || 'Translated Video',
         output_language: selectedLanguageCode,
@@ -173,10 +169,19 @@ console.log('videoUrl', videoUrl);
         speaker_num: '1',
         keep_the_same_format: false,
         mode: selectedMode,
-        project_id: selectedProject,
-      }).unwrap();
+      };
 
-      console.log('[SelectVedioDescription] Translate result:', translateResult);
+      // Only include project_id if a project is selected
+      if (selectedProject) {
+        translatePayload.project_id = selectedProject;
+      }
+
+      const translateResult = await translateVideo(translatePayload).unwrap();
+
+      console.log(
+        '[SelectVedioDescription] Translate result:',
+        translateResult,
+      );
 
       // Extract video_translate_id from response
       const videoTranslateId =
@@ -221,7 +226,11 @@ console.log('videoUrl', videoUrl);
             <View style={styles.imageContainer}>
               <Image source={Images.VedioIcon} style={styles.vedioIcon} />
               <View style={styles.textContainer}>
-                <Text style={styles.title} numberOfLines={1} ellipsizeMode='middle'>
+                <Text
+                  style={styles.title}
+                  numberOfLines={1}
+                  ellipsizeMode="middle"
+                >
                   {video?.name || 'video.mp4'}
                 </Text>
                 <View style={styles.roww}>
@@ -238,7 +247,7 @@ console.log('videoUrl', videoUrl);
           </LiquidGlassBackground>
 
           <CustomDropdown
-            title="Project *"
+            title="Project"
             options={projects.map((project: Project) => project.name)}
             selectedValue={
               projects.find((p: Project) => p.id === selectedProject)?.name ||
@@ -255,24 +264,26 @@ console.log('videoUrl', videoUrl);
             placeholder={
               isLoadingProjects ? 'Loading projects...' : 'Select Project'
             }
-            required
+            tooltip="Select a project to organize your video dubbing. This is optional."
           />
           <SearchableDropdown
-            title="Target Language *"
+            title="Target Language"
             options={languageOptions}
             selectedValue={selectedLanguage}
             onSelect={handleLanguageSelect}
             placeholder="Select Language"
             required
             searchPlaceholder="Search language..."
+            tooltip="Select the target language for video dubbing. Your video will be translated and dubbed into the selected language. You can search for languages by typing in the search box."
           />
           <CustomDropdown
-            title="Mode *"
+            title="Mode"
             options={modeOptions}
             selectedValue={selectedMode}
             onSelect={handleModeSelect}
             placeholder="Select Mode"
             required
+            tooltip="Select the processing mode: Fast mode for quicker results, or Quality mode for better output quality. Fast mode is faster but may have slightly lower quality."
           />
         </ScrollView>
         <PrimaryButton
@@ -312,7 +323,7 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.spaceGrotesk.bold,
     fontSize: metrics.width(15),
     color: colors.white,
-    maxWidth:'80%'
+    maxWidth: '80%',
   },
   subtitle: {
     fontFamily: FontFamily.spaceGrotesk.regular,

@@ -42,7 +42,7 @@ export default function RecentProjects() {
       disabled={false}
     >
       <View style={styles.projectInnerContainer}>
-        <Image source={Images.ProjectIcon} style={styles.projectIcon} />
+        <Image source={item?.imageUrl ? { uri: item.imageUrl } : Images.ProjectIcon} style={styles.projectIcon} />
         <View style={styles.projectDataContainer}>
           <Text style={styles.projectTitle} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
           <View style={styles.projectSubTitleContainer}>
@@ -155,6 +155,7 @@ const styles = StyleSheet.create({
   projectIcon: {
     height: metrics.width(47),
     width: metrics.width(47),
+    borderRadius:100
   },
   projectDataContainer: {
     gap: metrics.width(7),

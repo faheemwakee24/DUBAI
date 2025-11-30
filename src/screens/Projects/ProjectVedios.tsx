@@ -49,6 +49,7 @@ export default function ProjectVedios() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'ProjectVedios'>>();
   const { projectId } = route.params || {};
+console.log('projectId', projectId);
 
   // State for active tab
   const [activeTab, setActiveTab] = useState<TabType>('videos');

@@ -32,7 +32,7 @@ export default function Settings() {
   const [user, setUser] = useState<User | null>(null);
   const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
   const [logout, { isLoading: logoutLoading }] = useLogoutMutation();
-
+console.log('profileData-------', profileData);
   useEffect(() => {
     // Load user from storage on mount
     const loadUser = async () => {
@@ -84,9 +84,9 @@ export default function Settings() {
 
   // Get user avatar
   const getUserAvatar = () => {
-    // if (user?.avatar) {
-    //   return { uri: user.avatar };
-    // }
+    if (profileData?.avatar) {
+      return { uri: profileData.avatar };
+    }
     return Images.DefaultProfile;
   };
 
@@ -232,7 +232,7 @@ export default function Settings() {
                 />
               </TouchableOpacity>
             </LiquidGlassBackground> */}
-             {/* <LiquidGlassBackground style={styles.optionCard}>
+              {/* <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={()=>   {
@@ -256,7 +256,7 @@ export default function Settings() {
                   
                 />
               </TouchableOpacity>
-            </LiquidGlassBackground>  */}
+            </LiquidGlassBackground>   */}
 
             {/* Notifications Option */}
             <LiquidGlassBackground style={styles.optionCard}>
@@ -268,6 +268,20 @@ export default function Settings() {
                   size="medium"
                 />
               </View>
+            </LiquidGlassBackground>
+          </View>
+
+          {/* Legal Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Legal</Text>
+            <LiquidGlassBackground style={styles.optionCard}>
+              <TouchableOpacity
+                style={styles.optionRow}
+                onPress={() => navigation.navigate('PrivacyAndPolicy')}
+              >
+                <Text style={styles.optionText}>Privacy & Policy</Text>
+                <Svgs.WhiteArrowRight />
+              </TouchableOpacity>
             </LiquidGlassBackground>
           </View>
        
