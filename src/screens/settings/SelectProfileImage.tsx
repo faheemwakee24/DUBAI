@@ -35,14 +35,15 @@ export default function SelectProfileImage() {
   const navigation = useNavigation<SelectProfileImageNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'SelectProfileImage'>>();
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   // Image URLs list
   const imageUrls = [
-    'https://storage.googleapis.com/tradebucket1213/newthings/ChatGPT%20Image%20Nov%2029%2C%202025%2C%2001_18_49%20PM_1764404598741_mae9jr.png?GoogleAccessId=bucket%40legion-super-app.iam.gserviceaccount.com&Expires=1795940601&Signature=2BjDEzs5%2F1q%2BSYs6VqAyYM51Brocse7Lqz4TtxZp8UoHXp%2FGh9jQeCmBRs4neXg8nQhOHkmykko4mDN2Io7Bx8HeNbsZxZYuXak%2BhMvjb73Kp9a%2F%2FXHQ2QiNSIyV8SrGnPigOi0G8I32vJ5QHJt6W7VEOEmiJZW6xyFMN0oJpEAt%2FtghYyImB%2FSMLMkGzIyBkf58cTEctHDzVArXRkiLjpeqKpaSkIptxejcxq9OydaPX3RLfnWkUDCSshp1w4XWVfMF%2BlECYLjtJyeXTm%2B0rW1%2By7DIZpImQXPyvv%2B2bafmIdqM0TVTuwhXDeaPGc1kN1y%2F0N2pEEfmwGyS3thRvA%3D%3D',
-    'https://storage.googleapis.com/tradebucket1213/newthings/ChatGPT%20Image%20Nov%2029%2C%202025%2C%2001_18_46%20PM_1764404566532_ddwtij.png?GoogleAccessId=bucket%40legion-super-app.iam.gserviceaccount.com&Expires=1795940569&Signature=zN1ByADYV7XYpM7Fkcj%2F18lZ6vKuLwBnltfy7dvVR1crUW5VC4ouu2K4TVvVh%2FcgfaOXs%2Bf8GefntZi95irflS4jKJN6f19xE%2B%2B5j3Sqh3ipXAm9vKpUsACLNtkMAjunP811g9xZ80cEPKI%2BNtWJz93V4Fh7oicI1eoFoNGijC8nayvZK5to%2B%2F0SL%2Bp6bN3SnVDUUvtbVDQA6k8y0W7%2F4R3BrIp9jah12P5SmfLL7wCWjbx7FvZ0504UutU7YzkLKSrOtzE67I4QQJzutYaj0I03DT4NIYdlULUud%2FZ55O7Ai5MuYI4PEq7GnoGIP6T766p9M2tjny%2FxwViq3hDuEQ%3D%3D',
-    'https://storage.googleapis.com/tradebucket1213/newthings/ChatGPT%20Image%20Nov%2029%2C%202025%2C%2001_13_36%20PM_1764404529744_hgwelm.png?GoogleAccessId=bucket%40legion-super-app.iam.gserviceaccount.com&Expires=1795940534&Signature=v7vzWJMPZA1e3biNyjMXc%2BBCNZ6uInAlrpgNkGzS7k1CEL7gENOETLtzi6Ichus2A9oz%2F22NAAtWlfSsC5I2TTvtkbeVXKGjHz145mZ6n9Ec%2Bp2YrXEZ2ADB89ChRXgYxbYRiiRyEA%2FX1YAULeU3b6i8kHYq1tH6rv5ql4TFOCRk5guutU12cgtleP3ryh%2FBGKZK2HWwZl%2B3lg43%2BEcox4A%2FQlxptSlPwmy3paIyp5KEhGlq9LHQ3rwArLtTRV3%2FGSq%2BK2l8JLW3dA%2F%2FeNhz8GIV1HzB2KY519ratfTFvEGnPSBf%2FgWT69wcpuNW5gsKaeN0bwAk6FcDyA75qs5bWQ%3D%3D',
-    'https://storage.googleapis.com/tradebucket1213/newthings/ChatGPT%20Image%20Nov%2029%2C%202025%2C%2001_17_03%20PM_1764404454197_1q9sry.png?GoogleAccessId=bucket%40legion-super-app.iam.gserviceaccount.com&Expires=1795940458&Signature=044zQ34Aw0ItbEnIejm1gsIIcZdmC0mIs8op78Tglwj4sGbex69OPaVNVAs%2BLSSSfuZoKyuij0z9I3RT1E7QHy6cQ341aeK3%2B%2FSOvQc7FOr1bWI6%2Bq%2FqvqbNUEgJotm7%2BgnpH9fFp3TO9kdnlizwTy7yn6g882PF%2F5L9%2F3eQqv3EAaP%2Fr%2Fkex41X%2B85HV4xv3bx3zDuzMwi0DHfWFEE9NBAIpWBf8GPiBxmRt43jvToRV1DRx4d1M%2BOCW7%2Bj%2BbLhssZT6bbsFL%2FYkxGWen9367WQ0gdTECRAaEzV0XPUwBjBMp3gesLe7bMQtmK2AMQFdW86ouKvF90z93z1y7v6Qg%3D%3D',
+  'https://storage.googleapis.com/tradebucket1213/newthings/ChatGPT%20Image%20Nov%2029%2C%202025%2C%2001_13_36%20PM%201_1764517572780_hp2rs4.png?GoogleAccessId=bucket%40legion-super-app.iam.gserviceaccount.com&Expires=1796053574&Signature=VXTJWiflBaeEUTs%2FLiNKvOloYDZGoiodoRc%2FXi2z9J4dUv6HTd3rgXUUk%2BvtSH7anPe9HnIapybO8J19MAGj%2BayhT5rfbxZ24gU%2FDm0Szy3RAMT4f5H23zo%2FF%2B4fAnI%2F2ToRRoOiVywQoW3ZK1TBAzxA0BC1NUndcPrwvRtMPPhTXnVdqEDElUbymrXZbMyohthmT9%2B0J7duKQuEsWivRj55rWsE3pw2c%2FAXKV9LGcGiTrrN%2FHxV8zqrFM%2FfjqPVAK9%2Bjnzi3m6E1U5YwIL3E8Z0pgnp2MVzbqRTWex4ig3me6q2rTvaEhwpZYICoE6lSIXZkErMlG47CsPECt2yrw%3D%3D',
+  'https://storage.googleapis.com/tradebucket1213/newthings/ChatGPT%20Image%20Nov%2029%2C%202025%2C%2001_17_03%20PM%201_1764517642633_afwkmh.png?GoogleAccessId=bucket%40legion-super-app.iam.gserviceaccount.com&Expires=1796053644&Signature=IdDR9wD7nMDKUsCqOQse6H33HKXCLhutDOBt0Se8YJGiktuzK5qKfkyCnbegdotAUe0Y1XE1QeXUT1nDwWCRXOnLPHmTsZyv%2BPokujTJO4ppjP%2BJ7WYlsiE6CHGV8Ks2xJbzVbB5VpLgIVh0AljGC7QoBEghCgAYqP2CJHPGw3har7r6A9xEYbXUMNwhHpZ2RJQu99UeeMiaOvxL5x341FClQcYzbUYMAvFFR4rT3ic7Vbyrryo9HHipNqJiGufiAZIVd9QJg4exV0PXVX43qbteMish46z9qiG7iUVGVai555wv27zKsoUEX6lNbEbM9zjOEciKbRzGkYpogN5k1A%3D%3D',
+  'https://storage.googleapis.com/tradebucket1213/newthings/ChatGPT%20Image%20Nov%2029%2C%202025%2C%2001_18_46%20PM%201_1764517688241_7ksl7k.png?GoogleAccessId=bucket%40legion-super-app.iam.gserviceaccount.com&Expires=1796053689&Signature=k5i2L4tem1W%2FyDOwCu9onOL1kGQ5zm4mkq5YZ%2FHoKlMMPlXdsSVaFyRPvpbtxUTo5WeQBi2SUSab3%2B6GRIZ2%2FkKLLHnZ%2FlgVNFBPgl4%2ByJF0VBUb2iMmcSOq%2B0SD%2Fe%2FaserdJEujNQoQ9wH3%2BPsbg1KTdSmLwc97tYT42r53CSZ%2BFKRMibB6vp8gEh128YyUZAxt5UL%2FzszpXyIraSFZg1VPuVLBpshBdnCmkESwC1J93zC6Zki4jLGYtY0G68oGI%2Fx8GBStXfbB%2FU4oc7kaoyIzkxkFggC9dSvsqaj9xbh3E5LRS79vs4QsBT1bSlN2UwiFWuXYbToa%2FW9CaEQ2VQ%3D%3D',
+  'https://storage.googleapis.com/tradebucket1213/newthings/ChatGPT%20Image%20Nov%2029%2C%202025%2C%2001_18_49%20PM%201_1764517740651_wjdsln.png?GoogleAccessId=bucket%40legion-super-app.iam.gserviceaccount.com&Expires=1796053742&Signature=NpfDb2xJS2kZkD0jN7r6KoogPWomhwuATq7ay5EMLI%2B0xbbFnVALRQY3R62tqvRBqmkuspSGPXcL5CTNSFVj01oTnSKBdl2vR2cAuTDdVbzmzIQcNnVtd4rawtiHjQxeSyjjTVKMm5G2mia80sLfYnrKMRvtYTQu%2F7DuDdblwg7OXBbd6xUtEub2trvk%2Fr6WXC9ftvxNiaMI95PLh1glOu%2Fx%2Bn8sLUK0Y1C1CJhn31p%2Fao8zPzNfFD7LpmLhKD2q7pTFKmd8qS8e9DllbDTCOjQW%2B3CR3Pvf2A5O%2BujAfaB4TwGnTH%2FLdnm0O6qTl%2BTg6%2FLh9ZsdAzfZMMobyluyqA%3D%3D'  
   ];
 
   // Transform URLs into ProfileImage format
@@ -58,6 +59,20 @@ export default function SelectProfileImage() {
       setSelectedImageUrl(route.params.selectedImageUrl);
     }
   }, [route.params]);
+
+  // Track image loading
+  useEffect(() => {
+    // Reset loading state when component mounts
+    setIsLoading(true);
+    setLoadedImages(new Set());
+  }, []);
+
+  // Check if all images are loaded
+  useEffect(() => {
+    if (loadedImages.size === images.length && images.length > 0) {
+      setIsLoading(false);
+    }
+  }, [loadedImages, images.length]);
 
   const handleImageSelect = (image: ProfileImage) => {
     setSelectedImageUrl(image.url);
@@ -76,8 +91,14 @@ export default function SelectProfileImage() {
     // });
   };
 
+  const handleImageLoad = (imageUrl: string) => {
+    setLoadedImages(prev => new Set(prev).add(imageUrl));
+  };
+
   const renderImageItem = ({ item }: { item: ProfileImage }) => {
     const isSelected = selectedImageUrl === item.url;
+    const isImageLoaded = loadedImages.has(item.url);
+    
     return (
       <TouchableOpacity
         style={[
@@ -88,12 +109,22 @@ export default function SelectProfileImage() {
         activeOpacity={0.8}
       >
         <LiquidGlassBackground style={styles.imageWrapper}>
+          {!isImageLoaded && (
+            <View style={styles.imagePlaceholder}>
+              <Shimmer
+                width="100%"
+                height="100%"
+                borderRadius={metrics.width(75)}
+              />
+            </View>
+          )}
           <Image
             source={{ uri: item.url }}
-            style={styles.image}
+            style={[styles.image, !isImageLoaded && styles.hiddenImage]}
             resizeMode="cover"
+            onLoad={() => handleImageLoad(item.url)}
           />
-          {isSelected && (
+          {isSelected && isImageLoaded && (
             <View style={styles.selectedOverlay}>
               <View style={styles.checkmarkContainer}>
                 <Text style={styles.checkmark}>✓</Text>
@@ -237,5 +268,17 @@ const styles = StyleSheet.create({
   },
   shimmerItem: {
     marginBottom: metrics.width(15),
+  },
+  imagePlaceholder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: metrics.width(75),
+    overflow: 'hidden',
+  },
+  hiddenImage: {
+    opacity: 0,
   },
 });

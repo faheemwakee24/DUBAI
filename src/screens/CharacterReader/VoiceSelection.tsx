@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,8 +18,11 @@ import { Svgs } from '../../assets/icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, Shimmer } from '../../components/ui';
-import { HeygenVoice, useLazyGetAllVoicesQuery } from '../../store/api/heygenApi';
+import { CustomDropdown, Header, Input, Shimmer } from '../../components/ui';
+import {
+  HeygenVoice,
+  useLazyGetAllVoicesQuery,
+} from '../../store/api/heygenApi';
 import SoundPlayer from 'react-native-sound-player';
 
 type VoiceSelectionNavigationProp = NativeStackNavigationProp<
@@ -32,25 +35,57 @@ const ITEMS_PER_PAGE = 10;
 export default function VoiceSelection() {
   const navigation = useNavigation<VoiceSelectionNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'VoiceSelection'>>();
-  const { avatarId, screenFrom, projectId,avatar_photo_url,image,isCustomImageSelected } = route?.params as { avatarId: string; screenFrom?: string; projectId?: string,avatar_photo_url  ?: string,image?: { uri: string; type: string; name: string },isCustomImageSelected?: boolean };
+  const {
+    avatarId,
+    screenFrom,
+    projectId,
+    avatar_photo_url,
+    image,
+    isCustomImageSelected,
+  } = route?.params as {
+    avatarId: string;
+    screenFrom?: string;
+    projectId?: string;
+    avatar_photo_url?: string;
+    image?: { uri: string; type: string; name: string };
+    isCustomImageSelected?: boolean;
+  };
   console.log('avatarId', avatarId);
   console.log('screenFrom', screenFrom);
   console.log('isCustomImageSelected', isCustomImageSelected);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
   const [allVoices, setAllVoices] = useState<HeygenVoice[]>([]);
   const [hasMorePages, setHasMorePages] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  
-  const [getAllVoices, {
-    data,
-    isLoading,
-    isFetching,
-    isError,
-  }] = useLazyGetAllVoicesQuery();
+  const [selectedSearchType, setSelectedSearchType] = useState('Language');
+
+  const [getAllVoices, { data, isLoading, isFetching, isError }] =
+    useLazyGetAllVoicesQuery();
+
+  // Build API params based on search type
+  const getApiParams = useCallback((page: number) => {
+    const params: any = {
+      page,
+      limit: ITEMS_PER_PAGE,
+    };
+
+    // Handle search input based on search type
+    if (selectedSearchType === 'Language' && searchQuery) {
+      // If search type is Language, use searchQuery for language parameter
+      params.language = searchQuery;
+    } else if (selectedSearchType === 'Name' && searchQuery) {
+      // If search type is Name, use searchQuery for name parameter
+      params.name = searchQuery;
+    }
+
+    return params;
+  }, [selectedSearchType, searchQuery]);
 
   // Initial load
   useEffect(() => {
-    getAllVoices({ page: 1, limit: ITEMS_PER_PAGE });
+    const params = getApiParams(1);
+    getAllVoices(params);
   }, []);
 
   // Update voices when new data arrives
@@ -58,15 +93,18 @@ export default function VoiceSelection() {
     if (data) {
       if (currentPage === 1) {
         // First page - replace all voices
-        setAllVoices(data.data);
+        setAllVoices(data.data || []);
       } else {
         // Subsequent pages - append new voices
-        setAllVoices(prev => [...prev, ...data.data]);
+        setAllVoices(prev => [...prev, ...(data.data || [])]);
       }
-      setHasMorePages(data.pagination.hasNextPage);
+      setHasMorePages(data.pagination?.hasNextPage || false);
       setIsLoadingMore(false);
+    } else if (currentPage === 1 && !isLoading && !isFetching) {
+      // If no data and not loading, ensure voices array is set (might be empty result)
+      setAllVoices([]);
     }
-  }, [data, currentPage]);
+  }, [data, currentPage, isLoading, isFetching]);
 
   const voices = allVoices;
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
@@ -103,7 +141,7 @@ export default function VoiceSelection() {
       const nextPage = currentPage + 1;
       setIsLoadingMore(true);
       setCurrentPage(nextPage);
-      getAllVoices({ page: nextPage, limit: ITEMS_PER_PAGE });
+      getAllVoices(getApiParams(nextPage));
     }
   };
 
@@ -111,12 +149,15 @@ export default function VoiceSelection() {
     setCurrentPage(1);
     setAllVoices([]);
     setHasMorePages(true);
-    getAllVoices({ page: 1, limit: ITEMS_PER_PAGE });
+    getAllVoices(getApiParams(1));
   };
 
   const handlePlayPause = (voice: HeygenVoice, index: number) => {
     if (!voice.preview_audio) {
-      Alert.alert('No Preview', 'This voice does not have a preview audio available.');
+      Alert.alert(
+        'No Preview',
+        'This voice does not have a preview audio available.',
+      );
       return;
     }
 
@@ -140,7 +181,10 @@ export default function VoiceSelection() {
       }
     } catch (error: any) {
       console.error('[VoiceSelection] Audio error:', error);
-      Alert.alert('Playback Error', 'Failed to play audio preview. Please try again.');
+      Alert.alert(
+        'Playback Error',
+        'Failed to play audio preview. Please try again.',
+      );
       setPlayingIndex(null);
     }
   };
@@ -178,7 +222,13 @@ export default function VoiceSelection() {
     );
   };
 
-  const renderVoiceItem = ({ item: voice, index }: { item: HeygenVoice | null; index: number }) => {
+  const renderVoiceItem = ({
+    item: voice,
+    index,
+  }: {
+    item: HeygenVoice | null;
+    index: number;
+  }) => {
     // If item is null, it's a shimmer placeholder
     if (voice === null) {
       return renderShimmerItem();
@@ -216,7 +266,6 @@ export default function VoiceSelection() {
               <Text style={styles.voiceMetaText}> ({voice.language})</Text>
             )}
           </View>
-          
         </View>
         <TouchableOpacity
           style={[
@@ -224,7 +273,7 @@ export default function VoiceSelection() {
             !hasPreview && styles.playButtonDisabled,
             isPlaying && styles.playButtonActive,
           ]}
-          onPress={(e) => {
+          onPress={e => {
             e.stopPropagation();
             handlePlayPause(voice, index);
           }}
@@ -247,7 +296,21 @@ export default function VoiceSelection() {
       </TouchableOpacity>
     );
   };
-
+  // Refetch when search query or search type changes
+  useEffect(() => {
+    // Reset pagination state
+    setCurrentPage(1);
+    setHasMorePages(true);
+    setIsLoadingMore(false);
+    
+    // Always fetch data, even if search query is empty
+    const params = getApiParams(1);
+    getAllVoices(params);
+    
+    // Clear voices only after starting the fetch to avoid showing empty state
+    // The data will be updated by the data useEffect when response arrives
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, selectedSearchType]);
   const renderListHeader = () => {
     return (
       <View style={styles.headerContainer}>
@@ -255,6 +318,37 @@ export default function VoiceSelection() {
         <Text style={styles.subTitle}>
           Preview and choose from our collection of voices
         </Text>
+        <View style={styles.searchInputContainer}>
+          <View style={styles.searchInputContainerInner}>
+            <Input
+              placeholder={
+                selectedSearchType === 'Language'
+                  ? 'Search by language...'
+                  : 'Search by name...'
+              }
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              containerStyle={styles.searchInput}
+              fullWidth
+              inputStyle={styles.searchInputText}
+            />
+          </View>
+          <CustomDropdown
+            title=""
+            dropdownContainerStyle={styles.dropdownContainerStyle}
+            options={['Language', 'Name']}
+            selectedValue={selectedSearchType}
+            onSelect={(value: string) => {
+              // Update search type first - this will trigger useEffect to refetch
+              setSelectedSearchType(value);
+              // Clear search query - this will also trigger refetch with empty query
+              setSearchQuery('');
+            }}
+            placeholder="Search Type"
+            style={styles.dropdownStyle}
+            rowStyle={styles.dropdownRowStyle}
+          />
+        </View>
       </View>
     );
   };
@@ -279,7 +373,11 @@ export default function VoiceSelection() {
 
   const renderListEmpty = () => {
     // Shimmer is now shown in the FlatList data, so we don't need it here
-    if (isLoading && voices.length === 0||data?.data?.length != 0) {
+    if ((isLoading || isFetching) && voices.length === 0) {
+      return null;
+    }
+
+    if (data?.data?.length != 0) {
       return null;
     }
 
@@ -287,7 +385,6 @@ export default function VoiceSelection() {
       return (
         <View style={styles.stateContainer}>
           <Text style={styles.stateTitle}>Unable to load voices</Text>
-          <Text style={styles.stateSubtitle}>Check your connection or try again.</Text>
         </View>
       );
     }
@@ -296,7 +393,6 @@ export default function VoiceSelection() {
       return (
         <View style={styles.stateContainer}>
           <Text style={styles.stateTitle}>No voices available</Text>
-          <Text style={styles.stateSubtitle}>Please try again later.</Text>
         </View>
       );
     }
@@ -307,29 +403,18 @@ export default function VoiceSelection() {
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header
-          title="Voice Selection"
-          showBackButton
-          
-        />
+        <Header title="Voice Selection" showBackButton />
+        {renderListHeader()}
         <FlatList
-          data={isLoading && voices.length === 0 ? shimmerRows : voices}
+          data={(isLoading || isFetching) && voices.length === 0 ? shimmerRows : voices}
           renderItem={renderVoiceItem}
           keyExtractor={(item, index) => `voice-${index}`}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contentContainer}
-          ListHeaderComponent={renderListHeader}
           ListFooterComponent={renderListFooter}
           ListEmptyComponent={renderListEmpty}
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.5}
-          refreshControl={
-            <RefreshControl
-              refreshing={isFetching && currentPage === 1}
-              onRefresh={handleRefresh}
-              tintColor={colors.primary}
-            />
-          }
         />
       </SafeAreaView>
     </ScreenBackground>
@@ -338,14 +423,14 @@ export default function VoiceSelection() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    //  flex: 1,
   },
   safeArea: {
-    flex: 1,
+    //  flex: 1,
     marginHorizontal: metrics.width(25),
   },
   contentContainer: {
-    flexGrow: 1,
+    // flexGrow: 1,
     paddingBottom: 40,
   },
   headerContainer: {
@@ -439,7 +524,7 @@ const styles = StyleSheet.create({
   },
   stateContainer: {
     borderRadius: 16,
-    backgroundColor: colors.white10 ?? 'rgba(255,255,255,0.08)',
+    // backgroundColor: colors.white10 ?? 'rgba(255,255,255,0.08)',
     paddingHorizontal: metrics.width(20),
     paddingVertical: metrics.width(30),
     alignItems: 'center',
@@ -470,5 +555,35 @@ const styles = StyleSheet.create({
     fontSize: metrics.width(13),
     color: colors.subtitle,
   },
+  searchInputContainer: {
+    // flex: 1,
+    marginTop: metrics.width(10),
+    flexDirection: 'row',
+    width: '100%',
+  },
+  searchInput: {
+    marginBottom: 0,
+    marginTop: 0,
+  },
+  searchInputText: {
+    fontSize: metrics.width(14),
+  },
+  dropdownContainerStyle: {
+     position: 'absolute',
+zIndex:999,
+    flexGrow: 1,
+    marginTop:metrics.width(50),
+    width:'100%',
+  },
+  dropdownStyle: {
+    marginTop: 0,
+    marginLeft:metrics.width(5),
+    minWidth:metrics.width(120),
+  },
+  searchInputContainerInner: {
+    flex: 1,
+  },
+  dropdownRowStyle: {
+    minHeight:metrics.width(21),
+  },
 });
-

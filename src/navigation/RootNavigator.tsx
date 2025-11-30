@@ -22,6 +22,7 @@ import Dashboard from '../screens/home/Dashboard';
 import {
   CharacherReader,
   ChoseCharacter,
+  AvatarVariants,
   CustomizeAvatar,
   VoiceSelection,
   DescribeCharacter,
@@ -36,7 +37,7 @@ import {
   BillingDetail,
   PaymentMethodScreen,
 } from '../screens/Subscriptions';
-import { Settings, EditAccount, Language, PrivacyAndPolicy } from '../screens/settings';
+import { Settings, EditAccount, Language, PrivacyAndPolicy, TermsAndConditions, CreditHistory } from '../screens/settings';
 import SelectProfileImage from '../screens/settings/SelectProfileImage';
 import { Notifications } from '../screens/notifications';
 import { VideoHistory } from '../screens/history';
@@ -44,7 +45,7 @@ import { AvatarCustomization } from '../screens/AvatarCustomization';
 import ImageDubbing from '../screens/imageDub/ImageDubbing';
 import { tokenStorage } from '../utils/tokenStorage';
 import SplashScreen from '../screens/auth/SplashScreen';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { SubscriptionPlan } from '../store/api/subscriptionsApi';
 
 export type RootStackParamList = {
@@ -61,8 +62,10 @@ export type RootStackParamList = {
   };
   Language: undefined;
   PrivacyAndPolicy: undefined;
+  TermsAndConditions: undefined;
   Notifications: undefined;
   VideoHistory: undefined;
+  CreditHistory: undefined;
   Signup: undefined;
   VerifyOtp: { email: string };
   ForgotPasword: undefined;
@@ -95,6 +98,26 @@ export type RootStackParamList = {
   PreViewVedio: { video_url: string };
   Dashboard: undefined;
   ChoseCharacter: undefined;
+  AvatarVariants: {
+    groupedAvatar: {
+      base_name: string;
+      gender: string;
+      preview_image_url: string;
+      preview_video_url: string;
+      variant_count: number;
+      variants: Array<{
+        avatar_id: string;
+        avatar_name: string;
+        gender: string;
+        preview_image_url: string;
+        preview_video_url: string;
+        premium: boolean;
+        type: string | null;
+        tags: string[] | null;
+        default_voice_id: string | null;
+      }>;
+    };
+  };
   CustomizeAvatar: undefined;
   CharacherReader: {
     character: number;
@@ -199,7 +222,7 @@ export default function RootNavigator() {
         initialRouteName={isLoggedIn ? 'Dashboard' : 'Welcome'}
         screenOptions={{
           headerShown: false,
-          animation: 'none',
+          animation: Platform.OS === 'ios' ? 'default' : 'none',
         }}
       >
         <Stack.Screen
@@ -253,6 +276,7 @@ export default function RootNavigator() {
 
         <Stack.Screen name="PreViewVedio" component={PreViewVedio} />
         <Stack.Screen name="ChoseCharacter" component={ChoseCharacter} />
+        <Stack.Screen name="AvatarVariants" component={AvatarVariants} />
         <Stack.Screen name="CustomizeAvatar" component={CustomizeAvatar} />
         <Stack.Screen name="CharacherReader" component={CharacherReader} />
         <Stack.Screen
@@ -290,8 +314,10 @@ export default function RootNavigator() {
         />
         <Stack.Screen name="Language" component={Language} />
         <Stack.Screen name="PrivacyAndPolicy" component={PrivacyAndPolicy} />
+        <Stack.Screen name="TermsAndConditions" component={TermsAndConditions} />
         <Stack.Screen name="Notifications" component={Notifications} />
         <Stack.Screen name="VideoHistory" component={VideoHistory} />
+        <Stack.Screen name="CreditHistory" component={CreditHistory} />
         <Stack.Screen
           name="AvatarCustomization"
           component={AvatarCustomization}

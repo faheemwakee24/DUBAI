@@ -10,7 +10,12 @@ import { Svgs } from '../../assets/icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, CustomDropdown, Input } from '../../components/ui';
+import {
+  Header,
+  CustomDropdown,
+  Input,
+  ConfirmationModal,
+} from '../../components/ui';
 import {
   useGenerateVideoMutation,
   useGenerateAv4VideoMutation,
@@ -18,6 +23,10 @@ import {
 } from '../../store/api/heygenApi';
 import { useGetProjectsQuery } from '../../store/api/projectsApi';
 import type { Project } from '../../store/api/projectsApi';
+import {
+  useGetCreditDeductionsQuery,
+  useGetCreditsQuery,
+} from '../../store/api/usersApi';
 import { showToast } from '../../utils/toast';
 
 type DescribeCharacterNavigationProp = NativeStackNavigationProp<
@@ -53,6 +62,10 @@ export default function DescribeCharacter() {
   const { data: projects = [], isLoading: isLoadingProjects } =
     useGetProjectsQuery();
 
+  // Fetch credit deductions and current credits
+  const { data: creditDeductions } = useGetCreditDeductionsQuery();
+  const { data: creditsData } = useGetCreditsQuery();
+
   // State for all dropdowns
   const [selectedVoiceTone, setSelectedVoiceTone] = useState('');
   const [speed, setSpeed] = useState('');
@@ -64,6 +77,7 @@ export default function DescribeCharacter() {
   const [selectedProject, setSelectedProject] = useState<string>(
     projectId || '',
   );
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Options for all dropdowns
   const voiceToneOptions = [
@@ -160,10 +174,65 @@ export default function DescribeCharacter() {
     return `${minutes}m ${remainingSeconds}s`;
   };
 
-  const handlePreview = async () => {
+  // Calculate credits required based on estimated duration
+  const calculateCreditsRequired = useMemo(() => {
+    if (!creditDeductions || estimatedDuration === 0) {
+      return 0;
+    }
+
+    // Convert duration from seconds to minutes (use exact fractional minutes for sub-minute videos)
+    const durationInMinutes = estimatedDuration / 60;
+
+    // Use different deduction rate based on screenFrom
+    const deductionRate =
+      screenFrom === 'GeneratedCharacters'
+        ? creditDeductions.creditDeductionPerMinuteVideo
+        : creditDeductions.creditDeductionPerMinuteVideoGenerate;
+
+    // Calculate credits: rate per minute * duration in minutes
+    // For videos less than a minute, calculate proportionally
+    const creditsNeeded = deductionRate * durationInMinutes;
+
+    // Minimum 0.1 credit, round to 1 decimal place
+    return Math.max(
+      0.1,
+      Math.round(
+        (creditsNeeded +
+          (isCustomImageSelected
+            ? creditDeductions.creditDeductionImageUpload
+            : 0)) *
+          10,
+      ) / 10,
+    );
+  }, [creditDeductions, estimatedDuration, screenFrom]);
+
+  // Format credits for display (1 decimal place)
+  const formatCredits = (credits: number): string => {
+    return credits.toFixed(1);
+  };
+
+  const handlePreview = () => {
     // Validate required fields
     if (!message.trim()) {
       showToast.error('Validation Error', 'Please enter a message.');
+      return;
+    }
+
+    // Show confirmation modal with credit calculation
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmCreate = async () => {
+    setShowConfirmModal(false);
+
+    // Check if user has enough credits
+    if (creditsData && creditsData.credits < calculateCreditsRequired) {
+      showToast.error(
+        'Insufficient Credits',
+        `You need ${formatCredits(
+          calculateCreditsRequired,
+        )} credits but only have ${formatCredits(creditsData.credits)}.`,
+      );
       return;
     }
 
@@ -407,14 +476,24 @@ export default function DescribeCharacter() {
                 tooltip="Enter the message you want your character to read. This text will be converted to speech using the selected voice tone and speed."
               />
               {message.trim() && (
-                <View style={styles.durationContainer}>
-                  <Text style={styles.durationLabel}>
-                    Estimated Video Duration:
-                  </Text>
-                  <Text style={styles.durationValue}>
-                    {formatDuration(estimatedDuration)}
-                  </Text>
-                </View>
+                <>
+                  <View style={styles.durationContainer}>
+                    <Text style={styles.durationLabel}>
+                      Estimated Video Duration:
+                    </Text>
+                    <Text style={styles.durationValue}>
+                      {formatDuration(estimatedDuration)}
+                    </Text>
+                  </View>
+                  {calculateCreditsRequired > 0 && (
+                    <View style={styles.creditsContainer}>
+                      <Text style={styles.creditsLabel}>Credits Required:</Text>
+                      <Text style={styles.creditsValue}>
+                        {formatCredits(calculateCreditsRequired)}
+                      </Text>
+                    </View>
+                  )}
+                </>
               )}
               {screenFrom == 'GeneratedCharacters' || isCustomImageSelected ? (
                 <>
@@ -519,6 +598,20 @@ export default function DescribeCharacter() {
           style={{
             marginBottom: metrics.width(25),
           }}
+        />
+        <ConfirmationModal
+          visible={showConfirmModal}
+          text={`Are you sure you want to create this video? This will use ${formatCredits(
+            calculateCreditsRequired,
+          )} credit${
+            calculateCreditsRequired !== 1 ? 's' : ''
+          } and may take some time to process.`}
+          acceptButtonText="Confirm & Create"
+          cancelButtonText="Cancel"
+          creditsRequired={calculateCreditsRequired}
+          currentCredits={creditsData?.credits}
+          onAccept={handleConfirmCreate}
+          onCancel={() => setShowConfirmModal(false)}
         />
       </SafeAreaView>
     </ScreenBackground>
@@ -740,6 +833,28 @@ const styles = StyleSheet.create({
     color: colors.subtitle,
   },
   durationValue: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(16),
+    color: colors.primary,
+  },
+  creditsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: metrics.width(10),
+    paddingHorizontal: metrics.width(15),
+    paddingVertical: metrics.width(12),
+    backgroundColor: colors.white5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary40,
+  },
+  creditsLabel: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(14),
+    color: colors.subtitle,
+  },
+  creditsValue: {
     fontFamily: FontFamily.spaceGrotesk.bold,
     fontSize: metrics.width(16),
     color: colors.primary,

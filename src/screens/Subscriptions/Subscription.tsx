@@ -183,14 +183,7 @@ export default function Subscription() {
         <Header
           title="Subscription"
           showBackButton
-          RigthIcon={
-            <TouchableOpacity onPress={() => navigation.navigate('BillingDetail')}>
-              <Svgs.HistoryIcon
-                height={metrics.width(20)}
-                width={metrics.width(20)}
-              />
-            </TouchableOpacity>
-          }
+          
         />
         <FlatList<any>
           data={isLoadingPlans || isLoadingSubscription ? [1, 2, 3] : subscriptionData}

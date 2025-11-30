@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   Image,
+  TouchableOpacity,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -19,9 +20,12 @@ import {
   Header,
   LiquidGlassBackground,
   Shimmer,
+  ConfirmationModal,
 } from '../../components/ui';
 import { Images } from '../../assets/images';
-import { useGetProjectsQuery, Project } from '../../store/api/projectsApi';
+import { Svgs } from '../../assets/icons';
+import { useGetProjectsQuery, useDeleteProjectMutation, Project } from '../../store/api/projectsApi';
+import { showToast } from '../../utils';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -33,6 +37,44 @@ export default function RecentProjects() {
 
   // Fetch projects from API
   const { data: projects, isLoading, refetch, isFetching } = useGetProjectsQuery();
+  
+  // Filter to show only active projects
+  const activeProjects = useMemo(() => {
+    if (!projects) return [];
+    return projects.filter(project => project.isActive === true);
+  }, [projects]);
+  
+  // Delete project mutation
+  const [deleteProject, { isLoading: isDeleting }] = useDeleteProjectMutation();
+  
+  // State for delete confirmation
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!projectToDelete) return;
+
+    try {
+     const response =  await deleteProject(projectToDelete.id).unwrap();
+     console.log('response', response);
+      showToast.success('Success', 'Project deleted successfully');
+      setProjectToDelete(null);
+      // Refetch projects list
+      refetch();
+    } catch (error: any) {
+      console.error('[RecentProjects] Delete error:', error);
+      const errorMessage =
+        error?.data?.message || error?.message || 'Failed to delete project';
+      showToast.error('Error', errorMessage);
+      setProjectToDelete(null);
+    }
+  };
+
+  // Handle delete button press
+  const handleDeletePress = (item: Project, e: any) => {
+    e.stopPropagation();
+    setProjectToDelete(item);
+  };
 
   // Render item function for FlatList
   const renderProjectItem = ({ item }: { item: Project }) => (
@@ -51,6 +93,18 @@ export default function RecentProjects() {
             </Text>
           </View>
         </View>
+        <TouchableOpacity
+          onPress={(e) => handleDeletePress(item, e)}
+          style={styles.deleteButton}
+          activeOpacity={0.7}
+          disabled={isDeleting}
+        >
+          <Svgs.Delete
+            width={metrics.width(20)}
+            height={metrics.width(20)}
+          
+          />
+        </TouchableOpacity>
       </View>
     </LiquidGlassBackground>
   );
@@ -86,14 +140,13 @@ export default function RecentProjects() {
   );
 
   // Handler functions for all dropdowns
-console.log('projects', projects);
 
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <Header title="Recent Projects" showBackButton />
         <FlatList<any>
-          data={isLoading ? [1, 2, 3, 4] : (projects || [])}
+          data={isLoading ? [1, 2, 3, 4] : activeProjects}
           renderItem={({ item, index }) =>
             isLoading ? renderShimmerItem() : renderProjectItem({ item: item as Project })
           }
@@ -103,7 +156,7 @@ console.log('projects', projects);
           style={styles.flatList}
           contentContainerStyle={[
             styles.contentContainer,
-            (!projects || projects.length === 0) && !isLoading && styles.emptyContentContainer,
+            (!activeProjects || activeProjects.length === 0) && !isLoading && styles.emptyContentContainer,
           ]}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -119,6 +172,16 @@ console.log('projects', projects);
           style={{
             marginBottom: metrics.width(25),
           }}
+        />
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          visible={!!projectToDelete}
+          text={`Are you sure you want to delete "${projectToDelete?.name}"? This action cannot be undone.`}
+          acceptButtonText="Delete"
+          cancelButtonText="Cancel"
+          onAccept={handleDeleteConfirm}
+          onCancel={() => setProjectToDelete(null)}
         />
       </SafeAreaView>
     </ScreenBackground>
@@ -148,6 +211,7 @@ const styles = StyleSheet.create({
     marginVertical: metrics.width(20),
     flexDirection: 'row',
     gap: metrics.width(16),
+    alignItems: 'center',
   },
   ProjectOuterContainer: {
     borderRadius: 12,
@@ -159,6 +223,7 @@ const styles = StyleSheet.create({
   },
   projectDataContainer: {
     gap: metrics.width(7),
+    flex: 1,
   },
   projectTitle: {
     fontFamily: FontFamily.spaceGrotesk.bold,
@@ -208,5 +273,10 @@ const styles = StyleSheet.create({
   },
   emptyContentContainer: {
     flexGrow: 1,
+  },
+  deleteButton: {
+    padding: metrics.width(8),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

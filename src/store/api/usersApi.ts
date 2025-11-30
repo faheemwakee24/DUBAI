@@ -52,6 +52,45 @@ export interface UpdateFcmTokenResponse {
   success?: boolean;
 }
 
+// Credits Response
+export interface CreditsResponse {
+  credits: number;
+}
+
+// Credit Deductions Response
+export interface CreditDeductionsResponse {
+  creditDeductionImageUpload: number;
+  creditDeductionPhotoAvatarGeneration: number;
+  creditDeductionPerMinuteVideo: number;
+  creditDeductionPerMinuteVideoGenerate: number;
+  creditDeductionVideoTranslation: number;
+}
+
+// Credit History Types
+export interface CreditHistoryItem {
+  id: string;
+  userId: string;
+  creditsSpent: number;
+  description: string;
+  transactionType: 'video_translation' | 'photo_avatar_generation' | 'video_generation' | 'image_upload';
+  referenceId: string;
+  creditsBefore: number;
+  creditsAfter: number;
+  metadata: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreditHistoryResponse {
+  history: CreditHistoryItem[];
+  total: number;
+}
+
+export interface CreditHistoryRequest {
+  page?: number;
+  limit?: number;
+}
+
 export interface UsersResponse {
   data: User[];
   total?: number;
@@ -142,6 +181,32 @@ export const usersApi = baseApi.injectEndpoints({
         body,
       }),
     }),
+
+    // Get User Credits
+    getCredits: builder.query<CreditsResponse, void>({
+      query: () => ({
+        url: API_ENDPOINTS.USER.CREDITS,
+        method: 'GET',
+      }),
+      providesTags: ['User'],
+    }),
+
+    // Get Credit Deductions
+    getCreditDeductions: builder.query<CreditDeductionsResponse, void>({
+      query: () => ({
+        url: API_ENDPOINTS.USER.CREDITS_DEDUCTIONS,
+        method: 'GET',
+      }),
+    }),
+
+    // Get Credit History
+    getCreditHistory: builder.query<CreditHistoryResponse, CreditHistoryRequest | void>({
+      query: ({ page = 1, limit = 10 } = {}) => ({
+        url: API_ENDPOINTS.USER.CREDITS_HISTORY,
+        method: 'GET',
+        params: { page, limit },
+      }),
+    }),
   }),
 });
 
@@ -154,5 +219,8 @@ export const {
   useDeleteUserMutation,
   useUpdateProfileMutation,
   useUpdateFcmTokenMutation,
+  useGetCreditsQuery,
+  useGetCreditDeductionsQuery,
+  useGetCreditHistoryQuery,
 } = usersApi;
 

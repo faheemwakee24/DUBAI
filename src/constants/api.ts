@@ -21,6 +21,9 @@ export const API_ENDPOINTS = {
     PROFILE: '/users/profile',
     UPDATE_PROFILE: '/users/profile',
     FCM_TOKEN: '/users/fcm-token',
+    CREDITS: '/users/credits',
+    CREDITS_DEDUCTIONS: '/users/credits/deductions',
+    CREDITS_HISTORY: '/users/credits/history',
   },
   // Auth endpoints
   AUTH: {
@@ -89,6 +92,11 @@ export const API_ENDPOINTS = {
     VIDEO_TRANSLATIONS: (projectId: string) => `/heygen/video-translations/project/${projectId}`,
     UPLOAD_ASSET: '/heygen/asset/upload',
     RECENT_CREATIONS: '/heygen/recent-creations',
+    GET_GROUPED_AVATARS: '/heygen/getGroupedAvatars',
+    DELETE_IMAGE_UPLOAD: (id: string) => `/heygen/image-upload/${id}`,
+    DELETE_VIDEO_TRANSLATION: (id: string) => `/heygen/video-translation/${id}`,
+    DELETE_PHOTO_AVATAR_GENERATION: (id: string) => `/heygen/photo-avatar-generation/${id}`,
+    DELETE_GENERATE_AVATAR_VIDEO: (id: string) => `/heygen/generate-avatar-video/${id}`,
   },
   // Character endpoints
   CHARACTER: {

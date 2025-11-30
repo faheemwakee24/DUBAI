@@ -56,6 +56,8 @@ export interface GetAllVoicesResponse {
 export interface GetAllVoicesRequest {
   page?: number;
   limit?: number;
+  name?: string;
+  language?: string;
 }
 
 export interface GenerateVideoRequest {
@@ -295,6 +297,40 @@ export interface UploadAssetResponse {
   updatedAt: string;
 }
 
+// Grouped Avatars Types
+export interface GroupedAvatarVariant {
+  avatar_id: string;
+  avatar_name: string;
+  gender: string;
+  preview_image_url: string;
+  preview_video_url: string;
+  premium: boolean;
+  type: string | null;
+  tags: string[] | null;
+  default_voice_id: string | null;
+}
+
+export interface GroupedAvatar {
+  base_name: string;
+  gender: string;
+  preview_image_url: string;
+  preview_video_url: string;
+  variant_count: number;
+  variants: GroupedAvatarVariant[];
+}
+
+export interface GetGroupedAvatarsResponse {
+  data: GroupedAvatar[];
+  pagination: HeygenPagination;
+}
+
+export interface GetGroupedAvatarsRequest {
+  page?: number;
+  limit?: number;
+  gender?: 'male' | 'female';
+  search?: string;
+}
+
 export const heygenApi = baseApi.injectEndpoints({
   endpoints: builder => ({
     getAllAvatars: builder.query<
@@ -311,10 +347,15 @@ export const heygenApi = baseApi.injectEndpoints({
       GetAllVoicesResponse,
       GetAllVoicesRequest | void
     >({
-      query: ({ page = 1, limit = 10 } = {}) => ({
+      query: ({ page = 1, limit = 10, name, language } = {}) => ({
         url: API_ENDPOINTS.HEYGEN.GET_ALL_VOICES,
         method: 'GET',
-        params: { page, limit },
+        params: {
+          page,
+          limit,
+          ...(name && { name }),
+          ...(language && { language }),
+        },
       }),
     }),
     generateVideo: builder.mutation<
@@ -383,6 +424,19 @@ export const heygenApi = baseApi.injectEndpoints({
         method: 'GET',
         params: {page, limit},
       }),
+    }),
+    getGroupedAvatars: builder.query<GetGroupedAvatarsResponse, GetGroupedAvatarsRequest>({
+      query: ({page = 1, limit = 10, gender, search} = {}) => ({
+        url: API_ENDPOINTS.HEYGEN.GET_GROUPED_AVATARS,
+        method: 'GET',
+        params: {
+          page,
+          limit,
+          ...(gender && { gender }),
+          ...(search && { search }),
+        },
+      }),
+      keepUnusedDataFor: 0, // Disable caching - always fetch fresh data
     }),
     // Upload asset (for custom images)
     uploadAsset: builder.mutation<UploadAssetResponse, UploadAssetRequest>({
@@ -465,6 +519,35 @@ export const heygenApi = baseApi.injectEndpoints({
         }
       },
     }),
+    // Delete mutations
+    deleteImageUpload: builder.mutation<void, string>({
+      query: id => ({
+        url: API_ENDPOINTS.HEYGEN.DELETE_IMAGE_UPLOAD(id),
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Project'],
+    }),
+    deleteVideoTranslation: builder.mutation<void, string>({
+      query: id => ({
+        url: API_ENDPOINTS.HEYGEN.DELETE_VIDEO_TRANSLATION(id),
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Project'],
+    }),
+    deletePhotoAvatarGeneration: builder.mutation<void, string>({
+      query: id => ({
+        url: API_ENDPOINTS.HEYGEN.DELETE_PHOTO_AVATAR_GENERATION(id),
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Project'],
+    }),
+    deleteGenerateAvatarVideo: builder.mutation<void, string>({
+      query: id => ({
+        url: API_ENDPOINTS.HEYGEN.DELETE_GENERATE_AVATAR_VIDEO(id),
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Project'],
+    }),
   }),
 });
 
@@ -486,4 +569,10 @@ export const {
   useUploadAssetMutation,
   useGetRecentCreationsQuery,
   useLazyGetRecentCreationsQuery,
+  useGetGroupedAvatarsQuery,
+  useLazyGetGroupedAvatarsQuery,
+  useDeleteImageUploadMutation,
+  useDeleteVideoTranslationMutation,
+  useDeletePhotoAvatarGenerationMutation,
+  useDeleteGenerateAvatarVideoMutation,
 } = heygenApi;

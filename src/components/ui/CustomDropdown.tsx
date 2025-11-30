@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  ViewStyle,
 } from 'react-native';
 import Tooltip from 'react-native-walkthrough-tooltip';
 import LiquidGlassBackground from './LiquidGlassBackground';
@@ -19,8 +20,10 @@ interface CustomDropdownProps {
   onSelect: (value: string) => void;
   placeholder?: string;
   required?: boolean;
-  style?: any;
+  style?: ViewStyle;
   tooltip?: string;
+  dropdownContainerStyle?: ViewStyle;
+  rowStyle?: ViewStyle;
 }
 
 export default function CustomDropdown({
@@ -32,6 +35,8 @@ export default function CustomDropdown({
   required = false,
   style,
   tooltip,
+  dropdownContainerStyle,
+  rowStyle,
 }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -86,18 +91,23 @@ export default function CustomDropdown({
     <View style={[styles.container, style]}>
       <LiquidGlassBackground style={styles.liquidContainer}>
         <TouchableOpacity
-          style={styles.descriptionContainer}
+          style={[
+            styles.descriptionContainer,
+            !title && styles.descriptionContainerNoTitle,
+          ]}
           onPress={toggleDropdown}
         >
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>
-              {title}
-              {required && ' *'}
-            </Text>
-            {renderTooltipIcon()}
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.value}>
+          {title ? (
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>
+                {title}
+                {required && ' *'}
+              </Text>
+              {renderTooltipIcon()}
+            </View>
+          ) : null}
+          <View style={[styles.row,rowStyle]}>
+            <Text style={[styles.value, !title && styles.valueNoTitle]}>
               {selectedValue || placeholder}
             </Text>
             <Svgs.ArrowDown
@@ -111,7 +121,7 @@ export default function CustomDropdown({
       </LiquidGlassBackground>
       
       {isOpen && (
-        <LiquidGlassBackground style={styles.dropdownContainer}>
+        <LiquidGlassBackground style={[styles.dropdownContainer,dropdownContainerStyle]}>
           <View style={styles.dropdownContent}>
             {options.map((option, index) => (
               <TouchableOpacity
@@ -150,6 +160,10 @@ const styles = StyleSheet.create({
   descriptionContainer: {
     padding: metrics.width(12),
   },
+  descriptionContainerNoTitle: {
+    paddingVertical: metrics.width(12),
+    paddingHorizontal: metrics.width(12),
+  },
   dropdownContent: {
     padding: metrics.width(12),
     gap: metrics.width(8),
@@ -169,6 +183,9 @@ const styles = StyleSheet.create({
     fontSize: metrics.width(14),
     color: colors.subtitle,
     marginTop: metrics.width(5),
+  },
+  valueNoTitle: {
+    marginTop: 0,
   },
   arrowIcon: {
     transform: [{ rotate: '0deg' }],

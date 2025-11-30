@@ -19,13 +19,23 @@ import { Svgs } from '../../assets/icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, LiquidGlassBackground, Shimmer } from '../../components/ui';
+import {
+  Header,
+  LiquidGlassBackground,
+  Shimmer,
+  ConfirmationModal,
+} from '../../components/ui';
 import { Images } from '../../assets/images';
 import {
   useGetProjectVideosQuery,
   useGetPhotoAvatarGenerationsQuery,
   useGetVideoTranslationsQuery,
 } from '../../store/api/projectsApi';
+import {
+  useDeleteGenerateAvatarVideoMutation,
+  useDeletePhotoAvatarGenerationMutation,
+  useDeleteVideoTranslationMutation,
+} from '../../store/api/heygenApi';
 import type {
   ProjectVideo,
   PhotoAvatarGeneration,
@@ -49,7 +59,7 @@ export default function ProjectVedios() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'ProjectVedios'>>();
   const { projectId } = route.params || {};
-console.log('projectId', projectId);
+  console.log('projectId', projectId);
 
   // State for active tab
   const [activeTab, setActiveTab] = useState<TabType>('videos');
@@ -65,6 +75,19 @@ console.log('projectId', projectId);
     Record<string, number>
   >({});
 
+  // Delete mutations
+  const [deleteVideo] = useDeleteGenerateAvatarVideoMutation();
+  const [deleteAvatar] = useDeletePhotoAvatarGenerationMutation();
+  const [deleteTranslation] = useDeleteVideoTranslationMutation();
+
+  // State for delete confirmation
+  const [itemToDelete, setItemToDelete] = useState<{
+    type: 'video' | 'avatar' | 'translation';
+    id: string;
+    name: string;
+    videoId?: string; // For videos, we need video_id
+  } | null>(null);
+
   // Fetch data based on active tab
   const {
     data: videos,
@@ -75,6 +98,7 @@ console.log('projectId', projectId);
   } = useGetProjectVideosQuery(projectId || '', {
     skip: !projectId || activeTab !== 'videos',
   });
+console.log('videos', videos);
 
   const {
     data: avatars,
@@ -128,6 +152,69 @@ console.log('projectId', projectId);
       await refetch();
     } catch (error) {
       console.error('Error refreshing data:', error);
+    }
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+
+    try {
+      console.log('itemToDelete', itemToDelete);
+
+      return;
+      
+      if (itemToDelete.type === 'video' && itemToDelete.videoId) {
+        await deleteVideo(itemToDelete.videoId).unwrap();
+      } else if (itemToDelete.type === 'avatar') {
+        await deleteAvatar(itemToDelete.id).unwrap();
+      } else if (itemToDelete.type === 'translation') {
+        await deleteTranslation(itemToDelete.id).unwrap();
+      }
+
+      showToast.success('Success', 'Item deleted successfully');
+      setItemToDelete(null);
+      // Refetch data
+      await refetch();
+    } catch (error: any) {
+      console.error('[ProjectVedios] Delete error:', error);
+      const errorMessage =
+        error?.data?.message || error?.message || 'Failed to delete item';
+      showToast.error('Error', errorMessage);
+      setItemToDelete(null);
+    }
+  };
+
+  // Handle delete button press
+  const handleDeletePress = (
+    type: 'video' | 'avatar' | 'translation',
+    item: ProjectVideo | PhotoAvatarGeneration | VideoTranslation,
+    e: any,
+  ) => {
+    e.stopPropagation();
+
+    if (type === 'video') {
+      const videoItem = item as ProjectVideo;
+      setItemToDelete({
+        type: 'video',
+        id: videoItem.id,
+        name: videoItem.input_text.substring(0, 50) || 'Video',
+        videoId: videoItem.video_id,
+      });
+    } else if (type === 'avatar') {
+      const avatarItem = item as PhotoAvatarGeneration;
+      setItemToDelete({
+        type: 'avatar',
+        id: avatarItem.id,
+        name: avatarItem.name || 'Avatar',
+      });
+    } else if (type === 'translation') {
+      const translationItem = item as VideoTranslation;
+      setItemToDelete({
+        type: 'translation',
+        id: translationItem.id,
+        name: translationItem.title || 'Translation',
+      });
     }
   };
 
@@ -223,26 +310,17 @@ console.log('projectId', projectId);
             />
             {isCompleted && videoUrl && (
               <TouchableOpacity
-                onPress={() =>
-                  handleDownloadVideo(
-                    videoUrl,
-                    `project_video_${item.video_id}_${Date.now()}.mp4`,
-                    item.id,
-                  )
-                }
+                onPress={e => handleDeletePress('video', item, e)}
                 style={styles.downloadIconTouchable}
                 disabled={downloadingVideoId === item.id}
                 activeOpacity={0.7}
               >
                 <LiquidGlassBackground style={styles.downloadIcon}>
                   <View style={styles.downloadIconContainer}>
-                    {downloadingVideoId === item.id ? (
-                      <Text style={styles.downloadProgressText}>
-                        {downloadProgress[item.id] || 0}%
-                      </Text>
-                    ) : (
-                      <Svgs.Downloard />
-                    )}
+                    <Svgs.WhiteDelete
+                      width={metrics.width(18)}
+                      height={metrics.width(18)}
+                    />
                   </View>
                 </LiquidGlassBackground>
               </TouchableOpacity>
@@ -257,26 +335,17 @@ console.log('projectId', projectId);
           >
             {isCompleted && videoUrl && (
               <TouchableOpacity
-                onPress={() =>
-                  handleDownloadVideo(
-                    videoUrl,
-                    `project_video_${item.video_id}_${Date.now()}.mp4`,
-                    item.id,
-                  )
-                }
+                onPress={e => handleDeletePress('video', item, e)}
                 style={styles.downloadIconTouchable}
                 disabled={downloadingVideoId === item.id}
                 activeOpacity={0.7}
               >
                 <LiquidGlassBackground style={styles.downloadIcon}>
                   <View style={styles.downloadIconContainer}>
-                    {downloadingVideoId === item.id ? (
-                      <Text style={styles.downloadProgressText}>
-                        {downloadProgress[item.id] || 0}%
-                      </Text>
-                    ) : (
-                      <Svgs.Downloard />
-                    )}
+                    <Svgs.WhiteDelete
+                      width={metrics.width(18)}
+                      height={metrics.width(18)}
+                    />
                   </View>
                 </LiquidGlassBackground>
               </TouchableOpacity>
@@ -409,19 +478,22 @@ console.log('projectId', projectId);
         >
           {isCompleted && firstImage && (
             <TouchableOpacity
-              onPress={() => handleDownloadImage(firstImage, item.id, 0)}
+              onPress={e => handleDeletePress('avatar', item, e)}
               style={styles.downloadIconTouchable}
               disabled={downloadingImageId === `${item.id}-0`}
               activeOpacity={0.7}
             >
               <LiquidGlassBackground style={styles.downloadIcon}>
-                <View style={styles.downloadIconContainer}>
-                  {downloadingImageId === `${item.id}-0` ? (
-                    <Text style={styles.downloadProgressText}>...</Text>
-                  ) : (
-                    <Svgs.Downloard />
-                  )}
-                </View>
+                <TouchableOpacity
+                  onPress={e => handleDeletePress('avatar', item, e)}
+                  style={styles.deleteButton}
+                  activeOpacity={0.7}
+                >
+                  <Svgs.WhiteDelete
+                    width={metrics.width(20)}
+                    height={metrics.width(20)}
+                  />
+                </TouchableOpacity>
               </LiquidGlassBackground>
             </TouchableOpacity>
           )}
@@ -457,12 +529,17 @@ console.log('projectId', projectId);
             </Text>
           </View>
           {isCompleted && (
-            <PrimaryButton
-              title={hasMultipleImages ? 'Preview All' : 'Preview'}
-              onPress={() => handleAvatarPreview(item)}
-              extraContainerStyle={styles.buttonContainer}
-              textStyle={styles.text}
-            />
+            <View style={styles.buttonRow}>
+              <PrimaryButton
+                title={hasMultipleImages ? 'Preview All' : 'Preview'}
+                onPress={() => handleAvatarPreview(item)}
+                extraContainerStyle={StyleSheet.flatten([
+                  styles.buttonContainer,
+                  styles.previewButton,
+                ])}
+                textStyle={styles.text}
+              />
+            </View>
           )}
         </View>
       </LiquidGlassBackground>
@@ -484,26 +561,17 @@ console.log('projectId', projectId);
         >
           {isCompleted && videoUrl && (
             <TouchableOpacity
-              onPress={() =>
-                handleDownloadVideo(
-                  videoUrl,
-                  `translation_${item.video_translate_id}_${Date.now()}.mp4`,
-                  item.id,
-                )
-              }
+              onPress={e => handleDeletePress('translation', item, e)}
               style={styles.downloadIconTouchable}
               disabled={downloadingVideoId === item.id}
               activeOpacity={0.7}
             >
               <LiquidGlassBackground style={styles.downloadIcon}>
                 <View style={styles.downloadIconContainer}>
-                  {downloadingVideoId === item.id ? (
-                    <Text style={styles.downloadProgressText}>
-                      {downloadProgress[item.id] || 0}%
-                    </Text>
-                  ) : (
-                    <Svgs.Downloard />
-                  )}
+                  <Svgs.WhiteDelete
+                    width={metrics.width(18)}
+                    height={metrics.width(18)}
+                  />
                 </View>
               </LiquidGlassBackground>
             </TouchableOpacity>
@@ -684,7 +752,7 @@ console.log('projectId', projectId);
             ItemSeparatorComponent={() => <View style={styles.separator} />}
             refreshControl={
               <RefreshControl
-                refreshing={isRefreshing&&currentData.length>0}
+                refreshing={isRefreshing && currentData.length > 0}
                 onRefresh={onRefresh}
                 tintColor={colors.primary}
                 colors={[colors.primary]}
@@ -708,7 +776,7 @@ console.log('projectId', projectId);
             ItemSeparatorComponent={() => <View style={styles.separator} />}
             refreshControl={
               <RefreshControl
-                refreshing={isRefreshing&&currentData.length>0}
+                refreshing={isRefreshing && currentData.length > 0}
                 onRefresh={onRefresh}
                 tintColor={colors.primary}
                 colors={[colors.primary]}
@@ -720,6 +788,16 @@ console.log('projectId', projectId);
             <Text style={styles.emptyText}>No {activeTab} found</Text>
           </View>
         )}
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          visible={!!itemToDelete}
+          text={`Are you sure you want to delete "${itemToDelete?.name}"? This action cannot be undone.`}
+          acceptButtonText="Delete"
+          cancelButtonText="Cancel"
+          onAccept={handleDeleteConfirm}
+          onCancel={() => setItemToDelete(null)}
+        />
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -929,5 +1007,22 @@ const styles = StyleSheet.create({
     fontSize: metrics.width(12),
     color: colors.white,
     textAlign: 'center',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: metrics.width(8),
+    marginTop: metrics.width(10),
+  },
+  playButton: {
+    flex: 1,
+  },
+  previewButton: {
+    flex: 1,
+  },
+  deleteButton: {
+    padding: metrics.width(8),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

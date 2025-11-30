@@ -14,6 +14,7 @@ export { default as SearchableDropdown } from './SearchableDropdown';
 export { default as Shimmer } from './Shimmer';
 export { default as CustomToggle } from './CustomToggle';
 export { default as Checkbox } from './Checkbox';
+export { default as ConfirmationModal } from './ConfirmationModal';
 export { toastConfig } from './ToastConfig';
 
 

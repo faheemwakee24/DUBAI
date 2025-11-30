@@ -10,13 +10,14 @@ import { Svgs } from '../../assets/icons';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, CustomDropdown, Input } from '../../components/ui';
+import { Header, CustomDropdown, Input, ConfirmationModal } from '../../components/ui';
 import {
   useMakeYourOwnCharacterMutation,
   useLazyGetPhotoGenerationQuery,
 } from '../../store/api/heygenApi';
 import { useGetProjectsQuery } from '../../store/api/projectsApi';
 import type { Project } from '../../store/api/projectsApi';
+import { useGetCreditDeductionsQuery, useGetCreditsQuery } from '../../store/api/usersApi';
 import { showToast } from '../../utils/toast';
 
 type CustomizeAvatarNavigationProp = NativeStackNavigationProp<
@@ -47,6 +48,12 @@ export default function CustomizeAvatar() {
   // Fetch projects
   const { data: projects = [], isLoading: isLoadingProjects } =
     useGetProjectsQuery();
+
+  // Fetch credit deductions and current credits
+  const { data: creditDeductions } = useGetCreditDeductionsQuery();
+  const { data: creditsData } = useGetCreditsQuery();
+
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Utility function to format snake_case to Title Case
   const formatDisplayValue = (value: string): string => {
@@ -167,8 +174,16 @@ export default function CustomizeAvatar() {
     }
   };
 
+  // Calculate credits required for photo avatar generation
+  const calculateCreditsRequired = creditDeductions?.creditDeductionPhotoAvatarGeneration || 0;
+
+  // Format credits for display (1 decimal place)
+  const formatCredits = (credits: number): string => {
+    return credits.toFixed(1);
+  };
+
   // Handle Next button press
-  const handleNext = async () => {
+  const handleNext = () => {
     // Validation
     if (!description.trim()) {
       showToast.error('Description Required', 'Please enter a description.');
@@ -183,6 +198,22 @@ export default function CustomizeAvatar() {
       !selectedStyle
     ) {
       showToast.error('All Fields Required', 'Please select all options.');
+      return;
+    }
+
+    // Show confirmation modal with credit calculation
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmCreate = async () => {
+    setShowConfirmModal(false);
+
+    // Check if user has enough credits
+    if (creditsData && creditsData.credits < calculateCreditsRequired) {
+      showToast.error(
+        'Insufficient Credits',
+        `You need ${formatCredits(calculateCreditsRequired)} credits but only have ${formatCredits(creditsData.credits)}.`,
+      );
       return;
     }
 
@@ -287,6 +318,16 @@ export default function CustomizeAvatar() {
                 multiline
                 tooltip="Enter the description of your character. This description will be used to generate the character."
               />
+              {calculateCreditsRequired > 0 && (
+                <View style={styles.creditsContainer}>
+                  <Text style={styles.creditsLabel}>
+                    Credits Required:
+                  </Text>
+                  <Text style={styles.creditsValue}>
+                    {formatCredits(calculateCreditsRequired)}
+                  </Text>
+                </View>
+              )}
               <CustomDropdown
                 title="Project"
                 options={projects.map((project: Project) => project.name)}
@@ -371,6 +412,16 @@ export default function CustomizeAvatar() {
           style={{
             marginBottom: metrics.width(15),
           }}
+        />
+        <ConfirmationModal
+          visible={showConfirmModal}
+          text={`Are you sure you want to generate this character? This will use ${formatCredits(calculateCreditsRequired)} credit${calculateCreditsRequired !== 1 ? 's' : ''} and may take some time to process.`}
+          acceptButtonText="Confirm & Generate"
+          cancelButtonText="Cancel"
+          creditsRequired={calculateCreditsRequired}
+          currentCredits={creditsData?.credits}
+          onAccept={handleConfirmCreate}
+          onCancel={() => setShowConfirmModal(false)}
         />
       </SafeAreaView>
     </ScreenBackground>
@@ -608,5 +659,27 @@ const styles = StyleSheet.create({
     width: metrics.width(5),
     borderRadius: 100,
     backgroundColor: colors.subtitle,
+  },
+  creditsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: metrics.width(10),
+    paddingHorizontal: metrics.width(15),
+    paddingVertical: metrics.width(12),
+    backgroundColor: colors.white5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary40,
+  },
+  creditsLabel: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(14),
+    color: colors.subtitle,
+  },
+  creditsValue: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(16),
+    color: colors.primary,
   },
 });

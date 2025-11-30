@@ -23,6 +23,7 @@ import {
   LiquidGlassBackground,
   SearchableDropdown,
   CustomDropdown,
+  ConfirmationModal,
 } from '../../components/ui';
 import { Images } from '../../assets/images';
 import {
@@ -33,6 +34,10 @@ import type { VoiceLocale } from '../../store/api/heygenApi';
 import { useUploadVideoDubbingMutation } from '../../store/api';
 import { useGetProjectsQuery } from '../../store/api/projectsApi';
 import type { Project } from '../../store/api/projectsApi';
+import {
+  useGetCreditDeductionsQuery,
+  useGetCreditsQuery,
+} from '../../store/api/usersApi';
 import { showToast } from '../../utils/toast';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
@@ -47,6 +52,8 @@ export default function SelectVedioDescription() {
   const route =
     useRoute<RouteProp<RootStackParamList, 'SelectVedioDescription'>>();
   const { video } = route.params || {};
+console.log('video', video);
+console.log('video.duration', video?.duration);
 
   // State for dropdowns
   const [selectedLanguage, setSelectedLanguage] = useState('');
@@ -54,6 +61,7 @@ export default function SelectVedioDescription() {
   const [selectedVoice, setSelectedVoice] = useState('Select Style');
   const [selectedMode, setSelectedMode] = useState('');
   const [selectedProject, setSelectedProject] = useState<string>('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // API hooks
   const { data: localesData, isLoading: isLoadingLocales } =
@@ -64,6 +72,10 @@ export default function SelectVedioDescription() {
     useUploadVideoDubbingMutation();
   const [translateVideo, { isLoading: isTranslating }] =
     useTranslateVideoMutation();
+
+  // Fetch credit deductions and current credits
+  const { data: creditDeductions } = useGetCreditDeductionsQuery();
+  const { data: creditsData } = useGetCreditsQuery();
 
   // Transform locales to dropdown options
   const languageOptions = useMemo(() => {
@@ -111,6 +123,31 @@ export default function SelectVedioDescription() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Calculate credits required for video translation (per minute)
+  const calculateCreditsRequired = useMemo(() => {
+    if (!creditDeductions || !video?.duration) {
+      return 0;
+    }
+
+    // Convert duration from seconds to minutes (use exact fractional minutes for sub-minute videos)
+    const durationInMinutes = video.duration / 60;
+
+    // Use creditDeductionVideoTranslation as per-minute rate
+    const deductionRate = creditDeductions.creditDeductionVideoTranslation;
+
+    // Calculate credits: rate per minute * duration in minutes
+    // For videos less than a minute, calculate proportionally
+    const creditsNeeded = deductionRate * durationInMinutes;
+
+    // Minimum 0.1 credit, round to 1 decimal place
+    return Math.max(0.1, Math.round(creditsNeeded * 10) / 10);
+  }, [creditDeductions, video?.duration]);
+
+  // Format credits for display (1 decimal place)
+  const formatCredits = (credits: number): string => {
+    return credits.toFixed(1);
+  };
+
   const handleGenerateDub = async () => {
     if (!selectedLanguage || !selectedMode) {
       showToast.error('Validation Error', 'Please fill all required fields.');
@@ -119,6 +156,23 @@ export default function SelectVedioDescription() {
 
     if (!video) {
       showToast.error('Error', 'Video is missing.');
+      return;
+    }
+
+    setShowConfirmModal(true);
+  };
+
+  const confirmGenerateDub = async () => {
+    setShowConfirmModal(false);
+
+    // Check if user has enough credits
+    if (creditsData && creditsData.credits < calculateCreditsRequired) {
+      showToast.error(
+        'Insufficient Credits',
+        `You need ${formatCredits(
+          calculateCreditsRequired,
+        )} credits but only have ${formatCredits(creditsData.credits)}.`,
+      );
       return;
     }
 
@@ -169,6 +223,7 @@ export default function SelectVedioDescription() {
         speaker_num: '1',
         keep_the_same_format: false,
         mode: selectedMode,
+        duration: video.duration || 0,
       };
 
       // Only include project_id if a project is selected
@@ -285,6 +340,14 @@ export default function SelectVedioDescription() {
             required
             tooltip="Select the processing mode: Fast mode for quicker results, or Quality mode for better output quality. Fast mode is faster but may have slightly lower quality."
           />
+          {calculateCreditsRequired > 0 && (
+            <View style={styles.creditsContainer}>
+              <Text style={styles.creditsLabel}>Credits Required:</Text>
+              <Text style={styles.creditsValue}>
+                {formatCredits(calculateCreditsRequired)}
+              </Text>
+            </View>
+          )}
         </ScrollView>
         <PrimaryButton
           title="Generate Dub"
@@ -293,6 +356,20 @@ export default function SelectVedioDescription() {
           disabled={isUploading || isTranslating}
         />
       </SafeAreaView>
+      <ConfirmationModal
+        visible={showConfirmModal}
+        text={`Are you sure you want to generate the dub? This will use ${formatCredits(
+          calculateCreditsRequired,
+        )} credit${
+          calculateCreditsRequired !== 1 ? 's' : ''
+        } and may take some time to process.`}
+        acceptButtonText="Confirm & Generate"
+        cancelButtonText="Cancel"
+        creditsRequired={calculateCreditsRequired}
+        currentCredits={creditsData?.credits}
+        onAccept={confirmGenerateDub}
+        onCancel={() => setShowConfirmModal(false)}
+      />
     </ScreenBackground>
   );
 }
@@ -403,5 +480,27 @@ const styles = StyleSheet.create({
   selectedItem: {
     color: colors.white,
     fontFamily: FontFamily.spaceGrotesk.bold,
+  },
+  creditsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: metrics.width(10),
+    paddingHorizontal: metrics.width(15),
+    paddingVertical: metrics.width(12),
+    backgroundColor: colors.white5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary40,
+  },
+  creditsLabel: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(14),
+    color: colors.subtitle,
+  },
+  creditsValue: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(16),
+    color: colors.primary,
   },
 });

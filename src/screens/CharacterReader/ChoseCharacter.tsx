@@ -21,12 +21,27 @@ import { Svgs } from '../../assets/icons';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, LiquidGlassBackground, Shimmer } from '../../components/ui';
+import {
+  Header,
+  LiquidGlassBackground,
+  Shimmer,
+  Input,
+  CustomDropdown,
+} from '../../components/ui';
 import { Images } from '../../assets/images';
 import {
   HeygenAvatar,
   useLazyGetAllAvatarsQuery,
+  GroupedAvatar,
+  GetGroupedAvatarsResponse,
+  GetGroupedAvatarsRequest,
 } from '../../store/api/heygenApi';
+import {
+  API_BASE_URL,
+  API_VERSION_PREFIX,
+  API_ENDPOINTS,
+} from '../../constants/api';
+import { tokenStorage } from '../../utils/tokenStorage';
 import { SelectedImage, selectImage, showToast } from '../../utils';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
@@ -39,34 +54,117 @@ const ITEMS_PER_PAGE = 10;
 export default function ChoseCharacter() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const [currentPage, setCurrentPage] = useState(1);
-  const [allAvatars, setAllAvatars] = useState<HeygenAvatar[]>([]);
+  const [allGroupedAvatars, setAllGroupedAvatars] = useState<GroupedAvatar[]>(
+    [],
+  );
   const [hasMorePages, setHasMorePages] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [selectedGender, setSelectedGender] = useState<
+    'male' | 'female' | 'all'
+  >('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const [getAllAvatars, { data, isLoading, isFetching, isError }] =
-    useLazyGetAllAvatarsQuery();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [data, setData] = useState<GetGroupedAvatarsResponse | null>(null);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      setAllGroupedAvatars([]);
+      fetchGroupedAvatars(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedGender]);
 
   // Initial load
   useEffect(() => {
-    getAllAvatars({ page: 1, limit: ITEMS_PER_PAGE });
+    fetchGroupedAvatars(1);
   }, []);
+
+  const fetchGroupedAvatars = async (page: number) => {
+    try {
+      if (page === 1) {
+        setIsLoading(true);
+      } else {
+        setIsFetching(true);
+      }
+      setIsError(false);
+
+      // Get auth token
+      const token = await tokenStorage.getAccessToken();
+
+      // Build query parameters
+      const params: GetGroupedAvatarsRequest = {
+        page,
+        limit: ITEMS_PER_PAGE,
+        ...(searchQuery && { search: searchQuery }),
+        ...(selectedGender !== 'all' && { gender: selectedGender }),
+      };
+
+      // Build URL with query parameters
+      const queryString = new URLSearchParams();
+      if (params.page) queryString.append('page', params.page.toString());
+      if (params.limit) queryString.append('limit', params.limit.toString());
+      if (params.gender) queryString.append('gender', params.gender);
+      if (params.search) queryString.append('search', params.search);
+
+      const url = `${API_BASE_URL}${API_VERSION_PREFIX}${
+        API_ENDPOINTS.HEYGEN.GET_GROUPED_AVATARS
+      }?${queryString.toString()}`;
+
+      // Prepare headers
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      };
+
+      if (token) {
+        headers['authorization'] = `Bearer ${token}`;
+      }
+
+      // Make the API call
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+
+      const responseData: GetGroupedAvatarsResponse = await response.json();
+      setData(responseData);
+    } catch (error) {
+      console.error('[ChoseCharacter] Error fetching grouped avatars:', error);
+      setIsError(true);
+      setData(null);
+    } finally {
+      setIsLoading(false);
+      setIsFetching(false);
+    }
+  };
 
   // Update avatars when new data arrives
   useEffect(() => {
     if (data) {
       if (currentPage === 1) {
         // First page - replace all avatars
-        setAllAvatars(data.data);
+        setAllGroupedAvatars(data.data);
       } else {
         // Subsequent pages - append new avatars
-        setAllAvatars(prev => [...prev, ...data.data]);
+        setAllGroupedAvatars(prev => [...prev, ...data.data]);
       }
       setHasMorePages(data.pagination.hasNextPage);
       setIsLoadingMore(false);
     }
   }, [data, currentPage]);
 
-  const avatars = allAvatars;
+  const [selectedGroupedAvatar, setSelectedGroupedAvatar] =
+    useState<GroupedAvatar | null>(null);
   const [selectedCharacter, setSelectedCharacter] = useState<string | null>(
     null,
   );
@@ -90,9 +188,18 @@ export default function ChoseCharacter() {
 
     if (imageData) {
       setSelectedImage(imageData);
-      setIsCustomImageSelected(true);
-      setSelectedCharacter('custom-image');
-      setSelectedCharacterPhoto(imageData.uri);
+      // setIsCustomImageSelected(true);
+      //  setSelectedCharacter('custom-image');
+      //  setSelectedCharacterPhoto(imageData.uri);
+      // navigation.navigate('VoiceSelection', {
+      //   avatarId: 'custom-image',
+      //   image: {
+      //     uri: imageData.uri,
+      //     type: imageData.type || 'image/jpeg',
+      //     name: imageData.name || 'image.jpg',
+      //   },
+      //   isCustomImageSelected: true,
+      // });
     }
   };
 
@@ -105,6 +212,11 @@ export default function ChoseCharacter() {
       setIsCustomImageSelected(true);
       setSelectedCharacter('custom-image');
       setSelectedCharacterPhoto(selectedImage.uri);
+      navigation.navigate('VoiceSelection', {
+        avatarId: 'custom-image',
+        image: selectedImage,
+        isCustomImageSelected: true,
+      });
     } else {
       handleSelectImage();
     }
@@ -136,17 +248,16 @@ export default function ChoseCharacter() {
       }
     }
   };
-  const avatarRows = useMemo<
-    (HeygenAvatar[] | 'custom-upload-with-first')[]
-  >(() => {
-    const rows: (HeygenAvatar[] | 'custom-upload-with-first')[] = [];
+  // Create rows for grouped avatars (2 per row)
+  const groupedAvatarRows = useMemo(() => {
+    const rows: (GroupedAvatar[] | 'custom-upload-with-first')[] = [];
 
-    // First row: custom upload + first avatar (if available)
-    if (avatars.length > 0) {
+    // First row: custom upload + first grouped avatar (if available)
+    if (allGroupedAvatars.length > 0) {
       rows.push('custom-upload-with-first');
-      // Then add remaining avatars starting from index 1
-      for (let i = 1; i < avatars.length; i += 2) {
-        rows.push(avatars.slice(i, i + 2));
+      // Then add remaining grouped avatars starting from index 1
+      for (let i = 1; i < allGroupedAvatars.length; i += 2) {
+        rows.push(allGroupedAvatars.slice(i, i + 2));
       }
     } else {
       // If no avatars, just show custom upload
@@ -154,7 +265,7 @@ export default function ChoseCharacter() {
     }
 
     return rows;
-  }, [avatars]);
+  }, [allGroupedAvatars]);
 
   // Create shimmer data for loading state
   const shimmerRows = useMemo(() => {
@@ -163,16 +274,31 @@ export default function ChoseCharacter() {
 
   // Combine custom upload with shimmer rows for loading state
   const listData = useMemo<
-    (HeygenAvatar[] | 'custom-upload-with-first' | null)[]
+    (GroupedAvatar[] | 'custom-upload-with-first' | null)[]
   >(() => {
-    if (isLoading && avatars.length === 0) {
+    // Show shimmer when loading or fetching and no data yet
+    if ((isLoading || isFetching) && allGroupedAvatars.length === 0) {
       return shimmerRows;
     }
-    return avatarRows;
-  }, [isLoading, avatars.length, avatarRows, shimmerRows]);
+    return groupedAvatarRows;
+  }, [
+    isLoading,
+    isFetching,
+    allGroupedAvatars.length,
+    groupedAvatarRows,
+    shimmerRows,
+  ]);
 
   const handleImageError = (avatarId: string) => {
     setFailedImages(prev => new Set(prev).add(avatarId));
+  };
+
+  const handleGroupedAvatarSelect = (groupedAvatar: GroupedAvatar) => {
+    setSelectedGroupedAvatar(groupedAvatar);
+    // Navigate to variant selection screen
+    navigation.navigate('AvatarVariants', {
+      groupedAvatar,
+    });
   };
 
   const handleCharacterSelect = (characterId: string) => {
@@ -209,24 +335,40 @@ export default function ChoseCharacter() {
   };
 
   const handleLoadMore = () => {
-    if (!isLoadingMore && hasMorePages && !isFetching && avatars.length) {
+    if (
+      !isLoadingMore &&
+      hasMorePages &&
+      !isFetching &&
+      allGroupedAvatars.length
+    ) {
       const nextPage = currentPage + 1;
       setIsLoadingMore(true);
       setCurrentPage(nextPage);
-      getAllAvatars({ page: nextPage, limit: ITEMS_PER_PAGE });
+      fetchGroupedAvatars(nextPage);
     }
   };
 
   const handleRefresh = () => {
     setCurrentPage(1);
-    setAllAvatars([]);
+    setAllGroupedAvatars([]);
     setHasMorePages(true);
     setFailedImages(new Set()); // Reset failed images on refresh
-    getAllAvatars({ page: 1, limit: ITEMS_PER_PAGE });
+    fetchGroupedAvatars(1);
+  };
+
+  const handleGenderChange = (gender: string) => {
+    setSelectedGender(gender as 'male' | 'female' | 'all');
+    setCurrentPage(1);
+    setAllGroupedAvatars([]);
   };
 
   const handleEndReached = () => {
-    if (!isLoadingMore && hasMorePages && !isFetching && avatars.length > 0) {
+    if (
+      !isLoadingMore &&
+      hasMorePages &&
+      !isFetching &&
+      allGroupedAvatars.length > 0
+    ) {
       handleLoadMore();
     }
   };
@@ -292,7 +434,7 @@ export default function ChoseCharacter() {
   };
 
   const renderFirstRowWithAvatar = () => {
-    if (avatars.length === 0) {
+    if (allGroupedAvatars.length === 0) {
       // If no avatars, show custom upload with placeholder
       return (
         <View style={styles.columnRow}>
@@ -305,39 +447,38 @@ export default function ChoseCharacter() {
       );
     }
 
-    const firstAvatar = avatars[0];
-    const isSelected = selectedCharacter === firstAvatar.avatar_id;
+    const firstGroupedAvatar = allGroupedAvatars[0];
     const hasImageUrl =
-      firstAvatar.preview_image_url &&
-      firstAvatar.preview_image_url.trim() !== '' &&
-      firstAvatar.preview_image_url !== 'null' &&
-      firstAvatar.preview_image_url !== 'undefined';
-    const imageFailed = failedImages.has(firstAvatar.avatar_id);
+      firstGroupedAvatar.preview_image_url &&
+      firstGroupedAvatar.preview_image_url.trim() !== '' &&
+      firstGroupedAvatar.preview_image_url !== 'null' &&
+      firstGroupedAvatar.preview_image_url !== 'undefined';
+    const imageFailed = failedImages.has(firstGroupedAvatar.base_name);
     const shouldUseFallback = !hasImageUrl || imageFailed;
     const imageSource = shouldUseFallback
       ? Images.TempCharacher
-      : { uri: firstAvatar.preview_image_url };
+      : { uri: firstGroupedAvatar.preview_image_url };
 
     return (
       <View style={styles.columnRow}>
         {renderCustomUploadItem(false)}
         <TouchableOpacity
-          onPress={() => {
-            handleCharacterSelect(firstAvatar.avatar_id);
-            setSelectedCharacterPhoto(firstAvatar.preview_image_url);
-          }}
-          style={[styles.tempCharacher, isSelected && styles.selectedCharacter]}
+          onPress={() => handleGroupedAvatarSelect(firstGroupedAvatar)}
+          style={styles.tempCharacher}
           activeOpacity={0.8}
         >
           <ImageBackground
             source={imageSource}
             style={styles.tempCharacherImage}
-            onError={() => handleImageError(firstAvatar.avatar_id)}
+            onError={() => handleImageError(firstGroupedAvatar.base_name)}
             resizeMode="cover"
           >
             <View style={styles.tempCharacherOverlay}>
               <Text style={styles.tempCharacherTitle}>
-                {firstAvatar.avatar_name}
+                {firstGroupedAvatar.base_name}
+              </Text>
+              <Text style={styles.variantCount}>
+                {firstGroupedAvatar.variant_count} variants
               </Text>
             </View>
           </ImageBackground>
@@ -349,7 +490,7 @@ export default function ChoseCharacter() {
   const renderRow = ({
     item: row,
   }: {
-    item: HeygenAvatar[] | 'custom-upload-with-first' | null;
+    item: GroupedAvatar[] | 'custom-upload-with-first' | null;
   }) => {
     // If row is null, it's a shimmer placeholder
     if (row === null) {
@@ -363,41 +504,37 @@ export default function ChoseCharacter() {
 
     return (
       <View style={styles.columnRow}>
-        {row.map(character => {
-          const isSelected = selectedCharacter === character.avatar_id;
+        {row.map(groupedAvatar => {
           const hasImageUrl =
-            character.preview_image_url &&
-            character.preview_image_url.trim() !== '' &&
-            character.preview_image_url !== 'null' &&
-            character.preview_image_url !== 'undefined';
-          const imageFailed = failedImages.has(character.avatar_id);
+            groupedAvatar.preview_image_url &&
+            groupedAvatar.preview_image_url.trim() !== '' &&
+            groupedAvatar.preview_image_url !== 'null' &&
+            groupedAvatar.preview_image_url !== 'undefined';
+          const imageFailed = failedImages.has(groupedAvatar.base_name);
           const shouldUseFallback = !hasImageUrl || imageFailed;
           const imageSource = shouldUseFallback
             ? Images.TempCharacher
-            : { uri: character.preview_image_url };
+            : { uri: groupedAvatar.preview_image_url };
 
           return (
             <TouchableOpacity
-              key={character.avatar_id}
-              onPress={() => {
-                handleCharacterSelect(character.avatar_id);
-                setSelectedCharacterPhoto(character.preview_image_url);
-              }}
-              style={[
-                styles.tempCharacher,
-                isSelected && styles.selectedCharacter,
-              ]}
+              key={groupedAvatar.base_name}
+              onPress={() => handleGroupedAvatarSelect(groupedAvatar)}
+              style={styles.tempCharacher}
               activeOpacity={0.8}
             >
               <ImageBackground
                 source={imageSource}
                 style={styles.tempCharacherImage}
-                onError={() => handleImageError(character.avatar_id)}
+                onError={() => handleImageError(groupedAvatar.base_name)}
                 resizeMode="cover"
               >
                 <View style={styles.tempCharacherOverlay}>
                   <Text style={styles.tempCharacherTitle}>
-                    {character.avatar_name}
+                    {groupedAvatar.base_name}
+                  </Text>
+                  <Text style={styles.variantCount}>
+                    {groupedAvatar.variant_count} variants
                   </Text>
                 </View>
               </ImageBackground>
@@ -421,12 +558,54 @@ export default function ChoseCharacter() {
         <Text style={styles.subTitle}>
           Select from our collection of unique characters or upload your own
         </Text>
+
+        {/* Search Bar and Gender Dropdown in one row */}
+        <View style={styles.searchRowContainer}>
+          <View style={styles.searchInputContainer}>
+            <Input
+              placeholder="Search characters..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              containerStyle={styles.searchInput}
+              inputStyle={styles.searchInputText}
+            />
+          </View>
+          <View style={styles.dropdownContainer}>
+            <CustomDropdown
+              title=""
+              dropdownContainerStyle={styles.dropdownContainerStyle}
+              options={['All', 'Male', 'Female']}
+              selectedValue={
+                selectedGender === 'all'
+                  ? 'All'
+                  : selectedGender === 'male'
+                  ? 'Male'
+                  : 'Female'
+              }
+              onSelect={(value: string) => {
+                const genderMap: Record<string, 'male' | 'female' | 'all'> = {
+                  All: 'all',
+                  Male: 'male',
+                  Female: 'female',
+                };
+                handleGenderChange(genderMap[value] || 'all');
+              }}
+              placeholder="Gender"
+              style={styles.dropdownStyle}
+              rowStyle={styles.dropdownRowStyle}
+            />
+          </View>
+        </View>
       </View>
     );
   };
 
   const renderListFooter = () => {
-    if ((isLoadingMore || isFetching) && hasMorePages && avatars.length > 0) {
+    if (
+      (isLoadingMore || isFetching) &&
+      hasMorePages &&
+      allGroupedAvatars.length > 0
+    ) {
       return (
         <View style={styles.loadMoreContainer}>
           <ActivityIndicator color={colors.primary} size="small" />
@@ -439,11 +618,22 @@ export default function ChoseCharacter() {
 
   const renderListEmpty = () => {
     // Shimmer is now shown in the FlatList data, so we don't need it here
-    if ((isLoading && avatars.length === 0) || data?.data?.length === 0) {
+    if ((isLoading || isFetching) && allGroupedAvatars.length === 0) {
       return null;
     }
 
-    if (isError && avatars.length === 0) {
+    if (data?.data?.length === 0 && !isLoading && !isFetching) {
+      return (
+        <View style={styles.stateContainer}>
+          <Text style={styles.stateTitle}>No avatars found</Text>
+          <Text style={styles.stateSubtitle}>
+            Try adjusting your search or filter.
+          </Text>
+        </View>
+      );
+    }
+
+    if (isError && allGroupedAvatars.length === 0) {
       return (
         <View style={styles.stateContainer}>
           <Text style={styles.stateTitle}>Unable to load avatars</Text>
@@ -460,7 +650,7 @@ export default function ChoseCharacter() {
       );
     }
 
-    if (!avatars.length) {
+    if (!allGroupedAvatars.length) {
       return (
         <View style={styles.stateContainer}>
           <Text style={styles.stateTitle}>No avatars available</Text>
@@ -476,7 +666,7 @@ export default function ChoseCharacter() {
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <Header title="Chose Character" showBackButton />
-
+        {renderListHeader()}
         <FlatList
           data={listData}
           renderItem={renderRow}
@@ -489,7 +679,6 @@ export default function ChoseCharacter() {
           numColumns={1}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contentContainer}
-          ListHeaderComponent={renderListHeader}
           ListFooterComponent={renderListFooter}
           ListEmptyComponent={renderListEmpty}
           onEndReached={handleEndReached}
@@ -508,13 +697,14 @@ export default function ChoseCharacter() {
         <PrimaryButton
           title="Customize Avatar"
           onPress={handleNavigateToCustomize}
-          variant="secondary"
+          //  variant="secondary"
           style={{
             marginBottom: metrics.width(15),
           }}
           //  disabled={!selectedCharacter}
         />
-        <PrimaryButton
+
+        {/* {isCustomImageSelected&&  <PrimaryButton
           title="Next"
           onPress={handleNavigateNext}
           variant="primary"
@@ -525,7 +715,7 @@ export default function ChoseCharacter() {
             !selectedCharacter ||
             (selectedCharacter === 'custom-image' && !selectedImage)
           }
-        />
+        /> } */}
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -540,7 +730,7 @@ const styles = StyleSheet.create({
     marginHorizontal: metrics.width(25),
   },
   contentContainer: {
-    flexGrow: 1,
+    // flexGrow: 1,
     paddingBottom: 40,
   },
   headerContainer: {
@@ -585,7 +775,7 @@ const styles = StyleSheet.create({
     padding: metrics.width(10),
   },
   dashboardContainer: {
-    flex: 1,
+    //flex: 1,
     marginTop: metrics.width(30),
   },
   dashboardCard: {
@@ -911,5 +1101,43 @@ const styles = StyleSheet.create({
   },
   descriptionContainer: {
     marginTop: metrics.width(15),
+  },
+  searchRowContainer: {
+    flexDirection: 'row',
+    marginBottom: metrics.width(20),
+    gap: metrics.width(5),
+    alignItems: 'flex-start',
+  },
+  searchInputContainer: {
+    flex: 1,
+  },
+  searchInput: {
+    marginBottom: 0,
+    marginTop: 0,
+  },
+  searchInputText: {
+    fontSize: metrics.width(14),
+  },
+  dropdownContainer: {
+    width: metrics.width(120),
+  },
+  dropdownStyle: {
+    marginTop: 0,
+  },
+  variantCount: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(11),
+    color: colors.subtitle,
+    marginTop: metrics.width(4),
+  },
+  dropdownContainerStyle: {
+    position: 'absolute',
+    zIndex:999,
+        flexGrow: 1,
+        marginTop:metrics.width(50),
+        width:'100%',
+  },
+  dropdownRowStyle: {
+    minHeight:metrics.width(20),
   },
 });

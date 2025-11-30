@@ -160,11 +160,13 @@ export default function Header({
 
         {/* Right Section */}
         <View style={styles.rightSection}>
-          {RigthIcon && (
+          {rightAction ? (
+            rightAction
+          ) : RigthIcon ? (
             <LiquidGlassBackground style={styles.leftIconBackground}>
-              {rightAction || rederRightIcon()}
+              {rederRightIcon()}
             </LiquidGlassBackground>
-          )}
+          ) : null}
         </View>
       </View>
     </View>

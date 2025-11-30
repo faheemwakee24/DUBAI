@@ -30,7 +30,7 @@ import { tokenStorage } from '../../utils/tokenStorage';
 import { useGetProfileQuery } from '../../store/api/authApi';
 import { User } from '../../store/api/authApi';
 import { useGetProjectsQuery } from '../../store/api/projectsApi';
-import { useUpdateFcmTokenMutation } from '../../store/api/usersApi';
+import { useUpdateFcmTokenMutation, useGetCreditsQuery } from '../../store/api/usersApi';
 import { showToast } from '../../utils/toast';
 import { pushNotificationService } from '../../services/pushNotificationService';
 import {
@@ -54,6 +54,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
   const { data: projects = [], isLoading: isLoadingProjects } = useGetProjectsQuery();
+  const { data: creditsData, isLoading: isLoadingCredits } = useGetCreditsQuery();
   const [updateFcmToken] = useUpdateFcmTokenMutation();
   const [currentPage, setCurrentPage] = useState(1);
   const [allCreations, setAllCreations] = useState<RecentCreation[]>([]);
@@ -546,27 +547,7 @@ export default function Dashboard() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.dashboardContainer}>
-            <LiquidGlassBackground style={styles.dashboardCard}>
-              <View style={styles.ProPlanIconContainer}>
-                <View style={styles.propPlanIconTextContainer}>
-                  <Image
-                    source={Images.ProPlanIcon}
-                    style={styles.ProPlanIconImage}
-                  />
-                  <View>
-                    <Text style={styles.ProPlanTitle}>Pro Plan</Text>
-                    <Text style={styles.ProPlanSubTitle}>3 of 5 Dubs used</Text>
-                  </View>
-                </View>
-                <PrimaryButton
-                  title="Upgrade"
-                  onPress={() => navigation.navigate('Subscription')}
-                  variant="primary"
-                  size="extraSmall"
-                  extraContainerStyle={styles.button}
-                />
-              </View>
-            </LiquidGlassBackground>
+ 
             <LiquidGlassBackground style={styles.debugCotainer}>
               <View>
                 <Text style={styles.debugTitle}>Video {'\n'}Dubbing</Text>
@@ -751,7 +732,6 @@ const styles = StyleSheet.create({
   debugCotainer: {
     paddingHorizontal: metrics.width(17),
     paddingVertical: metrics.width(20),
-    marginTop: metrics.width(40),
   },
   debugTitle: {
     fontFamily: FontFamily.spaceGrotesk.bold,

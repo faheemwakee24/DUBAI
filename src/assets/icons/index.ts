@@ -29,6 +29,8 @@ import WhiteArrowRight from './WhiteArrowRight.svg'
 import LogoutIcon from './LogoutIcon.svg'
 import EditAccountIcon from './EditAccountIcon.svg'
 import Info from './Info.svg'
+import Delete from './Delete.svg'
+import WhiteDelete from './WhiteDelete.svg'
 // Export all SVGs in a centralized object
 export const Svgs = {
     // Authentication & User
@@ -67,7 +69,9 @@ export const Svgs = {
     WhiteArrowRight,
     LogoutIcon,
     EditAccountIcon,
-    Info
+    Info,
+    Delete,
+    WhiteDelete
 };
 
 // Export individual icons for direct import if needed

@@ -126,7 +126,7 @@ export default function GeneratingCharacterVideo() {
             }, 1000);
           } else {
             // Handle error
-            setStatusMessage(responseData.message || 'Video translation failed. Please try again.');
+            setStatusMessage(responseData.message || 'Video translation processing. Please wait a moment.');
             if (intervalRef.current) {
               clearInterval(intervalRef.current);
             }

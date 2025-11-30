@@ -18,7 +18,12 @@ import {
 import { Images } from '../../assets/images';
 import { LiquidGlassContainerView } from '@callstack/liquid-glass';
 import { tokenStorage } from '../../utils/tokenStorage';
-import { useGetProfileQuery, useLogoutMutation, User } from '../../store/api/authApi';
+import {
+  useGetProfileQuery,
+  useLogoutMutation,
+  User,
+} from '../../store/api/authApi';
+import { useGetCreditsQuery } from '../../store/api/usersApi';
 import { showToast } from '../../utils/toast';
 import notifee from '@notifee/react-native';
 type SettingsNavigationProp = NativeStackNavigationProp<
@@ -30,10 +35,23 @@ export default function Settings() {
   const navigation = useNavigation<SettingsNavigationProp>();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [user, setUser] = useState<User | null>(null);
-  const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
+  const {
+    data: profileData,
+    isLoading: profileLoading,
+    refetch: refetchProfile,
+  } = useGetProfileQuery();
+  const {
+    data: creditsData,
+    isLoading: isLoadingCredits,
+    refetch,
+  } = useGetCreditsQuery();
+  console.log('creditsData-------', creditsData);
+
   const [logout, { isLoading: logoutLoading }] = useLogoutMutation();
-console.log('profileData-------', profileData);
+  console.log('profileData-------', profileData);
   useEffect(() => {
+    refetch();
+    refetchProfile();
     // Load user from storage on mount
     const loadUser = async () => {
       try {
@@ -105,12 +123,12 @@ console.log('profileData-------', profileData);
   const handleLogout = async () => {
     try {
       await logout().unwrap();
-      
+
       // Clear stored data
       await tokenStorage.clearAll();
-      
+
       showToast.success('Logged out', 'You have been successfully logged out');
-      
+
       // Navigate to login screen
       navigation.reset({
         index: 0,
@@ -120,7 +138,10 @@ console.log('profileData-------', profileData);
       console.error('Logout error:', error);
       // Clear local data even if API call fails
       await tokenStorage.clearAll();
-      showToast.error('Logout', 'Failed to logout from server, but local session cleared');
+      showToast.error(
+        'Logout',
+        'Failed to logout from server, but local session cleared',
+      );
       navigation.reset({
         index: 0,
         routes: [{ name: 'Welcome' }],
@@ -129,7 +150,7 @@ console.log('profileData-------', profileData);
   };
   //  async function showTestNotification() {
   //   await notifee.requestPermission();
-  
+
   //   await notifee.displayNotification({
   //     title: '🔔 Test Notification',
   //     body: 'This is a test push notification!',
@@ -139,7 +160,7 @@ console.log('profileData-------', profileData);
   //     },
   //   });
   // }
-  
+
   //  async function createChannel() {
   //   await notifee.createChannel({
   //     id: 'default',
@@ -153,7 +174,26 @@ console.log('profileData-------', profileData);
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header title="Settings" showBackButton />
+        <Header
+          title="Settings"
+          showBackButton
+          rightAction={
+            <TouchableOpacity
+              style={styles.headerCreditsContainer}
+              onPress={() => navigation.navigate('CreditHistory')}
+              activeOpacity={0.7}
+            >
+              <LiquidGlassBackground style={styles.headerCreditsBadge}>
+                <View style={styles.headerCreditsContent}>
+                  <Text style={styles.headerCreditsNumber}>
+                    {isLoadingCredits ? '...' : creditsData?.credits ?? 0}
+                  </Text>
+                  <Text style={styles.headerCreditsLabel}>Credits</Text>
+                </View>
+              </LiquidGlassBackground>
+            </TouchableOpacity>
+          }
+        />
 
         <View style={styles.contentContainer}>
           {/* User Profile Section */}
@@ -166,9 +206,7 @@ console.log('profileData-------', profileData);
                 <Text style={styles.userName}>
                   {profileLoading ? 'Loading...' : getUserDisplayName()}
                 </Text>
-                <Text style={styles.userEmail}>
-                  {getUserEmail()}
-                </Text>
+                <Text style={styles.userEmail}>{getUserEmail()}</Text>
               </View>
             </View>
           </LiquidGlassBackground>
@@ -182,9 +220,7 @@ console.log('profileData-------', profileData);
                 onPress={handleEditProfile}
               >
                 <Text style={styles.optionText}>Edit Profile</Text>
-                <Svgs.WhiteArrowRight
-                  
-                />
+                <Svgs.WhiteArrowRight />
               </TouchableOpacity>
             </LiquidGlassBackground>
           </View>
@@ -192,15 +228,14 @@ console.log('profileData-------', profileData);
           {/* Subscription Section */}
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Subscription</Text>
+
             <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={handleManageSubscription}
               >
                 <Text style={styles.optionText}>Manage Subscription</Text>
-                <Svgs.WhiteArrowRight
-                  
-                />
+                <Svgs.WhiteArrowRight />
               </TouchableOpacity>
             </LiquidGlassBackground>
           </View>
@@ -232,7 +267,7 @@ console.log('profileData-------', profileData);
                 />
               </TouchableOpacity>
             </LiquidGlassBackground> */}
-              {/* <LiquidGlassBackground style={styles.optionCard}>
+            {/* <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={()=>   {
@@ -283,8 +318,17 @@ console.log('profileData-------', profileData);
                 <Svgs.WhiteArrowRight />
               </TouchableOpacity>
             </LiquidGlassBackground>
+            <LiquidGlassBackground style={styles.optionCard}>
+              <TouchableOpacity
+                style={styles.optionRow}
+                onPress={() => navigation.navigate('TermsAndConditions')}
+              >
+                <Text style={styles.optionText}>Terms & Conditions</Text>
+                <Svgs.WhiteArrowRight />
+              </TouchableOpacity>
+            </LiquidGlassBackground>
           </View>
-       
+
           {/* Logout Button */}
           <PrimaryButton
             title={logoutLoading ? 'Logging out...' : 'Logout'}
@@ -292,7 +336,7 @@ console.log('profileData-------', profileData);
             variant="primary"
             style={styles.logoutButton}
             fullWidth
-            icon={<Svgs.LogoutIcon/>}
+            icon={<Svgs.LogoutIcon />}
             disabled={logoutLoading}
           />
         </View>
@@ -333,8 +377,8 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     width: metrics.width(60),
     height: metrics.width(60),
-    backgroundColor:colors.white15,
-    overflow:'hidden'
+    backgroundColor: colors.white15,
+    overflow: 'hidden',
   },
   profileInfo: {
     flex: 1,
@@ -377,7 +421,111 @@ const styles = StyleSheet.create({
   logoutButton: {
     marginTop: metrics.width(20),
     marginBottom: metrics.width(25),
-    position:'absolute',
-    bottom:0
+    position: 'absolute',
+    bottom: 0,
+  },
+  proPlanCard: {
+    borderRadius: 16,
+    paddingHorizontal: metrics.width(20),
+    paddingVertical: metrics.width(20),
+    marginBottom: metrics.width(12),
+    borderWidth: 1,
+    borderColor: colors.primary40,
+    backgroundColor: colors.primary3,
+    shadowColor: colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  proPlanContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: metrics.width(15),
+  },
+  proPlanIconTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: metrics.width(16),
+  },
+  proPlanIconWrapper: {
+    width: metrics.width(56),
+    height: metrics.width(56),
+    borderRadius: metrics.width(28),
+    backgroundColor: colors.primary40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: metrics.width(8),
+  },
+  proPlanIconImage: {
+    width: metrics.width(40),
+    height: metrics.width(40),
+    resizeMode: 'contain',
+  },
+  proPlanTextContainer: {
+    flex: 1,
+    gap: metrics.width(6),
+  },
+  proPlanTitle: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(18),
+    color: colors.white,
+    letterSpacing: 0.3,
+  },
+  creditsContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: metrics.width(6),
+    flexWrap: 'wrap',
+  },
+  creditsNumber: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(20),
+    color: colors.primary,
+    lineHeight: metrics.width(24),
+  },
+  proPlanSubTitle: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(13),
+    color: colors.subtitle,
+    lineHeight: metrics.width(18),
+  },
+  upgradeButton: {
+    borderRadius: 10,
+    paddingHorizontal: metrics.width(20),
+    minWidth: metrics.width(90),
+  },
+  headerCreditsContainer: {
+    alignItems: 'flex-end',
+  },
+  headerCreditsBadge: {
+    borderRadius: 12,
+    paddingHorizontal: metrics.width(12),
+    paddingVertical: metrics.width(8),
+    borderWidth: 1,
+    borderColor: colors.primary40,
+    backgroundColor: colors.primary3,
+  },
+  headerCreditsContent: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: metrics.width(4),
+  },
+  headerCreditsNumber: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(16),
+    color: colors.primary,
+    lineHeight: metrics.width(20),
+  },
+  headerCreditsLabel: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(11),
+    color: colors.subtitle,
+    lineHeight: metrics.width(16),
   },
 });

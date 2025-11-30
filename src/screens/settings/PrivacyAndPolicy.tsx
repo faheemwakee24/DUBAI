@@ -31,7 +31,7 @@ export default function PrivacyAndPolicy() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>1. Introduction</Text>
               <Text style={styles.sectionText}>
-                Welcome to DubAI. We are committed to protecting your privacy and ensuring you have a positive experience on our platform. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application.
+                Welcome to DebNxt. We are committed to protecting your privacy and ensuring you have a positive experience on our platform. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application.
               </Text>
             </View>
 
@@ -150,7 +150,7 @@ export default function PrivacyAndPolicy() {
                 If you have any questions about this Privacy Policy, please contact us at:
               </Text>
               <Text style={styles.contactInfo}>
-                Email: support@dubai.com{'\n'}
+                Email: support@debnxt.com{'\n'}
                
               </Text>
             </View>
