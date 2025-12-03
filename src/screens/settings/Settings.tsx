@@ -185,8 +185,8 @@ export default function Settings() {
             >
               <LiquidGlassBackground style={styles.headerCreditsBadge}>
                 <View style={styles.headerCreditsContent}>
-                  <Text style={styles.headerCreditsNumber}>
-                    {isLoadingCredits ? '...' : creditsData?.credits ?? 0}
+                  <Text style={styles.headerCreditsNumber} numberOfLines={1} ellipsizeMode="tail">
+                    {isLoadingCredits ? '...' : creditsData?.credits?.toFixed(1) ?? 0}
                   </Text>
                   <Text style={styles.headerCreditsLabel}>Credits</Text>
                 </View>

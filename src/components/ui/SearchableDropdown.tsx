@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
+  ViewStyle,
+  TextStyle,
 } from 'react-native';
 import Tooltip from 'react-native-walkthrough-tooltip';
 import LiquidGlassBackground from './LiquidGlassBackground';
@@ -33,6 +35,11 @@ interface SearchableDropdownProps {
   style?: any;
   searchPlaceholder?: string;
   tooltip?: string;
+  dropdownContainerStyle?: ViewStyle;
+  showSearchInput?: boolean;
+  textStyle?: TextStyle;
+  showTitle?: boolean;
+  rowStyle?: ViewStyle;
 }
 
 export default function SearchableDropdown({
@@ -45,6 +52,11 @@ export default function SearchableDropdown({
   style,
   searchPlaceholder = 'Search...',
   tooltip,
+  dropdownContainerStyle,
+  showSearchInput = true,
+  textStyle,
+  showTitle = true,
+  rowStyle,
 }: SearchableDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -130,7 +142,10 @@ export default function SearchableDropdown({
           style={[
             styles.dropdownItem,
             isSelected && styles.selectedItem,
+            textStyle
           ]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
         >
           {item.label}
         </Text>
@@ -145,14 +160,14 @@ export default function SearchableDropdown({
           style={styles.descriptionContainer}
           onPress={toggleDropdown}
         >
-          <View style={styles.titleContainer}>
+          {showTitle && (<View style={styles.titleContainer}>
             <Text style={styles.title}>
               {title}
               {required && ' *'}
             </Text>
             {renderTooltipIcon()}
-          </View>
-          <View style={styles.row}>
+          </View>)}
+          <View style={[styles.row,rowStyle]}>
             <Text style={styles.value} numberOfLines={1}>
               {selectedOption?.label || selectedValue || placeholder}
             </Text>
@@ -167,8 +182,8 @@ export default function SearchableDropdown({
       </LiquidGlassBackground>
       
       {isOpen && (
-        <LiquidGlassBackground style={styles.dropdownContainer}>
-          <View style={styles.searchContainer}>
+        <LiquidGlassBackground style={[styles.dropdownContainer,dropdownContainerStyle]}>
+         {showSearchInput && ( <View style={styles.searchContainer}>
             <TextInput
               style={styles.searchInput}
               placeholder={searchPlaceholder}
@@ -177,7 +192,7 @@ export default function SearchableDropdown({
               onChangeText={setSearchQuery}
               
             />
-          </View>
+          </View>)}
           <View style={styles.listWrapper}>
             <FlatList
               data={filteredOptions}

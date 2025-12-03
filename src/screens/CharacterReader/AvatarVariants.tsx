@@ -20,6 +20,7 @@ import {
   Header,
   LiquidGlassBackground,
   PrimaryButton,
+  Shimmer,
 } from '../../components/ui';
 import { Images } from '../../assets/images';
 import { GroupedAvatar, GroupedAvatarVariant } from '../../store/api/heygenApi';
@@ -37,9 +38,16 @@ export default function AvatarVariants() {
   const [selectedVariant, setSelectedVariant] =
     useState<GroupedAvatarVariant | null>(null);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  // Track which images have loaded
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   const handleImageError = (avatarId: string) => {
     setFailedImages(prev => new Set(prev).add(avatarId));
+  };
+
+  // Handle image load
+  const handleImageLoad = (imageUrl: string) => {
+    setLoadedImages(prev => new Set(prev).add(imageUrl));
   };
 
   const handleVariantSelect = (variant: GroupedAvatarVariant) => {
@@ -70,6 +78,7 @@ export default function AvatarVariants() {
     const imageSource = shouldUseFallback
       ? Images.TempCharacher
       : { uri: item.preview_image_url };
+    const isImageLoaded = shouldUseFallback || (item.preview_image_url ? loadedImages.has(item.preview_image_url) : false);
 
     return (
       <TouchableOpacity
@@ -77,12 +86,26 @@ export default function AvatarVariants() {
         style={[styles.variantCard, isSelected && styles.selectedVariant]}
         activeOpacity={0.8}
       >
-        <ImageBackground
-          source={imageSource}
-          style={styles.variantImage}
-          onError={() => handleImageError(item.avatar_id)}
-          resizeMode="cover"
-        >
+        <View style={styles.variantImageContainer}>
+          {!isImageLoaded && !shouldUseFallback && item.preview_image_url && (
+            <View style={styles.imageShimmerContainer}>
+              <Shimmer
+                width="100%"
+                height="100%"
+                borderRadius={16}
+              />
+            </View>
+          )}
+          <ImageBackground
+            source={imageSource}
+            style={[
+              styles.variantImage,
+              !isImageLoaded && !shouldUseFallback && styles.hiddenImage,
+            ]}
+            onError={() => handleImageError(item.avatar_id)}
+            onLoad={() => item.preview_image_url && !shouldUseFallback && handleImageLoad(item.preview_image_url)}
+            resizeMode="cover"
+          >
           <View style={styles.variantOverlay}>
             <Text style={styles.variantName} numberOfLines={2}>
               {item.avatar_name}
@@ -93,7 +116,8 @@ export default function AvatarVariants() {
               </View>
             )}
           </View>
-        </ImageBackground>
+          </ImageBackground>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -170,10 +194,29 @@ const styles = StyleSheet.create({
   selectedVariant: {
     borderColor: colors.primary,
   },
+  variantImageContainer: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+  },
   variantImage: {
     width: '100%',
     height: '100%',
     justifyContent: 'flex-end',
+  },
+  imageShimmerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  hiddenImage: {
+    opacity: 0,
   },
   variantOverlay: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

@@ -49,6 +49,9 @@ export default function RecentProjects() {
   
   // State for delete confirmation
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  
+  // State for tracking loaded images
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   // Handle delete confirmation
   const handleDeleteConfirm = async () => {
@@ -76,15 +79,43 @@ export default function RecentProjects() {
     setProjectToDelete(item);
   };
 
+  // Handle image load
+  const handleImageLoad = (imageUrl: string) => {
+    setLoadedImages(prev => new Set(prev).add(imageUrl));
+  };
+
   // Render item function for FlatList
-  const renderProjectItem = ({ item }: { item: Project }) => (
-    <LiquidGlassBackground
-      style={styles.ProjectOuterContainer}
-      onPress={() => navigation.navigate('ProjectVedios', { projectId: item.id })}
-      disabled={false}
-    >
-      <View style={styles.projectInnerContainer}>
-        <Image source={item?.imageUrl ? { uri: item.imageUrl } : Images.ProjectIcon} style={styles.projectIcon} />
+  const renderProjectItem = ({ item }: { item: Project }) => {
+    const imageUrl = item?.imageUrl;
+    const imageSource = imageUrl ? { uri: imageUrl } : Images.ProjectIcon;
+    const isImageLoaded = imageUrl ? loadedImages.has(imageUrl) : true;
+    
+    return (
+      <LiquidGlassBackground
+        style={styles.ProjectOuterContainer}
+        onPress={() => navigation.navigate('ProjectVedios', { projectId: item.id })}
+        disabled={false}
+      >
+        <View style={styles.projectInnerContainer}>
+          <View style={styles.projectIconContainer}>
+            {!isImageLoaded && imageUrl && (
+              <View style={styles.imageShimmerContainer}>
+                <Shimmer
+                  width={metrics.width(47)}
+                  height={metrics.width(47)}
+                  borderRadius={100}
+                />
+              </View>
+            )}
+            <Image
+              source={imageSource}
+              style={[
+                styles.projectIcon,
+                !isImageLoaded && styles.hiddenImage,
+              ]}
+              onLoad={() => imageUrl && handleImageLoad(imageUrl)}
+            />
+          </View>
         <View style={styles.projectDataContainer}>
           <Text style={styles.projectTitle} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
           <View style={styles.projectSubTitleContainer}>
@@ -107,7 +138,8 @@ export default function RecentProjects() {
         </TouchableOpacity>
       </View>
     </LiquidGlassBackground>
-  );
+    );
+  };
 
   // Render shimmer placeholder for project item
   const renderShimmerItem = () => (
@@ -216,10 +248,29 @@ const styles = StyleSheet.create({
   ProjectOuterContainer: {
     borderRadius: 12,
   },
+  projectIconContainer: {
+    height: metrics.width(47),
+    width: metrics.width(47),
+    borderRadius: 100,
+    overflow: 'hidden',
+    position: 'relative',
+  },
   projectIcon: {
     height: metrics.width(47),
     width: metrics.width(47),
-    borderRadius:100
+    borderRadius: 100,
+  },
+  imageShimmerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 100,
+    overflow: 'hidden',
+  },
+  hiddenImage: {
+    opacity: 0,
   },
   projectDataContainer: {
     gap: metrics.width(7),

@@ -339,11 +339,7 @@ export default function PreViewVideo() {
 
         {!isFullscreen && (
           <View style={styles.buttonContainer}>
-            <PrimaryButton
-              title="Create New Dub"
-              variant="secondary"
-              onPress={() => navigation.goBack()}
-            />
+           
             <PrimaryButton
               title={isDownloading ? `Downloading ${downloadProgress}%` : 'Download Video'}
               onPress={handleDownloadVideo}

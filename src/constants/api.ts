@@ -91,6 +91,7 @@ export const API_ENDPOINTS = {
     PHOTO_AVATAR_GENERATIONS: (projectId: string) => `/heygen/photo-avatar-generations/project/${projectId}`,
     VIDEO_TRANSLATIONS: (projectId: string) => `/heygen/video-translations/project/${projectId}`,
     UPLOAD_ASSET: '/heygen/asset/upload',
+    GET_ASSET_UPLOADS: '/heygen/asset/uploads',
     RECENT_CREATIONS: '/heygen/recent-creations',
     GET_GROUPED_AVATARS: '/heygen/getGroupedAvatars',
     DELETE_IMAGE_UPLOAD: (id: string) => `/heygen/image-upload/${id}`,

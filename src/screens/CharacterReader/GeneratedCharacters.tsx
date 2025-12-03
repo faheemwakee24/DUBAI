@@ -41,6 +41,7 @@ export default function GeneratedCharacters() {
   const [imageKeys, setImageKeys] = useState<string[]>(initialImageKeys || []);
   const [isProcessing, setIsProcessing] = useState(!initialImageUrls || initialImageUrls.length === 0);
   const [downloadingImageId, setDownloadingImageId] = useState<string | null>(null);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Poll photo generation status using direct fetch (no RTK Query, no caching)
@@ -160,6 +161,11 @@ export default function GeneratedCharacters() {
     setSelectedImageIndex(index);
   };
 
+  // Handle image load
+  const handleImageLoad = (imageUrl: string) => {
+    setLoadedImages(prev => new Set(prev).add(imageUrl));
+  };
+
   // Handle image download
   const handleDownloadImage = async (imageUrl: string, imageIndex: number) => {
     if (!imageUrl) {
@@ -227,6 +233,8 @@ export default function GeneratedCharacters() {
           const globalIndex = imageRows.indexOf(row) * 2 + rowIndex;
           const isSelected = selectedImageIndex === globalIndex;
 
+          const isImageLoaded = loadedImages.has(imageUrl);
+
           return (
             <TouchableOpacity
               key={`image-${globalIndex}`}
@@ -237,10 +245,23 @@ export default function GeneratedCharacters() {
               ]}
               activeOpacity={0.8}
             >
+              {!isImageLoaded && (
+                <View style={styles.imageShimmerContainer}>
+                  <Shimmer
+                    width="100%"
+                    height="100%"
+                    borderRadius={16}
+                  />
+                </View>
+              )}
               <Image
                 source={{ uri: imageUrl }}
-                style={styles.generatedImage}
+                style={[
+                  styles.generatedImage,
+                  !isImageLoaded && styles.hiddenImage,
+                ]}
                 resizeMode="cover"
+                onLoad={() => handleImageLoad(imageUrl)}
               />
               {!isProcessing && (
                 <TouchableOpacity
@@ -441,6 +462,18 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.spaceGrotesk.medium,
     fontSize: metrics.width(10),
     color: colors.white,
+  },
+  imageShimmerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  hiddenImage: {
+    opacity: 0,
   },
 });
 

@@ -177,6 +177,8 @@ export default function ChoseCharacter() {
     null,
   );
   const [isCustomImageSelected, setIsCustomImageSelected] = useState(false);
+  // Track which images have loaded
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   const handleSelectImage = async () => {
     const imageData = await selectImage({
@@ -293,6 +295,11 @@ export default function ChoseCharacter() {
     setFailedImages(prev => new Set(prev).add(avatarId));
   };
 
+  // Handle image load
+  const handleImageLoad = (imageUrl: string) => {
+    setLoadedImages(prev => new Set(prev).add(imageUrl));
+  };
+
   const handleGroupedAvatarSelect = (groupedAvatar: GroupedAvatar) => {
     setSelectedGroupedAvatar(groupedAvatar);
     // Navigate to variant selection screen
@@ -401,11 +408,25 @@ export default function ChoseCharacter() {
         activeOpacity={0.8}
       >
         {selectedImage ? (
-          <ImageBackground
-            source={{ uri: selectedImage.uri }}
-            style={styles.tempCharacherImage}
-            resizeMode="cover"
-          >
+          <View style={styles.tempCharacherImage}>
+            {!loadedImages.has(selectedImage.uri) && (
+              <View style={styles.imageShimmerContainer}>
+                <Shimmer
+                  width="100%"
+                  height="100%"
+                  borderRadius={16}
+                />
+              </View>
+            )}
+            <ImageBackground
+              source={{ uri: selectedImage.uri }}
+              style={[
+                styles.tempCharacherImageBackground,
+                !loadedImages.has(selectedImage.uri) && styles.hiddenImage,
+              ]}
+              resizeMode="cover"
+              onLoad={() => handleImageLoad(selectedImage.uri)}
+            >
             <View style={styles.tempCharacherOverlay}>
               <Text style={styles.tempCharacherTitle}>Custom Image</Text>
               <TouchableOpacity
@@ -421,7 +442,8 @@ export default function ChoseCharacter() {
                 />
               </TouchableOpacity>
             </View>
-          </ImageBackground>
+            </ImageBackground>
+          </View>
         ) : (
           <LiquidGlassBackground style={styles.tempCharacherImage}>
             <View style={styles.customUploadContent}>
@@ -458,6 +480,7 @@ export default function ChoseCharacter() {
     const imageSource = shouldUseFallback
       ? Images.TempCharacher
       : { uri: firstGroupedAvatar.preview_image_url };
+    const isImageLoaded = shouldUseFallback || (firstGroupedAvatar.preview_image_url ? loadedImages.has(firstGroupedAvatar.preview_image_url) : false);
 
     return (
       <View style={styles.columnRow}>
@@ -467,12 +490,26 @@ export default function ChoseCharacter() {
           style={styles.tempCharacher}
           activeOpacity={0.8}
         >
-          <ImageBackground
-            source={imageSource}
-            style={styles.tempCharacherImage}
-            onError={() => handleImageError(firstGroupedAvatar.base_name)}
-            resizeMode="cover"
-          >
+          <View style={styles.tempCharacherImage}>
+            {!isImageLoaded && !shouldUseFallback && firstGroupedAvatar.preview_image_url && (
+              <View style={styles.imageShimmerContainer}>
+                <Shimmer
+                  width="100%"
+                  height="100%"
+                  borderRadius={16}
+                />
+              </View>
+            )}
+            <ImageBackground
+              source={imageSource}
+              style={[
+                styles.tempCharacherImageBackground,
+                !isImageLoaded && !shouldUseFallback && styles.hiddenImage,
+              ]}
+              onError={() => handleImageError(firstGroupedAvatar.base_name)}
+              onLoad={() => firstGroupedAvatar.preview_image_url && !shouldUseFallback && handleImageLoad(firstGroupedAvatar.preview_image_url)}
+              resizeMode="cover"
+            >
             <View style={styles.tempCharacherOverlay}>
               <Text style={styles.tempCharacherTitle}>
                 {firstGroupedAvatar.base_name}
@@ -481,7 +518,8 @@ export default function ChoseCharacter() {
                 {firstGroupedAvatar.variant_count} variants
               </Text>
             </View>
-          </ImageBackground>
+            </ImageBackground>
+          </View>
         </TouchableOpacity>
       </View>
     );
@@ -515,6 +553,7 @@ export default function ChoseCharacter() {
           const imageSource = shouldUseFallback
             ? Images.TempCharacher
             : { uri: groupedAvatar.preview_image_url };
+          const isImageLoaded = shouldUseFallback || (groupedAvatar.preview_image_url ? loadedImages.has(groupedAvatar.preview_image_url) : false);
 
           return (
             <TouchableOpacity
@@ -523,12 +562,26 @@ export default function ChoseCharacter() {
               style={styles.tempCharacher}
               activeOpacity={0.8}
             >
-              <ImageBackground
-                source={imageSource}
-                style={styles.tempCharacherImage}
-                onError={() => handleImageError(groupedAvatar.base_name)}
-                resizeMode="cover"
-              >
+              <View style={styles.tempCharacherImage}>
+                {!isImageLoaded && !shouldUseFallback && groupedAvatar.preview_image_url && (
+                  <View style={styles.imageShimmerContainer}>
+                    <Shimmer
+                      width="100%"
+                      height="100%"
+                      borderRadius={16}
+                    />
+                  </View>
+                )}
+                <ImageBackground
+                  source={imageSource}
+                  style={[
+                    styles.tempCharacherImageBackground,
+                    !isImageLoaded && !shouldUseFallback && styles.hiddenImage,
+                  ]}
+                  onError={() => handleImageError(groupedAvatar.base_name)}
+                  onLoad={() => groupedAvatar.preview_image_url && !shouldUseFallback && handleImageLoad(groupedAvatar.preview_image_url)}
+                  resizeMode="cover"
+                >
                 <View style={styles.tempCharacherOverlay}>
                   <Text style={styles.tempCharacherTitle}>
                     {groupedAvatar.base_name}
@@ -537,7 +590,8 @@ export default function ChoseCharacter() {
                     {groupedAvatar.variant_count} variants
                   </Text>
                 </View>
-              </ImageBackground>
+                </ImageBackground>
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -913,6 +967,26 @@ const styles = StyleSheet.create({
     height: '100%',
     width: '100%',
     justifyContent: 'flex-end',
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  tempCharacherImageBackground: {
+    height: '100%',
+    width: '100%',
+    justifyContent: 'flex-end',
+  },
+  imageShimmerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  hiddenImage: {
+    opacity: 0,
   },
   tempCharacherOverlay: {
     backgroundColor: 'rgba(0,0,0,0.2)',

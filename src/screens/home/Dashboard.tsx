@@ -24,7 +24,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, LiquidGlassBackground } from '../../components/ui';
+import { Header, LiquidGlassBackground, Shimmer } from '../../components/ui';
 import { Images } from '../../assets/images';
 import { tokenStorage } from '../../utils/tokenStorage';
 import { useGetProfileQuery } from '../../store/api/authApi';
@@ -70,6 +70,7 @@ export default function Dashboard() {
   const [downloadingVideoId, setDownloadingVideoId] = useState<string | null>(null);
   const [downloadingImageId, setDownloadingImageId] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     // Load user from storage on mount
@@ -88,14 +89,14 @@ export default function Dashboard() {
   }, []);
 
   // Refetch creations when screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      // Reset to page 1 and refetch when screen is focused
-      setCurrentPage(1);
-      setAllCreations([]);
-      refetchCreations();
-    }, [refetchCreations])
-  );
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     // Reset to page 1 and refetch when screen is focused
+  //     setCurrentPage(1);
+  //     setAllCreations([]);
+  //     refetchCreations();
+  //   }, [refetchCreations])
+  // );
 
   // Accumulate data from pages
   useEffect(() => {
@@ -409,6 +410,11 @@ export default function Dashboard() {
     }
   };
 
+  // Handle image load
+  const handleImageLoad = (imageUrl: string) => {
+    setLoadedImages(prev => new Set(prev).add(imageUrl));
+  };
+
   // Render creation item
   const renderCreationItem = ({ item }: { item: RecentCreation }) => {
     const statusDisplay = getStatusDisplay(item.status);
@@ -423,14 +429,31 @@ export default function Dashboard() {
       : item.type === 'video_translation'
       ? (item as VideoTranslationCreation).translated_video_url
       : null;
+    
+    const isImageLoaded = imageUrl ? loadedImages.has(imageUrl) : true;
+    const imageSource = imageUrl ? { uri: imageUrl } : Images.VedioIcon2;
 
     return (
       <LiquidGlassBackground style={styles.creationCard}>
-        <ImageBackground
-          source={imageUrl ? { uri: imageUrl } : Images.VedioIcon2}
-          style={styles.creationIcon}
-          imageStyle={{ borderRadius: 12 }}
-        >
+        <View style={styles.creationIcon}>
+          {!isImageLoaded && imageUrl && (
+            <View style={styles.imageShimmerContainer}>
+              <Shimmer
+                width="100%"
+                height="100%"
+                borderRadius={12}
+              />
+            </View>
+          )}
+          <ImageBackground
+            source={imageSource}
+            style={[
+              styles.creationIconBackground,
+              !isImageLoaded && styles.hiddenImage,
+            ]}
+            imageStyle={{ borderRadius: 12 }}
+            onLoad={() => imageUrl && handleImageLoad(imageUrl)}
+          >
           {isCompleted && (
             <TouchableOpacity
               onPress={() => {
@@ -461,7 +484,8 @@ export default function Dashboard() {
               </LiquidGlassBackground>
             </TouchableOpacity>
           )}
-        </ImageBackground>
+          </ImageBackground>
+        </View>
         <View style={styles.creationBodyContainer}>
           <Text
             style={styles.creationTitle}
@@ -545,6 +569,14 @@ export default function Dashboard() {
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isFetchingCreations && currentPage === 1}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
         >
           <View style={styles.dashboardContainer}>
  
@@ -815,6 +847,25 @@ const styles = StyleSheet.create({
   creationIcon: {
     height: metrics.width(140),
     width: '100%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  creationIconBackground: {
+    height: '100%',
+    width: '100%',
+  },
+  imageShimmerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  hiddenImage: {
+    opacity: 0,
   },
   creationBodyContainer: {
     margin: metrics.width(10),

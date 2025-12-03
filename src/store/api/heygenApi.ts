@@ -297,6 +297,32 @@ export interface UploadAssetResponse {
   updatedAt: string;
 }
 
+// Get Asset Uploads Request/Response
+export interface GetAssetUploadsRequest {
+  page?: number;
+  limit?: number;
+  projectId?: string;
+}
+
+export interface AssetUpload {
+  asset_id: string;
+  asset_type: string;
+  content_type: string;
+  asset_url: string;
+  image_key: string;
+  metadata: Record<string, any>;
+  id: string;
+  userId: string;
+  projectId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GetAssetUploadsResponse {
+  data: AssetUpload[];
+  pagination: HeygenPagination;
+}
+
 // Grouped Avatars Types
 export interface GroupedAvatarVariant {
   avatar_id: string;
@@ -417,6 +443,18 @@ export const heygenApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
+    }),
+    getAssetUploads: builder.query<GetAssetUploadsResponse, GetAssetUploadsRequest>({
+      query: ({page = 1, limit = 10, projectId} = {}) => ({
+        url: API_ENDPOINTS.HEYGEN.GET_ASSET_UPLOADS,
+        method: 'GET',
+        params: {
+          page,
+          limit,
+          ...(projectId && { projectId }),
+        },
+      }),
+      keepUnusedDataFor: 0, // Disable caching - always fetch fresh data
     }),
     getRecentCreations: builder.query<GetRecentCreationsResponse, GetRecentCreationsRequest | void>({
       query: ({page = 1, limit = 10} = {}) => ({
@@ -571,6 +609,7 @@ export const {
   useLazyGetRecentCreationsQuery,
   useGetGroupedAvatarsQuery,
   useLazyGetGroupedAvatarsQuery,
+  useGetAssetUploadsQuery,
   useDeleteImageUploadMutation,
   useDeleteVideoTranslationMutation,
   useDeletePhotoAvatarGenerationMutation,

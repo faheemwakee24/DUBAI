@@ -8,6 +8,7 @@ import {
   ImageBackground,
   Image,
   RefreshControl,
+  ScrollView,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -35,7 +36,10 @@ import {
   useDeleteGenerateAvatarVideoMutation,
   useDeletePhotoAvatarGenerationMutation,
   useDeleteVideoTranslationMutation,
+  useDeleteImageUploadMutation,
+  useGetAssetUploadsQuery,
 } from '../../store/api/heygenApi';
+import type { AssetUpload } from '../../store/api/heygenApi';
 import type {
   ProjectVideo,
   PhotoAvatarGeneration,
@@ -53,7 +57,7 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
   'Signup'
 >;
 
-type TabType = 'videos' | 'avatars' | 'translations';
+type TabType = 'videos' | 'avatars' | 'translations' | 'uploads';
 
 export default function ProjectVedios() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -74,15 +78,19 @@ export default function ProjectVedios() {
   const [downloadProgress, setDownloadProgress] = useState<
     Record<string, number>
   >({});
+  
+  // State for tracking loaded images
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   // Delete mutations
   const [deleteVideo] = useDeleteGenerateAvatarVideoMutation();
   const [deleteAvatar] = useDeletePhotoAvatarGenerationMutation();
   const [deleteTranslation] = useDeleteVideoTranslationMutation();
+  const [deleteUpload] = useDeleteImageUploadMutation();
 
   // State for delete confirmation
   const [itemToDelete, setItemToDelete] = useState<{
-    type: 'video' | 'avatar' | 'translation';
+    type: 'video' | 'avatar' | 'translation' | 'upload';
     id: string;
     name: string;
     videoId?: string; // For videos, we need video_id
@@ -98,6 +106,8 @@ export default function ProjectVedios() {
   } = useGetProjectVideosQuery(projectId || '', {
     skip: !projectId || activeTab !== 'videos',
   });
+  console.log('videos',videos);
+  
 console.log('videos', videos);
 
   const {
@@ -120,31 +130,48 @@ console.log('videos', videos);
     skip: !projectId || activeTab !== 'translations',
   });
 
+  const {
+    data: assetUploads,
+    isLoading: isLoadingUploads,
+    error: uploadsError,
+    refetch: refetchUploads,
+    isFetching: isFetchingUploads,
+  } = useGetAssetUploadsQuery(
+    { projectId: projectId || undefined },
+    {
+      skip: !projectId || activeTab !== 'uploads',
+    },
+  );
+
   // Get current data and loading state based on active tab
   const isLoading = useMemo(() => {
     if (activeTab === 'videos') return isLoadingVideos;
     if (activeTab === 'avatars') return isLoadingAvatars;
-    return isLoadingTranslations;
-  }, [activeTab, isLoadingVideos, isLoadingAvatars, isLoadingTranslations]);
+    if (activeTab === 'translations') return isLoadingTranslations;
+    return isLoadingUploads;
+  }, [activeTab, isLoadingVideos, isLoadingAvatars, isLoadingTranslations, isLoadingUploads]);
 
   const error = useMemo(() => {
     if (activeTab === 'videos') return videosError;
     if (activeTab === 'avatars') return avatarsError;
-    return translationsError;
-  }, [activeTab, videosError, avatarsError, translationsError]);
+    if (activeTab === 'translations') return translationsError;
+    return uploadsError;
+  }, [activeTab, videosError, avatarsError, translationsError, uploadsError]);
 
   // Get current refetch function and fetching state based on active tab
   const refetch = useMemo(() => {
     if (activeTab === 'videos') return refetchVideos;
     if (activeTab === 'avatars') return refetchAvatars;
-    return refetchTranslations;
-  }, [activeTab, refetchVideos, refetchAvatars, refetchTranslations]);
+    if (activeTab === 'translations') return refetchTranslations;
+    return refetchUploads;
+  }, [activeTab, refetchVideos, refetchAvatars, refetchTranslations, refetchUploads]);
 
   const isRefreshing = useMemo(() => {
     if (activeTab === 'videos') return isFetchingVideos;
     if (activeTab === 'avatars') return isFetchingAvatars;
-    return isFetchingTranslations;
-  }, [activeTab, isFetchingVideos, isFetchingAvatars, isFetchingTranslations]);
+    if (activeTab === 'translations') return isFetchingTranslations;
+    return isFetchingUploads;
+  }, [activeTab, isFetchingVideos, isFetchingAvatars, isFetchingTranslations, isFetchingUploads]);
 
   // Handle pull to refresh
   const onRefresh = async () => {
@@ -162,7 +189,7 @@ console.log('videos', videos);
     try {
       console.log('itemToDelete', itemToDelete);
 
-      return;
+
       
       if (itemToDelete.type === 'video' && itemToDelete.videoId) {
         await deleteVideo(itemToDelete.videoId).unwrap();
@@ -170,6 +197,8 @@ console.log('videos', videos);
         await deleteAvatar(itemToDelete.id).unwrap();
       } else if (itemToDelete.type === 'translation') {
         await deleteTranslation(itemToDelete.id).unwrap();
+      } else if (itemToDelete.type === 'upload') {
+        await deleteUpload(itemToDelete.id).unwrap();
       }
 
       showToast.success('Success', 'Item deleted successfully');
@@ -187,8 +216,8 @@ console.log('videos', videos);
 
   // Handle delete button press
   const handleDeletePress = (
-    type: 'video' | 'avatar' | 'translation',
-    item: ProjectVideo | PhotoAvatarGeneration | VideoTranslation,
+    type: 'video' | 'avatar' | 'translation' | 'upload',
+    item: ProjectVideo | PhotoAvatarGeneration | VideoTranslation | AssetUpload,
     e: any,
   ) => {
     e.stopPropagation();
@@ -214,6 +243,13 @@ console.log('videos', videos);
         type: 'translation',
         id: translationItem.id,
         name: translationItem.title || 'Translation',
+      });
+    } else if (type === 'upload') {
+      const uploadItem = item as AssetUpload;
+      setItemToDelete({
+        type: 'upload',
+        id: uploadItem.id,
+        name: uploadItem.asset_id || 'Upload',
       });
     }
   };
@@ -241,6 +277,11 @@ console.log('videos', videos);
       pending: 'Processing',
     };
     return statusMap[status.toLowerCase()] || status;
+  };
+
+  // Handle image load
+  const handleImageLoad = (imageUrl: string) => {
+    setLoadedImages(prev => new Set(prev).add(imageUrl));
   };
 
   // Handle video download (for videos and translations)
@@ -298,15 +339,31 @@ console.log('videos', videos);
     const hasGif = !!gifUrl;
     console.log('item', item);
 
+    const isGifLoaded = hasGif ? loadedImages.has(gifUrl) : true;
+    const isImageLoaded = !hasGif && item.avatar_photo_url ? loadedImages.has(item.avatar_photo_url) : true;
+
     return (
       <LiquidGlassBackground style={styles.projectCard}>
         {hasGif ? (
           // Show GIF if available - use View with Image for proper GIF animation
           <View style={styles.projectIconContainer}>
+            {!isGifLoaded && (
+              <View style={styles.imageShimmerContainer}>
+                <Shimmer
+                  width="100%"
+                  height="100%"
+                  borderRadius={12}
+                />
+              </View>
+            )}
             <Image
               source={{ uri: gifUrl }}
-              style={styles.projectIconImage}
+              style={[
+                styles.projectIconImage,
+                !isGifLoaded && styles.hiddenImage,
+              ]}
               resizeMode="cover"
+              onLoad={() => handleImageLoad(gifUrl)}
             />
             {isCompleted && videoUrl && (
               <TouchableOpacity
@@ -328,11 +385,25 @@ console.log('videos', videos);
           </View>
         ) : (
           // Show static image if no GIF
-          <ImageBackground
-            source={{ uri: item.avatar_photo_url }}
-            style={styles.projectIcon}
-            imageStyle={{ borderRadius: 12 }}
-          >
+          <View style={styles.projectIcon}>
+            {!isImageLoaded && item.avatar_photo_url && (
+              <View style={styles.imageShimmerContainer}>
+                <Shimmer
+                  width="100%"
+                  height="100%"
+                  borderRadius={12}
+                />
+              </View>
+            )}
+            <ImageBackground
+              source={{ uri: item.avatar_photo_url }}
+              style={[
+                styles.projectIconBackground,
+                !isImageLoaded && styles.hiddenImage,
+              ]}
+              imageStyle={{ borderRadius: 12 }}
+              onLoad={() => item.avatar_photo_url && handleImageLoad(item.avatar_photo_url)}
+            >
             {isCompleted && videoUrl && (
               <TouchableOpacity
                 onPress={e => handleDeletePress('video', item, e)}
@@ -350,7 +421,8 @@ console.log('videos', videos);
                 </LiquidGlassBackground>
               </TouchableOpacity>
             )}
-          </ImageBackground>
+            </ImageBackground>
+          </View>
         )}
         <View style={styles.projectBodyCotainer}>
           <Text
@@ -468,14 +540,29 @@ console.log('videos', videos);
     const firstImage = item.image_url_list?.[0] || item.photo_url;
     const hasMultipleImages =
       item.image_url_list && item.image_url_list.length > 1;
+    const isImageLoaded = firstImage ? loadedImages.has(firstImage) : true;
 
     return (
       <LiquidGlassBackground style={styles.projectCard}>
-        <ImageBackground
-          source={{ uri: firstImage }}
-          style={styles.projectIcon}
-          imageStyle={{ borderRadius: 12 }}
-        >
+        <View style={styles.projectIcon}>
+          {!isImageLoaded && firstImage && (
+            <View style={styles.imageShimmerContainer}>
+              <Shimmer
+                width="100%"
+                height="100%"
+                borderRadius={12}
+              />
+            </View>
+          )}
+          <ImageBackground
+            source={{ uri: firstImage }}
+            style={[
+              styles.projectIconBackground,
+              !isImageLoaded && styles.hiddenImage,
+            ]}
+            imageStyle={{ borderRadius: 12 }}
+            onLoad={() => firstImage && handleImageLoad(firstImage)}
+          >
           {isCompleted && firstImage && (
             <TouchableOpacity
               onPress={e => handleDeletePress('avatar', item, e)}
@@ -497,7 +584,8 @@ console.log('videos', videos);
               </LiquidGlassBackground>
             </TouchableOpacity>
           )}
-        </ImageBackground>
+          </ImageBackground>
+        </View>
         <View style={styles.projectBodyCotainer}>
           <Text
             style={styles.projectTitle}
@@ -621,6 +709,108 @@ console.log('videos', videos);
     );
   };
 
+  // Render upload item function for FlatList
+  const renderUploadItem = ({ item }: { item: AssetUpload }) => {
+    const isImage = item.asset_type === 'image';
+    const imageUrl = item.asset_url;
+    const isImageLoaded = imageUrl ? loadedImages.has(imageUrl) : true;
+
+    return (
+      <LiquidGlassBackground style={styles.projectCard}>
+        <View style={styles.projectIconContainer}>
+          {!isImageLoaded && imageUrl && (
+            <View style={styles.imageShimmerContainer}>
+              <Shimmer
+                width="100%"
+                height="100%"
+                borderRadius={12}
+              />
+            </View>
+          )}
+          {isImage && imageUrl ? (
+            <ImageBackground
+              source={{ uri: imageUrl }}
+              style={[
+                styles.projectIconBackground,
+                !isImageLoaded && styles.hiddenImage,
+              ]}
+              imageStyle={{ borderRadius: 12 }}
+              onLoad={() => imageUrl && handleImageLoad(imageUrl)}
+            >
+              <TouchableOpacity
+                onPress={e => handleDeletePress('upload', item, e)}
+                style={styles.downloadIconTouchable}
+                activeOpacity={0.7}
+              >
+                <LiquidGlassBackground style={styles.downloadIcon}>
+                  <TouchableOpacity
+                    onPress={e => handleDeletePress('upload', item, e)}
+                    style={styles.deleteButton}
+                    activeOpacity={0.7}
+                  >
+                    <Svgs.WhiteDelete
+                      width={metrics.width(20)}
+                      height={metrics.width(20)}
+                    />
+                  </TouchableOpacity>
+                </LiquidGlassBackground>
+              </TouchableOpacity>
+            </ImageBackground>
+          ) : (
+            <ImageBackground
+              source={Images.VedioIcon2}
+              style={styles.projectIcon}
+              imageStyle={{ borderRadius: 12 }}
+            >
+              <TouchableOpacity
+                onPress={e => handleDeletePress('upload', item, e)}
+                style={styles.downloadIconTouchable}
+                activeOpacity={0.7}
+              >
+                <LiquidGlassBackground style={styles.downloadIcon}>
+                  <TouchableOpacity
+                    onPress={e => handleDeletePress('upload', item, e)}
+                    style={styles.deleteButton}
+                    activeOpacity={0.7}
+                  >
+                    <Svgs.WhiteDelete
+                      width={metrics.width(20)}
+                      height={metrics.width(20)}
+                    />
+                  </TouchableOpacity>
+                </LiquidGlassBackground>
+              </TouchableOpacity>
+            </ImageBackground>
+          )}
+        </View>
+        <View style={styles.projectBodyCotainer}>
+          <Text
+            style={styles.projectTitle}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {item.asset_id || 'Asset'}
+          </Text>
+          <Text
+            style={styles.subtitle}
+            numberOfLines={1}
+            ellipsizeMode="middle"
+          >
+            {item.asset_type} • {item.content_type}
+          </Text>
+          <View style={styles.rowSpaceBetween}>
+            <Text style={styles.status}>
+              Uploaded
+            </Text>
+            <Text style={styles.statusTime}>
+              {formatTimeAgo(item.createdAt)}
+            </Text>
+          </View>
+        </View>
+      </LiquidGlassBackground>
+    );
+  };
+
   // Render shimmer placeholder
   const renderShimmerItem = () => (
     <LiquidGlassBackground style={styles.projectCard}>
@@ -659,7 +849,8 @@ console.log('videos', videos);
   const getCurrentData = () => {
     if (activeTab === 'videos') return videos || [];
     if (activeTab === 'avatars') return avatars || [];
-    return translations || [];
+    if (activeTab === 'translations') return translations || [];
+    return assetUploads?.data || [];
   };
 
   const currentData = getCurrentData();
@@ -670,74 +861,58 @@ console.log('videos', videos);
       return renderVideoItem({ item: item as ProjectVideo });
     if (activeTab === 'avatars')
       return renderAvatarItem({ item: item as PhotoAvatarGeneration });
-    return renderTranslationItem({ item: item as VideoTranslation });
+    if (activeTab === 'translations')
+      return renderTranslationItem({ item: item as VideoTranslation });
+    return renderUploadItem({ item: item as AssetUpload });
+  };
+
+  // Tabs list
+  const tabs: TabType[] = ['videos', 'avatars', 'translations', 'uploads'];
+  
+  // Tab labels mapping
+  const tabLabels: Record<TabType, string> = {
+    videos: 'Videos',
+    avatars: 'Avatars',
+    translations: 'Translations',
+    uploads: 'Uploads',
   };
 
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <Header title="Project Videos" showBackButton />
-
-        {/* Tab Bar */}
-        <View style={styles.tabContainer}>
-          {activeTab === 'videos' ? (
-            <TouchableOpacity
-              style={[styles.tab, styles.activeTab]}
-              onPress={() => setActiveTab('videos')}
-            >
-              <Text style={[styles.tabText, styles.activeTabText]}>Videos</Text>
-            </TouchableOpacity>
-          ) : (
-            <LiquidGlassBackground style={styles.tab}>
+        <View style={styles.headerContainer}>
+          <Header title="Project Videos" showBackButton />
+</View>
+        {/* Tab Bar with Horizontal Scroll */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabScrollContainer}
+          style={styles.tabScrollView}
+        >
+          {tabs.map(tab => (
+            activeTab === tab ? (
               <TouchableOpacity
-                style={styles.tabContent}
-                onPress={() => setActiveTab('videos')}
+                key={tab}
+                style={[styles.tab, styles.activeTab]}
+                onPress={() => setActiveTab(tab)}
               >
-                <Text style={styles.tabText}>Videos</Text>
+                <Text style={[styles.tabText, styles.activeTabText]}>
+                  {tabLabels[tab]}
+                </Text>
               </TouchableOpacity>
-            </LiquidGlassBackground>
-          )}
-
-          {activeTab === 'avatars' ? (
-            <TouchableOpacity
-              style={[styles.tab, styles.activeTab]}
-              onPress={() => setActiveTab('avatars')}
-            >
-              <Text style={[styles.tabText, styles.activeTabText]}>
-                Avatars
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <LiquidGlassBackground style={styles.tab}>
-              <TouchableOpacity
-                style={styles.tabContent}
-                onPress={() => setActiveTab('avatars')}
-              >
-                <Text style={styles.tabText}>Avatars</Text>
-              </TouchableOpacity>
-            </LiquidGlassBackground>
-          )}
-
-          {activeTab === 'translations' ? (
-            <TouchableOpacity
-              style={[styles.tab, styles.activeTab]}
-              onPress={() => setActiveTab('translations')}
-            >
-              <Text style={[styles.tabText, styles.activeTabText]}>
-                Translations
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <LiquidGlassBackground style={styles.tab}>
-              <TouchableOpacity
-                style={styles.tabContent}
-                onPress={() => setActiveTab('translations')}
-              >
-                <Text style={styles.tabText}>Translations</Text>
-              </TouchableOpacity>
-            </LiquidGlassBackground>
-          )}
-        </View>
+            ) : (
+              <LiquidGlassBackground key={tab} style={styles.tab}>
+                <TouchableOpacity
+                  style={styles.tabContent}
+                  onPress={() => setActiveTab(tab)}
+                >
+                  <Text style={styles.tabText}>{tabLabels[tab]}</Text>
+                </TouchableOpacity>
+              </LiquidGlassBackground>
+            )
+          ))}
+        </ScrollView>
 
         {isLoading ? (
           <FlatList
@@ -809,11 +984,14 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    marginHorizontal: metrics.width(25),
+  },
+  headerContainer: {
+    marginHorizontal: metrics.width(20),
   },
   flatList: {
     flex: 1,
     marginTop: metrics.width(20),
+    marginHorizontal: metrics.width(20),
   },
   contentContainer: {
     paddingBottom: 40,
@@ -837,6 +1015,13 @@ const styles = StyleSheet.create({
   projectIcon: {
     height: metrics.width(140),
     width: '100%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  projectIconBackground: {
+    height: '100%',
+    width: '100%',
   },
   projectIconContainer: {
     height: metrics.width(140),
@@ -849,6 +1034,18 @@ const styles = StyleSheet.create({
     height: metrics.width(140),
     width: '100%',
     borderRadius: 12,
+  },
+  imageShimmerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  hiddenImage: {
+    opacity: 0,
   },
   projectDataContainer: {
     gap: metrics.width(7),
@@ -967,6 +1164,17 @@ const styles = StyleSheet.create({
     fontSize: metrics.width(16),
     color: colors.subtitle,
   },
+  tabScrollView: {
+    maxHeight: metrics.width(50),
+    marginTop: metrics.width(20),
+    marginBottom: metrics.width(20),
+  },
+  tabScrollContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: metrics.width(25),
+    gap: metrics.width(10),
+  },
   tabContainer: {
     flexDirection: 'row',
     marginTop: metrics.width(20),
@@ -976,9 +1184,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   tab: {
-    flex: 1,
     borderRadius: 8,
-    minWidth: 0, // Allow flex to shrink if needed
+    minWidth: metrics.width(80), // Fixed min width for horizontal scroll
   },
   tabContent: {
     paddingVertical: metrics.width(12),
@@ -989,12 +1196,13 @@ const styles = StyleSheet.create({
   activeTab: {
     backgroundColor: colors.primary,
     paddingVertical: metrics.width(12),
-    paddingHorizontal: metrics.width(10),
+    paddingHorizontal: metrics.width(15),
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    minWidth: 0, // Allow flex to shrink if needed
+
+    minWidth: metrics.width(80),
   },
   tabText: {
     fontFamily: FontFamily.spaceGrotesk.medium,

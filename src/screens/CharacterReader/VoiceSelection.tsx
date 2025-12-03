@@ -18,9 +18,16 @@ import { Svgs } from '../../assets/icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { CustomDropdown, Header, Input, Shimmer } from '../../components/ui';
+import {
+  CustomDropdown,
+  Header,
+  Input,
+  SearchableDropdown,
+  Shimmer,
+} from '../../components/ui';
 import {
   HeygenVoice,
+  useGetAllVoicesLocalesQuery,
   useLazyGetAllVoicesQuery,
 } from '../../store/api/heygenApi';
 import SoundPlayer from 'react-native-sound-player';
@@ -50,37 +57,45 @@ export default function VoiceSelection() {
     image?: { uri: string; type: string; name: string };
     isCustomImageSelected?: boolean;
   };
-  console.log('avatarId', avatarId);
-  console.log('screenFrom', screenFrom);
-  console.log('isCustomImageSelected', isCustomImageSelected);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [allVoices, setAllVoices] = useState<HeygenVoice[]>([]);
   const [hasMorePages, setHasMorePages] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [selectedSearchType, setSelectedSearchType] = useState('Language');
-
+  const [selectedLanguage, setSelectedLanguage] = useState('');
   const [getAllVoices, { data, isLoading, isFetching, isError }] =
     useLazyGetAllVoicesQuery();
+  const { data: localesData, isLoading: isLoadingLocales } =
+    useGetAllVoicesLocalesQuery();
+  const languageOptions = useMemo(() => {
+    if (!localesData?.data?.languages) return [];
+    return localesData.data.languages.map((language: string) => ({
+      value: language,
+      label: language,
+    }));
+  }, [localesData]);
+  // Build API params - input for name, dropdown for language
+  const getApiParams = useCallback(
+    (page: number) => {
+      const params: any = {
+        page,
+        limit: ITEMS_PER_PAGE,
+      };
+      
+      // Use dropdown selection for language parameter
+      if (selectedLanguage) {
+        params.language = selectedLanguage;
+      }
+      
+      // Use input field for name parameter
+      if (searchQuery) {
+        params.name = searchQuery;
+      }
 
-  // Build API params based on search type
-  const getApiParams = useCallback((page: number) => {
-    const params: any = {
-      page,
-      limit: ITEMS_PER_PAGE,
-    };
-
-    // Handle search input based on search type
-    if (selectedSearchType === 'Language' && searchQuery) {
-      // If search type is Language, use searchQuery for language parameter
-      params.language = searchQuery;
-    } else if (selectedSearchType === 'Name' && searchQuery) {
-      // If search type is Name, use searchQuery for name parameter
-      params.name = searchQuery;
-    }
-
-    return params;
-  }, [selectedSearchType, searchQuery]);
+      return params;
+    },
+    [searchQuery, selectedLanguage],
+  );
 
   // Initial load
   useEffect(() => {
@@ -187,6 +202,12 @@ export default function VoiceSelection() {
       );
       setPlayingIndex(null);
     }
+  };
+
+  const handleLanguageSelect = (value: string, option?: any) => {
+    setSelectedLanguage(value);
+    setSearchQuery('');
+    // The useEffect will handle the refetch when selectedLanguage changes
   };
 
   const renderShimmerItem = () => {
@@ -302,15 +323,15 @@ export default function VoiceSelection() {
     setCurrentPage(1);
     setHasMorePages(true);
     setIsLoadingMore(false);
-    
+
     // Always fetch data, even if search query is empty
     const params = getApiParams(1);
     getAllVoices(params);
-    
+
     // Clear voices only after starting the fetch to avoid showing empty state
     // The data will be updated by the data useEffect when response arrives
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, selectedSearchType]);
+  }, [searchQuery, selectedLanguage]);
   const renderListHeader = () => {
     return (
       <View style={styles.headerContainer}>
@@ -321,11 +342,7 @@ export default function VoiceSelection() {
         <View style={styles.searchInputContainer}>
           <View style={styles.searchInputContainerInner}>
             <Input
-              placeholder={
-                selectedSearchType === 'Language'
-                  ? 'Search by language...'
-                  : 'Search by name...'
-              }
+              placeholder="Search by name..."
               value={searchQuery}
               onChangeText={setSearchQuery}
               containerStyle={styles.searchInput}
@@ -333,21 +350,31 @@ export default function VoiceSelection() {
               inputStyle={styles.searchInputText}
             />
           </View>
-          <CustomDropdown
-            title=""
-            dropdownContainerStyle={styles.dropdownContainerStyle}
-            options={['Language', 'Name']}
-            selectedValue={selectedSearchType}
-            onSelect={(value: string) => {
-              // Update search type first - this will trigger useEffect to refetch
-              setSelectedSearchType(value);
-              // Clear search query - this will also trigger refetch with empty query
-              setSearchQuery('');
-            }}
-            placeholder="Search Type"
-            style={styles.dropdownStyle}
-            rowStyle={styles.dropdownRowStyle}
-          />
+          <View style={{ width: metrics.width(120),marginLeft:metrics.width(5) }}>
+            <SearchableDropdown
+              title="Target Language"
+              style={{ marginTop: 0 }}
+              dropdownContainerStyle={{
+                marginTop: metrics.width(55),
+                position: 'absolute',
+                zIndex: 999,
+                width: '100%',
+                backgroundColor: 'black',
+                paddingVertical:10,
+              }}
+              rowStyle={{ marginTop: metrics.width(2) }}
+              showTitle={false}
+              textStyle={{ fontSize: metrics.width(13), }}
+              showSearchInput={false}
+              options={languageOptions}
+              selectedValue={selectedLanguage}
+              onSelect={handleLanguageSelect}
+              placeholder="Select Language"
+              required
+              searchPlaceholder="Search language..."
+              tooltip="Select the target language for video dubbing. Your video will be translated and dubbed into the selected language. You can search for languages by typing in the search box."
+            />
+          </View>
         </View>
       </View>
     );
@@ -406,7 +433,11 @@ export default function VoiceSelection() {
         <Header title="Voice Selection" showBackButton />
         {renderListHeader()}
         <FlatList
-          data={(isLoading || isFetching) && voices.length === 0 ? shimmerRows : voices}
+          data={
+            (isLoading || isFetching) && voices.length === 0
+              ? shimmerRows
+              : voices
+          }
           renderItem={renderVoiceItem}
           keyExtractor={(item, index) => `voice-${index}`}
           showsVerticalScrollIndicator={false}
@@ -564,26 +595,27 @@ const styles = StyleSheet.create({
   searchInput: {
     marginBottom: 0,
     marginTop: 0,
+
   },
   searchInputText: {
     fontSize: metrics.width(14),
   },
   dropdownContainerStyle: {
-     position: 'absolute',
-zIndex:999,
+    position: 'absolute',
+    zIndex: 999,
     flexGrow: 1,
-    marginTop:metrics.width(50),
-    width:'100%',
+    marginTop: metrics.width(50),
+    width: '100%',
   },
   dropdownStyle: {
     marginTop: 0,
-    marginLeft:metrics.width(5),
-    minWidth:metrics.width(120),
+    marginLeft: metrics.width(5),
+    minWidth: metrics.width(120),
   },
   searchInputContainerInner: {
     flex: 1,
   },
   dropdownRowStyle: {
-    minHeight:metrics.width(21),
+    minHeight: metrics.width(21),
   },
 });
