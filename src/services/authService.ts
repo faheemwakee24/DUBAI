@@ -1,5 +1,5 @@
 import auth from '@react-native-firebase/auth';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {GoogleSignin, statusCodes} from '@react-native-google-signin/google-signin';
 import {appleAuth} from '@invertase/react-native-apple-authentication';
 import {Platform} from 'react-native';
 
@@ -7,9 +7,7 @@ import {Platform} from 'react-native';
 // Use Web Client ID (client_type: 3) which works for both iOS and Android
 GoogleSignin.configure({
   webClientId:
-    '5903335579-gvuclhdvjhi9j8kq9rkqc89jjufj96rn.apps.googleusercontent.com', // ✅ from client_type 3
-  // androidClientId (optional)
-  // androidClientId: '5903335579-qarbihgknij8evc8sh16oo0jaiurlr2k.apps.googleusercontent.com',
+    '315596728489-i3tmpkkb55i80k34i3d5ebuakp4ql3ja.apps.googleusercontent.com', // ✅ from client_type 3
   offlineAccess: true,
 });
 
@@ -54,6 +52,19 @@ class AuthService {
       };
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
+      console.log('GOOGLE SIGNIN ERROR RAW =>', JSON.stringify(error, null, 2));
+
+      if (error.code) {
+        console.log('ERROR CODE =>', error.code);
+      }
+  
+      if (error.message) {
+        console.log('ERROR MESSAGE =>', error.message);
+      }
+  
+      if (error.code === statusCodes?.DEVELOPER_ERROR) {
+        console.log('DEVELOPER_ERROR – usually config / SHA1 / client ID issue');
+      }
       throw new Error(error?.message || 'Google sign-in failed');
     }
   }

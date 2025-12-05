@@ -97,7 +97,7 @@ export default function SelectProfileImage() {
 
   const renderImageItem = ({ item }: { item: ProfileImage }) => {
     const isSelected = selectedImageUrl === item.url;
-    const isImageLoaded = loadedImages.has(item.url);
+    const isImageLoaded =loadedImages.has(item.url);
     
     return (
       <TouchableOpacity
@@ -114,7 +114,7 @@ export default function SelectProfileImage() {
               <Shimmer
                 width="100%"
                 height="100%"
-                borderRadius={metrics.width(75)}
+                borderRadius={100}
               />
             </View>
           )}
@@ -141,9 +141,9 @@ export default function SelectProfileImage() {
       {[1, 2, 3, 4, 5, 6].map(index => (
         <Shimmer
           key={index}
-          width="48%"
+          width={metrics.width(150)}
           height={metrics.width(150)}
-          borderRadius={metrics.width(75)}
+          borderRadius={100}
           style={styles.shimmerItem}
         />
       ))}
@@ -154,7 +154,7 @@ export default function SelectProfileImage() {
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <Header title="Select Profile Image" showBackButton />
-        {isLoading ? (
+        {false ? (
           renderShimmer()
         ) : images.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(254, 44, 11, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: metrics.width(75),
+    borderRadius: 100,
   },
   checkmarkContainer: {
     width: metrics.width(40),
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: metrics.width(75),
+    borderRadius: 100,
     overflow: 'hidden',
   },
   hiddenImage: {
