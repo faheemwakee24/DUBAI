@@ -37,7 +37,7 @@ import {
   BillingDetail,
   PaymentMethodScreen,
 } from '../screens/Subscriptions';
-import { Settings, EditAccount, Language, PrivacyAndPolicy, TermsAndConditions, CreditHistory } from '../screens/settings';
+import { Settings, EditAccount, Language, PrivacyAndPolicy, TermsAndConditions, CreditHistory, Support } from '../screens/settings';
 import SelectProfileImage from '../screens/settings/SelectProfileImage';
 import { Notifications } from '../screens/notifications';
 import { VideoHistory } from '../screens/history';
@@ -66,6 +66,7 @@ export type RootStackParamList = {
   Notifications: undefined;
   VideoHistory: undefined;
   CreditHistory: undefined;
+  Support: undefined;
   Signup: undefined;
   VerifyOtp: { email: string };
   ForgotPasword: undefined;
@@ -318,6 +319,7 @@ export default function RootNavigator() {
         <Stack.Screen name="Notifications" component={Notifications} />
         <Stack.Screen name="VideoHistory" component={VideoHistory} />
         <Stack.Screen name="CreditHistory" component={CreditHistory} />
+        <Stack.Screen name="Support" component={Support} />
         <Stack.Screen
           name="AvatarCustomization"
           component={AvatarCustomization}

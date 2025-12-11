@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+} from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import { FontFamily } from '../../constants/fonts';
@@ -185,8 +192,14 @@ export default function Settings() {
             >
               <LiquidGlassBackground style={styles.headerCreditsBadge}>
                 <View style={styles.headerCreditsContent}>
-                  <Text style={styles.headerCreditsNumber} numberOfLines={1} ellipsizeMode="tail">
-                    {isLoadingCredits ? '...' : creditsData?.credits?.toFixed(1) ?? 0}
+                  <Text
+                    style={styles.headerCreditsNumber}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {isLoadingCredits
+                      ? '...'
+                      : creditsData?.credits?.toFixed(1) ?? 0}
                   </Text>
                   <Text style={styles.headerCreditsLabel}>Credits</Text>
                 </View>
@@ -196,56 +209,61 @@ export default function Settings() {
         />
 
         <View style={styles.contentContainer}>
-          {/* User Profile Section */}
-          <LiquidGlassBackground style={styles.profileCard}>
-            <View style={styles.profileContent}>
-              <LiquidGlassBackground style={styles.avatarContainer}>
-                <Image source={getUserAvatar()} style={styles.avatar} />
-              </LiquidGlassBackground>
-              <View style={styles.profileInfo}>
-                <Text style={styles.userName}>
-                  {profileLoading ? 'Loading...' : getUserDisplayName()}
-                </Text>
-                <Text style={styles.userEmail}>{getUserEmail()}</Text>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={styles.scrollView}
+            contentContainerStyle={styles.ScrollViewContentContainer}
+          >
+            {/* User Profile Section */}
+            <LiquidGlassBackground style={styles.profileCard}>
+              <View style={styles.profileContent}>
+                <LiquidGlassBackground style={styles.avatarContainer}>
+                  <Image source={getUserAvatar()} style={styles.avatar} />
+                </LiquidGlassBackground>
+                <View style={styles.profileInfo}>
+                  <Text style={styles.userName}>
+                    {profileLoading ? 'Loading...' : getUserDisplayName()}
+                  </Text>
+                  <Text style={styles.userEmail}>{getUserEmail()}</Text>
+                </View>
               </View>
+            </LiquidGlassBackground>
+
+            {/* Account Section */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Account</Text>
+              <LiquidGlassBackground style={styles.optionCard}>
+                <TouchableOpacity
+                  style={styles.optionRow}
+                  onPress={handleEditProfile}
+                >
+                  <Text style={styles.optionText}>Edit Profile</Text>
+                  <Svgs.WhiteArrowRight />
+                </TouchableOpacity>
+              </LiquidGlassBackground>
             </View>
-          </LiquidGlassBackground>
 
-          {/* Account Section */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Account</Text>
-            <LiquidGlassBackground style={styles.optionCard}>
-              <TouchableOpacity
-                style={styles.optionRow}
-                onPress={handleEditProfile}
-              >
-                <Text style={styles.optionText}>Edit Profile</Text>
-                <Svgs.WhiteArrowRight />
-              </TouchableOpacity>
-            </LiquidGlassBackground>
-          </View>
+            {/* Subscription Section */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Subscription</Text>
 
-          {/* Subscription Section */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Subscription</Text>
+              <LiquidGlassBackground style={styles.optionCard}>
+                <TouchableOpacity
+                  style={styles.optionRow}
+                  onPress={handleManageSubscription}
+                >
+                  <Text style={styles.optionText}>Manage Subscription</Text>
+                  <Svgs.WhiteArrowRight />
+                </TouchableOpacity>
+              </LiquidGlassBackground>
+            </View>
 
-            <LiquidGlassBackground style={styles.optionCard}>
-              <TouchableOpacity
-                style={styles.optionRow}
-                onPress={handleManageSubscription}
-              >
-                <Text style={styles.optionText}>Manage Subscription</Text>
-                <Svgs.WhiteArrowRight />
-              </TouchableOpacity>
-            </LiquidGlassBackground>
-          </View>
+            {/* Preferences Section */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Preferences</Text>
 
-          {/* Preferences Section */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Preferences</Text>
-
-            {/* Language Option */}
-            {/* <LiquidGlassBackground style={styles.optionCard}>
+              {/* Language Option */}
+              {/* <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={handleLanguage}
@@ -256,7 +274,7 @@ export default function Settings() {
                 />
               </TouchableOpacity>
             </LiquidGlassBackground> */}
-            {/* <LiquidGlassBackground style={styles.optionCard}>
+              {/* <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={()=>navigation.navigate('AvatarCustomization')}
@@ -267,7 +285,7 @@ export default function Settings() {
                 />
               </TouchableOpacity>
             </LiquidGlassBackground> */}
-            {/* <LiquidGlassBackground style={styles.optionCard}>
+              {/* <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={()=>   {
@@ -293,52 +311,68 @@ export default function Settings() {
               </TouchableOpacity>
             </LiquidGlassBackground>   */}
 
-            {/* Notifications Option */}
-            <LiquidGlassBackground style={styles.optionCard}>
-              <View style={styles.optionRow}>
-                <Text style={styles.optionText}>Notifications</Text>
-                <CustomToggle
-                  value={notificationsEnabled}
-                  onValueChange={setNotificationsEnabled}
-                  size="medium"
-                />
-              </View>
-            </LiquidGlassBackground>
-          </View>
+              {/* Notifications Option */}
+              <LiquidGlassBackground style={styles.optionCard}>
+                <View style={styles.optionRow}>
+                  <Text style={styles.optionText}>Notifications</Text>
+                  <CustomToggle
+                    value={notificationsEnabled}
+                    onValueChange={setNotificationsEnabled}
+                    size="medium"
+                  />
+                </View>
+              </LiquidGlassBackground>
+            </View>
 
-          {/* Legal Section */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Legal</Text>
-            <LiquidGlassBackground style={styles.optionCard}>
-              <TouchableOpacity
-                style={styles.optionRow}
-                onPress={() => navigation.navigate('PrivacyAndPolicy')}
-              >
-                <Text style={styles.optionText}>Privacy & Policy</Text>
-                <Svgs.WhiteArrowRight />
-              </TouchableOpacity>
-            </LiquidGlassBackground>
-            <LiquidGlassBackground style={styles.optionCard}>
-              <TouchableOpacity
-                style={styles.optionRow}
-                onPress={() => navigation.navigate('TermsAndConditions')}
-              >
-                <Text style={styles.optionText}>Terms & Conditions</Text>
-                <Svgs.WhiteArrowRight />
-              </TouchableOpacity>
-            </LiquidGlassBackground>
-          </View>
+            {/* Support Section */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Support</Text>
+              <LiquidGlassBackground style={styles.optionCard}>
+                <TouchableOpacity
+                  style={styles.optionRow}
+                  onPress={() => navigation.navigate('Support')}
+                >
+                  <Text style={styles.optionText}>Contact Support</Text>
+                  <Svgs.WhiteArrowRight />
+                </TouchableOpacity>
+              </LiquidGlassBackground>
+            </View>
 
+            {/* Legal Section */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Legal</Text>
+              <LiquidGlassBackground style={styles.optionCard}>
+                <TouchableOpacity
+                  style={styles.optionRow}
+                  onPress={() => navigation.navigate('PrivacyAndPolicy')}
+                >
+                  <Text style={styles.optionText}>Privacy & Policy</Text>
+                  <Svgs.WhiteArrowRight />
+                </TouchableOpacity>
+              </LiquidGlassBackground>
+              <LiquidGlassBackground style={styles.optionCard}>
+                <TouchableOpacity
+                  style={styles.optionRow}
+                  onPress={() => navigation.navigate('TermsAndConditions')}
+                >
+                  <Text style={styles.optionText}>Terms & Conditions</Text>
+                  <Svgs.WhiteArrowRight />
+                </TouchableOpacity>
+              </LiquidGlassBackground>
+            </View>
+            <View style={styles.logoutButtonContainer}>
+              <PrimaryButton
+                title={logoutLoading ? 'Logging out...' : 'Logout'}
+                onPress={handleLogout}
+                variant="primary"
+                style={styles.logoutButton}
+                fullWidth
+                icon={<Svgs.LogoutIcon />}
+                disabled={logoutLoading}
+              />
+            </View>
+          </ScrollView>
           {/* Logout Button */}
-          <PrimaryButton
-            title={logoutLoading ? 'Logging out...' : 'Logout'}
-            onPress={handleLogout}
-            variant="primary"
-            style={styles.logoutButton}
-            fullWidth
-            icon={<Svgs.LogoutIcon />}
-            disabled={logoutLoading}
-          />
         </View>
       </SafeAreaView>
     </ScreenBackground>
@@ -527,5 +561,15 @@ const styles = StyleSheet.create({
     fontSize: metrics.width(11),
     color: colors.subtitle,
     lineHeight: metrics.width(16),
+  },
+  scrollView: {
+    marginBottom: metrics.width(20),
+  },
+  ScrollViewContentContainer: {
+    gap: metrics.width(20),
+  },
+  logoutButtonContainer: {
+    marginTop: metrics.width(25),
+    minHeight:50
   },
 });

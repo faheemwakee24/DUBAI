@@ -48,7 +48,7 @@ class AuthService {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
         displayName: userCredential.user.displayName,
-        photoURL: userCredential.user.photoURL,
+        photoURL: '',
       };
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
@@ -120,7 +120,7 @@ class AuthService {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
         displayName: userCredential.user.displayName,
-        photoURL: userCredential.user.photoURL,
+        photoURL: '',
       };
     } catch (error: any) {
       console.error('Apple Sign-In Error:', error);
@@ -174,7 +174,7 @@ class AuthService {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
-      photoURL: user.photoURL,
+      photoURL: '',
     };
   }
 
@@ -188,7 +188,7 @@ class AuthService {
           uid: user.uid,
           email: user.email,
           displayName: user.displayName,
-          photoURL: user.photoURL,
+          photoURL: '' 
         });
       } else {
         callback(null);

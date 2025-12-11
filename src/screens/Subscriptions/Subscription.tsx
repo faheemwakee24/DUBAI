@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { View, StyleSheet, FlatList, Image, Text, TouchableOpacity } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,6 +29,7 @@ export default function Subscription() {
   // Fetch subscription plans and current user subscription
   const { data: plans, isLoading: isLoadingPlans } = useGetSubscriptionPlansQuery();
   const { data: mySubscription, isLoading: isLoadingSubscription } = useGetMySubscriptionQuery();
+console.log('plans', JSON.stringify(plans,null,8));
 
   // Transform API data to match UI structure
   const subscriptionData = useMemo(() => {
@@ -47,7 +48,7 @@ export default function Subscription() {
 
       // Build features array from plan data
       const features = [
-        `${plan.videosPerWeek === 99999 ? 'Unlimited' : plan.videosPerWeek} videos per week`,
+      
         `Resolution: ${plan.resolution}`,
         plan.watermark ? 'Watermark on exports' : 'No watermarks',
         plan.notes,

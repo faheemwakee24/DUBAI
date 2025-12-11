@@ -352,7 +352,7 @@ export default function SubsCriptionDetail() {
             <PrimaryButton
               title="Back"
               onPress={() => navigation.goBack()}
-              variant="secondary"
+              variant="primary"
               style={{
                 marginBottom: metrics.width(25),
               }}
