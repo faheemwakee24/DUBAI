@@ -132,7 +132,7 @@ export default function AuthLoginScreen() {
                 lastName,
                 authProvider: 'apple',
                 providerId: firebaseUser.uid || '',
-                avatar: ''|| undefined,
+                avatar: '',
             }).unwrap();
 
             // Store tokens and user data

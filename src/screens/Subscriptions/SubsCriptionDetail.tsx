@@ -198,10 +198,11 @@ export default function SubsCriptionDetail() {
   const cancelSubscriptionFlow = async (immediate: boolean) => {
     setIsProcessing(true);
     try {
-      await cancelSubscription({
+    const result = await cancelSubscription({
         immediate,
       }).unwrap();
-
+      console.log('result', JSON.stringify(result));
+      
       showToast.success(
         'Success',
         immediate

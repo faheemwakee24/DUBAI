@@ -11,4 +11,5 @@ export * from './characterApi';
 export * from './videoDubbingApi';
 export * from './heygenApi';
 export * from './notificationsApi';
+export * from './supportApi';
 

@@ -242,7 +242,7 @@ export default function CreditHistory() {
               <View style={styles.creationMeta}>
                 <View style={styles.creditsInfo}>
                   <Text style={styles.creditsSpent}>
-                    -{formatCredits(item.creditsSpent)}
+                    {formatCredits(item.creditsSpent)}
                   </Text>
                   <Text style={styles.creditsAfter}>
                     Balance: {formatCredits(item.creditsAfter)}

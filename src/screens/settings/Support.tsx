@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import { FontFamily } from '../../constants/fonts';
@@ -18,6 +13,7 @@ import { Header, Input } from '../../components/ui';
 import { showToast } from '../../utils/toast';
 import { useGetProfileQuery, User } from '../../store/api/authApi';
 import { tokenStorage } from '../../utils/tokenStorage';
+import { useSubmitSupportRequestMutation } from '../../store/api/supportApi';
 
 type SupportNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -26,9 +22,10 @@ type SupportNavigationProp = NativeStackNavigationProp<
 
 export default function Support() {
   const navigation = useNavigation<SupportNavigationProp>();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: profileData } = useGetProfileQuery();
   const [user, setUser] = useState<User | null>(null);
+  const [submitSupportRequest, { isLoading: isSubmitting }] =
+    useSubmitSupportRequestMutation();
 
   // Form state
   const [name, setName] = useState('');
@@ -50,9 +47,10 @@ export default function Support() {
         if (storedUser) {
           setUser(storedUser);
           // Set name from profile (firstName + lastName)
-          const fullName = storedUser.firstName && storedUser.lastName
-            ? `${storedUser.firstName} ${storedUser.lastName}`
-            : storedUser.firstName || '';
+          const fullName =
+            storedUser.firstName && storedUser.lastName
+              ? `${storedUser.firstName} ${storedUser.lastName}`
+              : storedUser.firstName || '';
           setName(fullName);
           setEmail(storedUser.email || '');
         }
@@ -69,9 +67,10 @@ export default function Support() {
     if (profileData) {
       setUser(profileData as any);
       // Set name from profile (firstName + lastName)
-      const fullName = (profileData as any).firstName && (profileData as any).lastName
-        ? `${(profileData as any).firstName} ${(profileData as any).lastName}`
-        : (profileData as any).firstName || '';
+      const fullName =
+        (profileData as any).firstName && (profileData as any).lastName
+          ? `${(profileData as any).firstName} ${(profileData as any).lastName}`
+          : (profileData as any).firstName || '';
       setName(fullName);
       setEmail((profileData as any).email || '');
       // Update stored user data
@@ -115,19 +114,34 @@ export default function Support() {
       return;
     }
 
-    setIsSubmitting(true);
+    // Get userId from local storage (same way as LoginScreen stores it)
+    let userId: string | null = null;
+    try {
+      const storedUser = await tokenStorage.getUser();
+      console.log('storedUser', JSON.stringify(storedUser, null, 8));
+
+      if (storedUser?._id) {
+        userId = storedUser._id;
+      }
+    } catch (error) {
+      console.error('Error getting user from storage:', error);
+    }
+
+    if (!userId) {
+      showToast.error(
+        'Error',
+        'User information not available. Please try again.',
+      );
+      return;
+    }
 
     try {
-      // TODO: Replace with actual API call when backend endpoint is available
-      // Example API call structure:
-      // const response = await supportApi.submitSupportRequest({
-      //   name: name.trim(),
-      //   email: email.trim(),
-      //   message: message.trim(),
-      // }).unwrap();
-
-      // Simulate API call delay
-      await new Promise<void>(resolve => setTimeout(() => resolve(), 1000));
+      const response = await submitSupportRequest({
+        name: name.trim(),
+        email: email.trim(),
+        message: message.trim(),
+        userId: userId,
+      }).unwrap();
 
       // Show success message
       showToast.success(
@@ -135,9 +149,7 @@ export default function Support() {
         'Thank you for contacting us. We will get back to you soon!',
       );
 
-      // Clear form
-      setName('');
-      setEmail('');
+      // Clear form (only clear message, keep name and email if they came from profile)
       setMessage('');
       setErrors({ name: '', email: '', message: '' });
     } catch (error: any) {
@@ -147,8 +159,6 @@ export default function Support() {
         error?.message ||
         'Failed to submit support request. Please try again.';
       showToast.error('Submission Failed', errorMessage);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -178,7 +188,7 @@ export default function Support() {
             <Input
               label="Name"
               value={name}
-              onChangeText={(text) => {
+              onChangeText={text => {
                 setName(text);
                 if (errors.name) {
                   setErrors({ ...errors, name: '' });
@@ -187,15 +197,16 @@ export default function Support() {
               placeholder="Enter your name"
               autoCapitalize="words"
               fullWidth
-              error={errors.name}
-              editable={!hasNameInProfile}
             />
+            {errors.name && (
+              <Text style={styles.errorText}>{errors.name}</Text>
+            )}
 
             {/* Email Field */}
             <Input
               label="Email"
               value={email}
-              onChangeText={(text) => {
+              onChangeText={text => {
                 setEmail(text);
                 if (errors.email) {
                   setErrors({ ...errors, email: '' });
@@ -205,15 +216,15 @@ export default function Support() {
               keyboardType="email-address"
               autoCapitalize="none"
               fullWidth
-              error={errors.email}
-              editable={!hasEmailInProfile}
             />
-
+            {errors.email && (
+              <Text style={styles.errorText}>{errors.email}</Text>
+            )}
             {/* Message Field */}
             <Input
               label="Message"
               value={message}
-              onChangeText={(text) => {
+              onChangeText={text => {
                 setMessage(text);
                 if (errors.message) {
                   setErrors({ ...errors, message: '' });
@@ -223,9 +234,9 @@ export default function Support() {
               multiline
               numberOfLines={6}
               fullWidth
-              error={errors.message}
               inputStyle={styles.messageInput}
             />
+            <Text style={styles.errorText}>{errors.message}</Text>
           </View>
         </ScrollView>
 
@@ -277,7 +288,7 @@ const styles = StyleSheet.create({
   },
   formSection: {
     marginTop: metrics.width(20),
-    gap: metrics.width(20),
+    gap: metrics.width(10),
   },
   messageInput: {
     minHeight: metrics.width(120),
@@ -285,5 +296,9 @@ const styles = StyleSheet.create({
   submitButton: {
     marginBottom: metrics.width(25),
   },
+  errorText: {
+    color: colors.primary,
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(14),
+  },
 });
-
