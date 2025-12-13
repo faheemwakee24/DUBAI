@@ -182,7 +182,7 @@ export default function Settings() {
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <Header
-          title="Settings"
+          title="Settings for ota  "
           showBackButton
           rightAction={
             <TouchableOpacity

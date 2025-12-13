@@ -7,6 +7,7 @@ import FirebaseMessaging
 import SDWebImage
 import SDWebImageWebPCoder
 import UserNotifications
+import CodePush
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -131,7 +132,8 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
 #if DEBUG
     RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
 #else
-    Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+    // Use CodePush to get the bundle URL for OTA updates
+    CodePush.bundleURL() ?? Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
   }
 }

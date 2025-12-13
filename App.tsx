@@ -11,6 +11,8 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { Provider } from 'react-redux';
 import Toast from 'react-native-toast-message';
 import { StripeProvider } from '@stripe/stripe-react-native';
+
+import codePush from '@revopush/react-native-code-push';
 import { store } from './src/store';
 import RootNavigator from './src/navigation/RootNavigator';
 import { toastConfig } from './src/components/ui/ToastConfig';
@@ -26,6 +28,13 @@ function App() {
     pushNotificationService.initialize().catch((error) => {
       console.error('Failed to initialize push notifications:', error);
     });
+
+    // Check for CodePush updates and auto-install silently
+    // CodePush.sync({
+    //   installMode: CodePush.InstallMode.IMMEDIATE,
+    // }).catch((error) => {
+    //   console.error('CodePush sync error:', error);
+    // });
 
     // Show splash screen for minimum duration, then hide it
     const timer = setTimeout(() => {
@@ -76,4 +85,11 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+const codePushOptions = {
+  checkFrequency: codePush.CheckFrequency.ON_APP_START, // Check on app start (more reliable)
+  installMode: codePush.InstallMode.IMMEDIATE, // Auto-install updates immediately
+  mandatoryInstallMode: codePush.InstallMode.IMMEDIATE, // Force critical fixes immediately
+  minimumBackgroundDuration: 0, // Check immediately, no delay
+};
+
+export default codePush(codePushOptions)(App);
