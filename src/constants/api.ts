@@ -115,5 +115,9 @@ export const API_ENDPOINTS = {
   SUPPORT: {
     REQUEST: '/support/request',
   },
+  // Admin Auth endpoints
+  ADMIN_AUTH: {
+    DELETE_USER: (userId: string) => `/admin-auth/users/${userId}`,
+  },
 } as const;
 

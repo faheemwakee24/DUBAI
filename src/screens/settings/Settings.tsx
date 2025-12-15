@@ -182,7 +182,7 @@ export default function Settings() {
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <Header
-          title="Settings for ota  "
+          title="Settings"
           showBackButton
           rightAction={
             <TouchableOpacity
@@ -259,8 +259,8 @@ export default function Settings() {
             </View>
 
             {/* Preferences Section */}
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Preferences</Text>
+            {/* <View style={styles.sectionContainer}> */}
+              {/* <Text style={styles.sectionTitle}>Preferences</Text> */}
 
               {/* Language Option */}
               {/* <LiquidGlassBackground style={styles.optionCard}>
@@ -312,7 +312,7 @@ export default function Settings() {
             </LiquidGlassBackground>   */}
 
               {/* Notifications Option */}
-              <LiquidGlassBackground style={styles.optionCard}>
+              {/* <LiquidGlassBackground style={styles.optionCard}>
                 <View style={styles.optionRow}>
                   <Text style={styles.optionText}>Notifications</Text>
                   <CustomToggle
@@ -321,8 +321,8 @@ export default function Settings() {
                     size="medium"
                   />
                 </View>
-              </LiquidGlassBackground>
-            </View>
+              </LiquidGlassBackground> */}
+            {/* </View> */}
 
             {/* Support Section */}
             <View style={styles.sectionContainer}>

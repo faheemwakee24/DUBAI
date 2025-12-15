@@ -10,36 +10,45 @@ import { FontFamily } from '../../constants/fonts';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { metrics } from '../../constants/metrics';
 import colors from '../../constants/colors';
-import { Header, LiquidGlassBackground } from '../../components/ui';
+import { Header } from '../../components/ui';
 
 export default function PrivacyAndPolicy() {
-
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <Header title="Privacy & Policy" showBackButton />
-        
-        <ScrollView 
+
+        <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.contentCard}>
             <Text style={styles.title}>Privacy Policy</Text>
-            <Text style={styles.lastUpdated}>Last Updated: {new Date().toLocaleDateString()}</Text>
-            
+            <Text style={styles.lastUpdated}>
+              Last Updated: {new Date().toLocaleDateString()}
+            </Text>
+
+            {/* 1. Introduction */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>1. Introduction</Text>
               <Text style={styles.sectionText}>
-                Welcome to DebNxt. We are committed to protecting your privacy and ensuring you have a positive experience on our platform. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application.
+                Welcome to Dub NXT. We are committed to protecting your privacy
+                and ensuring you have a positive experience on our platform.
+                This Privacy Policy explains how we collect, use, and safeguard
+                your information when you use our mobile application, including
+                AI-powered features.
               </Text>
             </View>
 
+            {/* 2. Information We Collect */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>2. Information We Collect</Text>
               <Text style={styles.sectionText}>
-                We collect information that you provide directly to us, including:
+                We collect information that you provide directly to us,
+                including:
               </Text>
+
               <Text style={styles.bulletPoint}>
                 • Account information (name, email address, password)
               </Text>
@@ -47,21 +56,35 @@ export default function PrivacyAndPolicy() {
                 • Profile information and preferences
               </Text>
               <Text style={styles.bulletPoint}>
+                • Images, videos, audio, and text prompts uploaded by users
+              </Text>
+              <Text style={styles.bulletPoint}>
                 • Content you create, upload, or share through our services
               </Text>
               <Text style={styles.bulletPoint}>
                 • Payment and billing information
               </Text>
+
               <Text style={styles.sectionText}>
-                We also automatically collect certain information about your device and how you interact with our app, including device identifiers, usage data, and technical information.
+                We also automatically collect certain information about your
+                device and how you interact with our app, including device
+                identifiers, usage data, and technical information.
+              </Text>
+
+              <Text style={styles.sectionText}>
+                Uploaded content may be processed using AI technologies to
+                generate characters, voices, dubbed videos, or translations.
+                Content is used only to provide requested features.
               </Text>
             </View>
 
+            {/* 3. How We Use Your Information */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>3. How We Use Your Information</Text>
               <Text style={styles.sectionText}>
                 We use the information we collect to:
               </Text>
+
               <Text style={styles.bulletPoint}>
                 • Provide, maintain, and improve our services
               </Text>
@@ -69,26 +92,32 @@ export default function PrivacyAndPolicy() {
                 • Process transactions and send related information
               </Text>
               <Text style={styles.bulletPoint}>
-                • Send you technical notices, updates, and support messages
+                • Send technical notices, updates, and support messages
               </Text>
               <Text style={styles.bulletPoint}>
                 • Respond to your comments, questions, and requests
               </Text>
               <Text style={styles.bulletPoint}>
-                • Monitor and analyze trends, usage, and activities
+                • Monitor and analyze usage and app performance
               </Text>
               <Text style={styles.bulletPoint}>
                 • Personalize and improve your experience
               </Text>
             </View>
 
+            {/* 4. Information Sharing */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>4. Information Sharing and Disclosure</Text>
-              <Text style={styles.sectionText}>
-                We do not sell, trade, or rent your personal information to third parties. We may share your information only in the following circumstances:
+              <Text style={styles.sectionTitle}>
+                4. Information Sharing and Disclosure
               </Text>
+              <Text style={styles.sectionText}>
+                We do not sell, trade, or rent your personal information to
+                third parties. We may share your information only in the
+                following circumstances:
+              </Text>
+
               <Text style={styles.bulletPoint}>
-                • With service providers who assist us in operating our app
+                • With service providers who help operate our app
               </Text>
               <Text style={styles.bulletPoint}>
                 • When required by law or to protect our rights
@@ -101,57 +130,81 @@ export default function PrivacyAndPolicy() {
               </Text>
             </View>
 
+            {/* 5. AI Processing */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>5. Data Security</Text>
+              <Text style={styles.sectionTitle}>
+                5. AI Processing and Generated Content
+              </Text>
               <Text style={styles.sectionText}>
-                We implement appropriate technical and organizational security measures to protect your personal information. However, no method of transmission over the internet or electronic storage is 100% secure, and we cannot guarantee absolute security.
+                Dub NXT uses artificial intelligence to generate characters,
+                voices, dubbed videos, and translations. AI-generated content
+                may be fictional or inaccurate and does not represent real
+                people. AI voices are not intended to imitate or impersonate
+                real individuals.
               </Text>
             </View>
 
+            {/* 6. Data Security */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>6. Your Rights and Choices</Text>
+              <Text style={styles.sectionTitle}>6. Data Security</Text>
+              <Text style={styles.sectionText}>
+                We implement appropriate technical and organizational measures
+                to protect your personal information. However, no method of
+                transmission or storage is 100% secure.
+              </Text>
+            </View>
+
+            {/* 7. Your Rights */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>7. Your Rights and Choices</Text>
               <Text style={styles.sectionText}>
                 You have the right to:
               </Text>
+
               <Text style={styles.bulletPoint}>
                 • Access and receive a copy of your personal data
               </Text>
               <Text style={styles.bulletPoint}>
-                • Rectify inaccurate or incomplete data
+                • Correct inaccurate or incomplete data
               </Text>
               <Text style={styles.bulletPoint}>
                 • Request deletion of your personal data
-              </Text>
-              <Text style={styles.bulletPoint}>
-                • Object to or restrict processing of your data
               </Text>
               <Text style={styles.bulletPoint}>
                 • Withdraw consent at any time
               </Text>
             </View>
 
+            {/* 8. Children */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>7. Children's Privacy</Text>
+              <Text style={styles.sectionTitle}>8. Children&apos;s Privacy</Text>
               <Text style={styles.sectionText}>
-                Our services are not intended for children under the age of 13. We do not knowingly collect personal information from children under 13. If you believe we have collected information from a child under 13, please contact us immediately.
+                Our services are intended for users aged 13 and older. We do
+                not knowingly collect personal information from children under
+                13.
               </Text>
             </View>
 
+            {/* 9. Changes */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>8. Changes to This Privacy Policy</Text>
+              <Text style={styles.sectionTitle}>
+                9. Changes to This Privacy Policy
+              </Text>
               <Text style={styles.sectionText}>
-                We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date. You are advised to review this Privacy Policy periodically for any changes.
+                We may update this Privacy Policy from time to time. Changes
+                will be reflected by updating the &quot;Last Updated&quot; date.
               </Text>
             </View>
 
+            {/* 10. Contact */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>9. Contact Us</Text>
+              <Text style={styles.sectionTitle}>10. Contact Us</Text>
               <Text style={styles.sectionText}>
-                If you have any questions about this Privacy Policy, please contact us at:
+                If you have any questions about this Privacy Policy, please
+                contact us at:
               </Text>
               <Text style={styles.contactInfo}>
-                Email: support@debnxt.com{'\n'}
-               
+                Email: support@dubnxt.ai
               </Text>
             </View>
           </View>
@@ -179,7 +232,6 @@ const styles = StyleSheet.create({
   },
   contentCard: {
     borderRadius: 12,
-
     paddingVertical: metrics.width(24),
   },
   title: {
@@ -226,4 +278,3 @@ const styles = StyleSheet.create({
     marginTop: metrics.width(8),
   },
 });
-

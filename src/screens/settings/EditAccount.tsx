@@ -17,10 +17,10 @@ import { Svgs } from '../../assets/icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, LiquidGlassBackground, Input } from '../../components/ui';
+import { Header, LiquidGlassBackground, Input, ConfirmationModal } from '../../components/ui';
 import { Images } from '../../assets/images';
 import { tokenStorage } from '../../utils/tokenStorage';
-import { useGetProfileQuery } from '../../store/api/authApi';
+import { useGetProfileQuery, useDeleteAccountMutation, useLogoutMutation } from '../../store/api/authApi';
 import { User } from '../../store/api/authApi';
 import { useUpdateProfileMutation } from '../../store/api/usersApi';
 import { showToast } from '../../utils/toast';
@@ -35,6 +35,9 @@ export default function EditAccount() {
   const route = useRoute<RouteProp<RootStackParamList, 'EditAccount'>>();
   const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
   const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
+  const [deleteAccount, { isLoading: isDeleting }] = useDeleteAccountMutation();
+  const [logout] = useLogoutMutation();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Form state
   const [firstName, setFirstName] = useState('');
@@ -138,6 +141,47 @@ export default function EditAccount() {
     });
   };
 
+  const handleDeleteAccount = async () => {
+    // Get userId - check both id and _id properties
+    const userId = (user as any)?._id || user?.id;
+    
+    if (!userId) {
+      showToast.error('Error', 'User information not available');
+      return;
+    }
+
+    try {
+      await deleteAccount(userId).unwrap();
+
+      // Clear stored data
+      await tokenStorage.clearAll();
+
+      // Logout from server (optional, account is already deleted)
+      try {
+        await logout().unwrap();
+      } catch (logoutError) {
+        // Ignore logout errors since account is already deleted
+        console.log('Logout error (ignored):', logoutError);
+      }
+
+      showToast.success('Account Deleted', 'Your account has been permanently deleted');
+
+      // Navigate to welcome screen
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Welcome' }],
+      });
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      const errorMessage =
+        error?.data?.message ||
+        error?.message ||
+        'Failed to delete account. Please try again.';
+      showToast.error('Deletion Failed', errorMessage);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -221,6 +265,26 @@ export default function EditAccount() {
           style={styles.saveButton}
           fullWidth
           disabled={isUpdating}
+        />
+
+        {/* Delete Account Button */}
+        {/* <PrimaryButton
+          title={isDeleting ? 'Deleting...' : 'Delete Account'}
+          onPress={() => setShowDeleteConfirm(true)}
+          variant="secondary"
+          style={styles.deleteButton}
+          fullWidth
+          disabled={isDeleting || isUpdating}
+        /> */}
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          visible={showDeleteConfirm}
+          text="Are you sure you want to delete your account? This action cannot be undone. All your data, projects, and subscriptions will be permanently deleted."
+          acceptButtonText="Delete Account"
+          cancelButtonText="Cancel"
+          onAccept={handleDeleteAccount}
+          onCancel={() => setShowDeleteConfirm(false)}
         />
       </SafeAreaView>
     </ScreenBackground>
@@ -312,6 +376,9 @@ const styles = StyleSheet.create({
     color: colors.subtitle,
   },
   saveButton: {
+    marginBottom: metrics.width(15),
+  },
+  deleteButton: {
     marginBottom: metrics.width(25),
   },
 });
