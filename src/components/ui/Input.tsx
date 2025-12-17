@@ -393,7 +393,6 @@ const styles = StyleSheet.create({
     },
     backgroundContainer: { 
         borderRadius: 12,
-        overflow: 'visible',
     },
     labelContainer: {
         flexDirection: 'row',
