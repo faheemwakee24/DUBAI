@@ -93,15 +93,22 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            // Release keystore for Play Store uploads
+            // Keystore file is expected at android/app/my-upload-key.keystore
+            storeFile file('my-upload-key.keystore')
+            storePassword 'android'
+            keyAlias 'my-upload-key-alias'
+            keyPassword 'android'
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Play Store release build, signed with upload keystore
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }

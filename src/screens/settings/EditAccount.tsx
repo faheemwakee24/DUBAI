@@ -268,14 +268,14 @@ export default function EditAccount() {
         />
 
         {/* Delete Account Button */}
-        {/* <PrimaryButton
+         <PrimaryButton
           title={isDeleting ? 'Deleting...' : 'Delete Account'}
           onPress={() => setShowDeleteConfirm(true)}
           variant="secondary"
           style={styles.deleteButton}
           fullWidth
           disabled={isDeleting || isUpdating}
-        /> */}
+        /> 
 
         {/* Delete Confirmation Modal */}
         <ConfirmationModal
