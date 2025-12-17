@@ -107,14 +107,14 @@ export default function UploadVedio() {
           <Header
             title="Video Dubbing"
             showBackButton
-            // RigthIcon={
-            //   <TouchableOpacity onPress={()=>navigation.navigate('VideoHistory')}>
-            //     <Svgs.HistoryIcon
-            //       height={metrics.width(20)}
-            //       width={metrics.width(20)}
-            //     />
-            //   </TouchableOpacity>
-            // }
+          // RigthIcon={
+          //   <TouchableOpacity onPress={()=>navigation.navigate('VideoHistory')}>
+          //     <Svgs.HistoryIcon
+          //       height={metrics.width(20)}
+          //       width={metrics.width(20)}
+          //     />
+          //   </TouchableOpacity>
+          // }
           />
           <LiquidGlassBackground style={styles.liquidCotaier}>
             <View style={styles.imageContainer}>
@@ -122,9 +122,6 @@ export default function UploadVedio() {
               {!selectedVideo && (
                 <>
                   <Text style={styles.title}>Upload your Video</Text>
-                  <Text style={styles.subtitle}>
-                    Drag and drop or click to browse
-                  </Text>
                 </>
               )}
               {selectedVideo && (
@@ -290,8 +287,8 @@ const styles = StyleSheet.create({
     fontSize: metrics.width(14),
     color: colors.white,
     textAlign: 'center',
-    maxWidth:'80%',
-    alignSelf:'center',
+    maxWidth: '80%',
+    alignSelf: 'center',
   },
   videoMetaRow: {
     flexDirection: 'row',

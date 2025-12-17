@@ -29,12 +29,55 @@ function App() {
       console.error('Failed to initialize push notifications:', error);
     });
 
-    // Check for CodePush updates and auto-install silently
-    // CodePush.sync({
-    //   installMode: CodePush.InstallMode.IMMEDIATE,
-    // }).catch((error) => {
-    //   console.error('CodePush sync error:', error);
-    // });
+    // Explicitly sync CodePush updates for Android
+    // The HOC handles it, but explicit sync ensures it works
+    codePush.sync(
+      {
+        installMode: codePush.InstallMode.IMMEDIATE,
+        mandatoryInstallMode: codePush.InstallMode.IMMEDIATE,
+      },
+      (status) => {
+        console.log('CodePush sync status:', status);
+        switch (status) {
+          case codePush.SyncStatus.CHECKING_FOR_UPDATE:
+            console.log('CodePush: Checking for updates...');
+            break;
+          case codePush.SyncStatus.DOWNLOADING_PACKAGE:
+            console.log('CodePush: Downloading package...');
+            break;
+          case codePush.SyncStatus.INSTALLING_UPDATE:
+            console.log('CodePush: Installing update...');
+            break;
+          case codePush.SyncStatus.UP_TO_DATE:
+            console.log('CodePush: App is up to date');
+            break;
+          case codePush.SyncStatus.UPDATE_INSTALLED:
+            console.log('CodePush: Update installed, restarting...');
+            break;
+        }
+      },
+      (progress) => {
+        console.log('CodePush download progress:', progress);
+      }
+    ).catch((error) => {
+      console.error('CodePush sync error:', error);
+    });
+
+    // Check current update metadata
+    codePush.getUpdateMetadata().then((update) => {
+      if (update) {
+        console.log('CodePush: Current update metadata:', {
+          label: update.label,
+          description: update.description,
+          isMandatory: update.isMandatory,
+          appVersion: update.appVersion,
+        });
+      } else {
+        console.log('CodePush: No update installed, using binary version');
+      }
+    }).catch((error) => {
+      console.error('CodePush: Error getting update metadata:', error);
+    });
 
     // Show splash screen for minimum duration, then hide it
     const timer = setTimeout(() => {

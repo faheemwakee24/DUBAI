@@ -260,10 +260,10 @@ export default function Settings() {
 
             {/* Preferences Section */}
             {/* <View style={styles.sectionContainer}> */}
-              {/* <Text style={styles.sectionTitle}>Preferences</Text> */}
+            {/* <Text style={styles.sectionTitle}>Preferences</Text> */}
 
-              {/* Language Option */}
-              {/* <LiquidGlassBackground style={styles.optionCard}>
+            {/* Language Option */}
+            {/* <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={handleLanguage}
@@ -274,7 +274,7 @@ export default function Settings() {
                 />
               </TouchableOpacity>
             </LiquidGlassBackground> */}
-              {/* <LiquidGlassBackground style={styles.optionCard}>
+            {/* <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={()=>navigation.navigate('AvatarCustomization')}
@@ -285,7 +285,7 @@ export default function Settings() {
                 />
               </TouchableOpacity>
             </LiquidGlassBackground> */}
-              {/* <LiquidGlassBackground style={styles.optionCard}>
+            {/* <LiquidGlassBackground style={styles.optionCard}>
               <TouchableOpacity
                 style={styles.optionRow}
                 onPress={()=>   {
@@ -311,8 +311,8 @@ export default function Settings() {
               </TouchableOpacity>
             </LiquidGlassBackground>   */}
 
-              {/* Notifications Option */}
-              {/* <LiquidGlassBackground style={styles.optionCard}>
+            {/* Notifications Option */}
+            {/* <LiquidGlassBackground style={styles.optionCard}>
                 <View style={styles.optionRow}>
                   <Text style={styles.optionText}>Notifications</Text>
                   <CustomToggle
@@ -570,6 +570,6 @@ const styles = StyleSheet.create({
   },
   logoutButtonContainer: {
     marginTop: metrics.width(25),
-    minHeight:50
+    minHeight: 50
   },
 });
