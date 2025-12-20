@@ -62,6 +62,7 @@ export const API_ENDPOINTS = {
     ME: '/subscriptions/me',
     CHECKOUT: '/subscriptions/checkout',
     CONFIRM: '/subscriptions/confirm',
+    CONFIRM_IOS: '/subscriptions/confirm-ios',
     CANCEL: '/subscriptions/cancel',
     DETAIL: (id: string) => `/subscriptions/${id}`,
     CREATE: '/subscriptions',

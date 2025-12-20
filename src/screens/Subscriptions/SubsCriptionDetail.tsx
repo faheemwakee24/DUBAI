@@ -9,6 +9,7 @@ import {
   Linking,
   Alert,
   AppState,
+  Platform,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -20,7 +21,7 @@ import { Svgs } from '../../assets/icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header, LiquidGlassBackground } from '../../components/ui';
+import { Header, LiquidGlassBackground, Shimmer } from '../../components/ui';
 import { Images } from '../../assets/images';
 import { useStripe } from '@stripe/stripe-react-native';
 import { showToast } from '../../utils/toast';
@@ -35,7 +36,9 @@ import {
   useCheckoutSubscriptionMutation,
   useCancelSubscriptionMutation,
   useConfirmSubscriptionMutation,
+  useConfirmIOSSubscriptionMutation,
 } from '../../store/api/subscriptionsApi';
+import { useIOSPurchases } from '../../hooks/useIOSPurchases';
 
 type SubsCriptionDetailRouteProp = RouteProp<
   RootStackParamList,
@@ -45,6 +48,13 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   'SubsCriptionDetail'
 >;
+// Map plan keys to iOS product IDs
+const PLAN_TO_IOS_PRODUCT_ID: Record<string, string> = {
+  'basic': 'com.dubnnxt.basic.monthly',
+  'creator': 'com.dubnnxt.creator.monthly',
+  'business_pro': 'com.dubnnxt.business.monthly',
+  // Add more mappings as needed
+};
 
 export default function SubsCriptionDetail() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -68,9 +78,56 @@ export default function SubsCriptionDetail() {
   const [checkoutSubscription] = useCheckoutSubscriptionMutation();
   const [cancelSubscription] = useCancelSubscriptionMutation();
   const [confirmSubscription] = useConfirmSubscriptionMutation();
+  const [confirmIOSSubscription] = useConfirmIOSSubscriptionMutation();
   const [createPaymentIntent] = useCreatePaymentIntentMutation();
   const [confirmPaymentIntent] = useConfirmPaymentMutation();
   console.log('mySubscription', JSON.stringify(mySubscription));
+
+  // iOS IAP hooks
+  const {
+    products: iosProducts,
+    isLoading: isLoadingIOSProducts,
+    fetchProducts: fetchIOSProducts,
+    purchaseProduct: purchaseIOSProduct,
+    getProductPrice: getIOSProductPrice,
+    getProductCurrency: getIOSProductCurrency,
+  } = useIOSPurchases();
+
+  // Get iOS product ID for selected plan
+  const iosProductId = useMemo(() => {
+    if (!selectedPlan?.key) return null;
+    return selectedPlan.iosProductId || PLAN_TO_IOS_PRODUCT_ID[selectedPlan.key] || null;
+  }, [selectedPlan]);
+console.log('iosProductId', iosProductId);
+
+  // Check if we should show loading for price (iOS only, when fetching)
+  const isPriceLoading = Platform.OS === 'ios' && iosProductId && isLoadingIOSProducts;
+
+  // Fetch iOS products when plan is selected (iOS only)
+  useEffect(() => {
+    if (Platform.OS === 'ios' && iosProductId) {
+      fetchIOSProducts([iosProductId]);
+    }
+  }, [iosProductId, fetchIOSProducts]);
+
+  // Get the price to display (iOS price if available, otherwise backend price)
+  // iOS price uses displayPrice which already includes currency symbol from product.currency
+  // e.g., "$38.99" for USD, "€34.99" for EUR, etc.
+  const displayPrice = useMemo(() => {
+    if (Platform.OS === 'ios' && iosProductId) {
+      const iosPrice = getIOSProductPrice(iosProductId);
+      if (iosPrice) {
+        // displayPrice already includes currency formatted according to product.currency
+        // This ensures we show the price in the currency the product was fetched with
+        return iosPrice;
+      }
+    }
+    // Fallback to backend price (assumes USD for now)
+    if (selectedPlan?.amount === 0) {
+      return '$0';
+    }
+    return selectedPlan?.amount ? `$${(selectedPlan.amount / 100).toFixed(2)}` : '$0';
+  }, [Platform.OS, iosProductId, getIOSProductPrice, selectedPlan]);
 
   // Confirm subscription after returning from URL
   const handleConfirmSubscriptionAfterReturn = useCallback(async () => {
@@ -151,10 +208,7 @@ export default function SubsCriptionDetail() {
 
     const currentPlanName = currentPlan || 'Free';
     const newPlanName = selectedPlan.name;
-    const monthlyCost =
-      selectedPlan.amount === 0
-        ? '$0'
-        : `$${(selectedPlan.amount / 100).toFixed(2)}`;
+    const monthlyCost = displayPrice;
 
     return {
       currentPlanName,
@@ -164,7 +218,7 @@ export default function SubsCriptionDetail() {
         (typeof selectedPlan.amount === 'number' ? selectedPlan.amount : 0) >
         (typeof currentPlan === 'number' ? currentPlan : 0),
     };
-  }, [selectedPlan, currentPlan]);
+  }, [selectedPlan, currentPlan, displayPrice]);
 
   // Handle cancel subscription for current paid plan
   const handleCancelSubscription = () => {
@@ -233,6 +287,57 @@ export default function SubsCriptionDetail() {
 
     setIsProcessing(true);
     try {
+      // iOS: Use in-app purchase flow
+      if (Platform.OS === 'ios' && iosProductId) {
+        try {
+          // Purchase the product through iOS IAP
+          const purchase = await purchaseIOSProduct(iosProductId);
+          
+          // Get receipt data for iOS (if available)
+          // For iOS, we use purchaseToken which contains the receipt
+          const receiptData = purchase.purchaseToken || purchase.id || '';
+          
+          // Get transaction ID - for iOS, check if it's PurchaseIOS type
+          let transactionId = purchase.id;
+          if (purchase.platform === 'ios' && 'originalTransactionIdentifierIOS' in purchase) {
+            transactionId = (purchase as any).originalTransactionIdentifierIOS || purchase.id;
+          }
+          
+          // Confirm with backend
+          const result = await confirmIOSSubscription({
+            planKey: selectedPlan.key,
+            transactionReceipt: receiptData,
+            transactionId: transactionId || '',
+            productId: purchase.productId,
+          }).unwrap();
+
+          console.log('iOS subscription confirmed:', JSON.stringify(result));
+
+          const planName = result.plan?.name || 'Subscription';
+          showToast.success('Success', `${planName} activated successfully!`);
+
+          // Navigate back after success
+          setTimeout(() => {
+            navigation.goBack();
+          }, 1500);
+        } catch (error: any) {
+          // Handle user cancellation gracefully
+          if (error?.code === 'E_USER_CANCELLED' || error?.message?.includes('cancel')) {
+            showToast.info('Info', 'Purchase was cancelled');
+          } else {
+            const errorMessage =
+              error?.data?.message ||
+              error?.message ||
+              'Failed to process subscription. Please try again.';
+            showToast.error('Error', errorMessage);
+          }
+        } finally {
+          setIsProcessing(false);
+        }
+        return;
+      }
+
+      // Android/Web: Use Stripe checkout flow
       // Step 1: Checkout subscription using planKey
       const checkoutResult = await checkoutSubscription({
         planKey: selectedPlan.key,
@@ -284,7 +389,7 @@ export default function SubsCriptionDetail() {
               </Text>
               <Text style={styles.subTitle}>
                 {subscriptionInfo.isUpgrade
-                  ? `You're upgrading from ${subscriptionInfo.currentPlanName} to ${subscriptionInfo.newPlanName}. You'll be charged ${subscriptionInfo.monthlyCost} per ${selectedPlan.interval}.`
+                  ? `You're upgrading from ${subscriptionInfo.currentPlanName} to ${subscriptionInfo.newPlanName}. You'll be charged per ${selectedPlan.interval}.`
                   : `You're changing from ${subscriptionInfo.currentPlanName} to ${subscriptionInfo.newPlanName}.`}
               </Text>
               <LiquidGlassBackground style={styles.liquidBackgroundContainer}>
@@ -303,9 +408,17 @@ export default function SubsCriptionDetail() {
                   </View>
                   <View style={styles.roww}>
                     <Text style={styles.currentPlanTitle}>Monthly Cost:</Text>
-                    <Text style={styles.currentPlanValue}>
-                      {subscriptionInfo.monthlyCost}
-                    </Text>
+                    {isPriceLoading ? (
+                      <Shimmer
+                        width={metrics.width(80)}
+                        height={metrics.width(18)}
+                        borderRadius={4}
+                      />
+                    ) : (
+                      <Text style={styles.currentPlanValue}>
+                        {subscriptionInfo.monthlyCost}
+                      </Text>
+                    )}
                   </View>
                   {selectedPlan.notes && (
                     <View style={styles.notesContainer}>
@@ -325,20 +438,44 @@ export default function SubsCriptionDetail() {
         {!isCurrentPlan ? (
           // Only show button if plan is not free
           selectedPlan?.amount !== 0 && (
-            <PrimaryButton
-              title="Confirm & Pay"
-              onPress={handleConfirmSubscription}
-              variant="primary"
-              style={{
-                marginBottom: metrics.width(25),
-              }}
-              loading={isProcessing}
-              disabled={!selectedPlan || isProcessing}
-            />
+            <>
+              {/* App Store Subscription Terms - iOS only */}
+              {Platform.OS === 'ios' && (
+                <View style={styles.termsContainer}>
+                  <Text style={styles.termsText}>
+                    • Payment will be charged to your Apple ID account.{'\n'}
+                    • Subscription automatically renews unless canceled at least 24 hours before the end of the current period.{'\n'}
+                    • Account will be charged for renewal within 24 hours prior to the end of the current period.{'\n'}
+                    • Manage or cancel your subscription in Apple ID Settings.
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      Linking.openURL('https://apps.apple.com/account/subscriptions').catch(err => {
+                        console.error('Error opening subscription management:', err);
+                        showToast.error('Error', 'Unable to open subscription management');
+                      });
+                    }}
+                    style={styles.manageLinkContainer}
+                  >
+                    <Text style={styles.manageLinkText}>Manage Subscription</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              <PrimaryButton
+                title="Confirm & Pay"
+                onPress={handleConfirmSubscription}
+                variant="primary"
+                style={{
+                  marginBottom: metrics.width(25),
+                }}
+                loading={isProcessing}
+                disabled={!selectedPlan || isProcessing}
+              />
+            </>
           )
         ) : (
           <>
-            {selectedPlan && selectedPlan.amount > 0 && (
+            {selectedPlan && selectedPlan.amount > 0 &&Platform.OS === 'android' && (
               <PrimaryButton
                 title="Cancel Subscription"
                 onPress={handleCancelSubscription}
@@ -598,5 +735,24 @@ const styles = StyleSheet.create({
     fontSize: metrics.width(13),
     color: colors.subtitle,
     lineHeight: metrics.width(18),
+  },
+  termsContainer: {
+    marginBottom: metrics.width(20),
+    paddingHorizontal: metrics.width(4),
+  },
+  termsText: {
+    fontFamily: FontFamily.spaceGrotesk.regular,
+    fontSize: metrics.width(12),
+    color: colors.subtitle,
+    lineHeight: metrics.width(18),
+  },
+  manageLinkContainer: {
+    
+  },
+  manageLinkText: {
+    fontFamily: FontFamily.spaceGrotesk.medium,
+    fontSize: metrics.width(13),
+    color: colors.primary,
+    textDecorationLine: 'underline',
   },
 });

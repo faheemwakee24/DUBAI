@@ -19,6 +19,7 @@ export interface SubscriptionPlan {
   notes: string;
   stripeProductId?: string;
   stripePriceId?: string;
+  iosProductId?: string; // iOS App Store product ID
   createdAt: string;
   updatedAt: string;
   __v: number;
@@ -81,6 +82,24 @@ export interface ConfirmSubscriptionResponse {
   nextPaymentDate: string;
 }
 
+// iOS Confirm Subscription Request
+export interface ConfirmIOSSubscriptionRequest {
+  planKey: string;
+  transactionReceipt: string;
+  transactionId: string;
+  productId: string;
+}
+
+// iOS Confirm Subscription Response
+export interface ConfirmIOSSubscriptionResponse {
+  plan: SubscriptionPlan;
+  status: 'active' | 'canceled' | 'past_due' | 'unpaid' | 'trialing';
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  daysRemaining: number;
+  nextPaymentDate: string;
+}
+
 /**
  * Subscriptions API slice
  */
@@ -133,6 +152,16 @@ export const subscriptionsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Subscription'],
     }),
+
+    // Confirm iOS Subscription
+    confirmIOSSubscription: builder.mutation<ConfirmIOSSubscriptionResponse, ConfirmIOSSubscriptionRequest>({
+      query: body => ({
+        url: API_ENDPOINTS.SUBSCRIPTION.CONFIRM_IOS,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Subscription'],
+    }),
   }),
 });
 
@@ -143,5 +172,6 @@ export const {
   useCheckoutSubscriptionMutation,
   useCancelSubscriptionMutation,
   useConfirmSubscriptionMutation,
+  useConfirmIOSSubscriptionMutation,
 } = subscriptionsApi;
 
