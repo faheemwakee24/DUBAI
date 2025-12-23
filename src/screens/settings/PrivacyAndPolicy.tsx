@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import { FontFamily } from '../../constants/fonts';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,6 +8,9 @@ import colors from '../../constants/colors';
 import { Header } from '../../components/ui';
 
 export default function PrivacyAndPolicy() {
+  // IMPORTANT: fixed date for Play Store reviewers
+  const LAST_UPDATED = 'December 2025';
+
   return (
     <ScreenBackground style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -25,186 +23,186 @@ export default function PrivacyAndPolicy() {
         >
           <View style={styles.contentCard}>
             <Text style={styles.title}>Privacy Policy</Text>
-            <Text style={styles.lastUpdated}>
-              Last Updated: {new Date().toLocaleDateString()}
-            </Text>
+            <Text style={styles.lastUpdated}>Last Updated: {LAST_UPDATED}</Text>
 
-            {/* 1. Introduction */}
+            {/* 1. Overview */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>1. Introduction</Text>
+              <Text style={styles.sectionTitle}>1. Overview</Text>
               <Text style={styles.sectionText}>
-                Welcome to Dub NXT. We are committed to protecting your privacy
-                and ensuring you have a positive experience on our platform.
-                This Privacy Policy explains how we collect, use, and safeguard
-                your information when you use our mobile application, including
-                AI-powered features.
+                Dub NXT (“we”, “our”, or “us”) respects your privacy. This Privacy
+                Policy explains how we collect, use, and protect your information
+                when you use the Dub NXT mobile application and its AI-powered
+                features.
               </Text>
             </View>
 
             {/* 2. Information We Collect */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>2. Information We Collect</Text>
-              <Text style={styles.sectionText}>
-                We collect information that you provide directly to us,
-                including:
-              </Text>
 
               <Text style={styles.bulletPoint}>
-                • Account information (name, email address, password)
+                • Account information (name, email address, login method)
               </Text>
               <Text style={styles.bulletPoint}>
-                • Profile information and preferences
+                • User IDs (internal identifiers used to manage accounts)
               </Text>
               <Text style={styles.bulletPoint}>
-                • Images, videos, audio, and text prompts uploaded by users
-              </Text>
-              <Text style={styles.bulletPoint}>
-                • Content you create, upload, or share through our services
-              </Text>
-              <Text style={styles.bulletPoint}>
-                • Payment and billing information
+                • User-generated content such as images, videos, and text prompts
+                submitted for processing
               </Text>
 
               <Text style={styles.sectionText}>
-                We also automatically collect certain information about your
-                device and how you interact with our app, including device
-                identifiers, usage data, and technical information.
+                We may also collect limited device information (such as device or
+                installation identifiers and push notification tokens) required
+                for app functionality, security, and notifications.
               </Text>
 
               <Text style={styles.sectionText}>
-                Uploaded content may be processed using AI technologies to
-                generate characters, voices, dubbed videos, or translations.
-                Content is used only to provide requested features.
+                Dub NXT does not require users to upload audio files. Audio
+                available in the app may be provided from our services and
+                selected by the user.
               </Text>
             </View>
 
-            {/* 3. How We Use Your Information */}
+            {/* 3. How We Use Information */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>3. How We Use Your Information</Text>
-              <Text style={styles.sectionText}>
-                We use the information we collect to:
-              </Text>
 
               <Text style={styles.bulletPoint}>
-                • Provide, maintain, and improve our services
+                • Provide core app functionality (image-based speech and video
+                translation)
               </Text>
               <Text style={styles.bulletPoint}>
-                • Process transactions and send related information
+                • Authenticate users via Google, Apple, or Email
               </Text>
               <Text style={styles.bulletPoint}>
-                • Send technical notices, updates, and support messages
+                • Manage subscriptions and account status
               </Text>
               <Text style={styles.bulletPoint}>
-                • Respond to your comments, questions, and requests
+                • Send service-related notifications (if enabled)
               </Text>
               <Text style={styles.bulletPoint}>
-                • Monitor and analyze usage and app performance
+                • Maintain security and prevent fraud
               </Text>
-              <Text style={styles.bulletPoint}>
-                • Personalize and improve your experience
+
+              <Text style={styles.sectionText}>
+                We do not sell personal data or use it for advertising.
               </Text>
             </View>
 
-            {/* 4. Information Sharing */}
+            {/* 4. AI & Media Processing */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                4. Information Sharing and Disclosure
+              <Text style={styles.sectionTitle}>4. AI & Media Processing</Text>
+              <Text style={styles.sectionText}>
+                When you upload images or videos or provide text prompts, your
+                content may be transmitted securely to our backend and processed
+                using third-party AI services solely to deliver the requested
+                functionality.
               </Text>
               <Text style={styles.sectionText}>
-                We do not sell, trade, or rent your personal information to
-                third parties. We may share your information only in the
-                following circumstances:
-              </Text>
-
-              <Text style={styles.bulletPoint}>
-                • With service providers who help operate our app
-              </Text>
-              <Text style={styles.bulletPoint}>
-                • When required by law or to protect our rights
-              </Text>
-              <Text style={styles.bulletPoint}>
-                • In connection with a business transfer or merger
-              </Text>
-              <Text style={styles.bulletPoint}>
-                • With your consent or at your direction
+                Uploaded content is processed temporarily and is not used for
+                advertising or profiling.
               </Text>
             </View>
 
-            {/* 5. AI Processing */}
+            {/* 5. Payments */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                5. AI Processing and Generated Content
+              <Text style={styles.sectionTitle}>5. Payments & Subscriptions</Text>
+              <Text style={styles.sectionText}>
+                Payments and subscriptions are processed by Stripe. Checkout is
+                opened in the user’s external browser. Dub NXT does not collect
+                or store payment card details within the app.
               </Text>
               <Text style={styles.sectionText}>
-                Dub NXT uses artificial intelligence to generate characters,
-                voices, dubbed videos, and translations. AI-generated content
-                may be fictional or inaccurate and does not represent real
-                people. AI voices are not intended to imitate or impersonate
-                real individuals.
+                Your email address may be shared with Stripe solely to initiate
+                checkout and manage subscriptions.
               </Text>
             </View>
 
-            {/* 6. Data Security */}
+            {/* 6. Data Sharing */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>6. Data Security</Text>
+              <Text style={styles.sectionTitle}>6. Data Sharing</Text>
               <Text style={styles.sectionText}>
-                We implement appropriate technical and organizational measures
-                to protect your personal information. However, no method of
-                transmission or storage is 100% secure.
+                We may share limited information with trusted service providers
+                such as authentication providers, AI processing services, push
+                notification providers, and our payment processor, only as
+                necessary to provide the app’s functionality and comply with
+                legal obligations.
+              </Text>
+              <Text style={styles.sectionText}>
+                We do not sell or rent personal information.
               </Text>
             </View>
 
-            {/* 7. Your Rights */}
+            {/* 7. Security */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>7. Your Rights and Choices</Text>
+              <Text style={styles.sectionTitle}>7. Data Security</Text>
               <Text style={styles.sectionText}>
-                You have the right to:
+                We use reasonable administrative, technical, and organizational
+                safeguards to protect your information. All data is encrypted in
+                transit using HTTPS/TLS.
               </Text>
+            </View>
+
+            {/* 8. Data Retention */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>8. Data Retention</Text>
+              <Text style={styles.sectionText}>
+                Account data is retained while your account is active. Uploaded
+                images, videos, and prompts are processed temporarily and removed
+                when no longer required for the requested feature, unless
+                retention is required by law.
+              </Text>
+            </View>
+
+            {/* 9. User Rights & Account Deletion */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>9. Your Rights and Choices</Text>
 
               <Text style={styles.bulletPoint}>
-                • Access and receive a copy of your personal data
+                • Access or update your account information
               </Text>
               <Text style={styles.bulletPoint}>
-                • Correct inaccurate or incomplete data
+                • Delete your account and associated data directly from within
+                the app using the “Delete Account” option
               </Text>
               <Text style={styles.bulletPoint}>
-                • Request deletion of your personal data
+                • Request account deletion via our website if you no longer have
+                access to the app
               </Text>
               <Text style={styles.bulletPoint}>
-                • Withdraw consent at any time
+                • Disable push notifications through your device settings
               </Text>
             </View>
 
-            {/* 8. Children */}
+            {/* 10. Children */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>8. Children&apos;s Privacy</Text>
+              <Text style={styles.sectionTitle}>10. Children’s Privacy</Text>
               <Text style={styles.sectionText}>
-                Our services are intended for users aged 13 and older. We do
-                not knowingly collect personal information from children under
-                13.
+                Dub NXT is intended for users aged 13 and older. We do not
+                knowingly collect personal information from children under 13.
               </Text>
             </View>
 
-            {/* 9. Changes */}
+            {/* 11. Policy Updates */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                9. Changes to This Privacy Policy
-              </Text>
+              <Text style={styles.sectionTitle}>11. Changes to This Policy</Text>
               <Text style={styles.sectionText}>
-                We may update this Privacy Policy from time to time. Changes
-                will be reflected by updating the &quot;Last Updated&quot; date.
+                We may update this Privacy Policy from time to time. Changes will
+                be reflected by updating the “Last Updated” date above.
               </Text>
             </View>
 
-            {/* 10. Contact */}
+            {/* 12. Contact */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>10. Contact Us</Text>
+              <Text style={styles.sectionTitle}>12. Contact Us</Text>
               <Text style={styles.sectionText}>
-                If you have any questions about this Privacy Policy, please
-                contact us at:
+                If you have questions about this Privacy Policy or your data,
+                contact us:
               </Text>
-              <Text style={styles.contactInfo}>
-                Email: support@dubnxt.ai
+              <Text style={styles.contactInfo}>support@dubnxt.ai</Text>
+              <Text style={[styles.sectionText, { marginTop: metrics.width(8) }]}>
+                Account deletion (web): https://dubnxt.ai/deleteaccount
               </Text>
             </View>
           </View>
@@ -215,16 +213,9 @@ export default function PrivacyAndPolicy() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    marginHorizontal: metrics.width(25),
-  },
-  scrollView: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+  safeArea: { flex: 1, marginHorizontal: metrics.width(25) },
+  scrollView: { flex: 1 },
   contentContainer: {
     flexGrow: 1,
     paddingTop: metrics.width(20),
@@ -246,9 +237,7 @@ const styles = StyleSheet.create({
     color: colors.subtitle,
     marginBottom: metrics.width(24),
   },
-  section: {
-    marginBottom: metrics.width(24),
-  },
+  section: { marginBottom: metrics.width(24) },
   sectionTitle: {
     fontFamily: FontFamily.spaceGrotesk.bold,
     fontSize: metrics.width(18),
