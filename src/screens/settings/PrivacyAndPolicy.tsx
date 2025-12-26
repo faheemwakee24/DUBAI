@@ -8,7 +8,6 @@ import colors from '../../constants/colors';
 import { Header } from '../../components/ui';
 
 export default function PrivacyAndPolicy() {
-  // IMPORTANT: fixed date for Play Store reviewers
   const LAST_UPDATED = 'December 2025';
 
   return (
@@ -90,7 +89,7 @@ export default function PrivacyAndPolicy() {
               </Text>
             </View>
 
-            {/* 4. AI & Media Processing */}
+            {/* 4. AI & Media Processing (UPDATED) */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>4. AI & Media Processing</Text>
               <Text style={styles.sectionText}>
@@ -100,8 +99,9 @@ export default function PrivacyAndPolicy() {
                 functionality.
               </Text>
               <Text style={styles.sectionText}>
-                Uploaded content is processed temporarily and is not used for
-                advertising or profiling.
+                Your uploaded images/videos and generated outputs may be stored in
+                your account so you can view them later inside the app. We do not
+                use your content for advertising or profiling.
               </Text>
             </View>
 
@@ -144,14 +144,20 @@ export default function PrivacyAndPolicy() {
               </Text>
             </View>
 
-            {/* 8. Data Retention */}
+            {/* 8. Data Retention (UPDATED) */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>8. Data Retention</Text>
               <Text style={styles.sectionText}>
                 Account data is retained while your account is active. Uploaded
-                images, videos, and prompts are processed temporarily and removed
-                when no longer required for the requested feature, unless
-                retention is required by law.
+                images, videos, prompts, and generated outputs may be stored in
+                your account so you can access them later. We keep this data only
+                as long as needed to provide the service, operate the app, or as
+                required by law.
+              </Text>
+              <Text style={styles.sectionText}>
+                If you delete your account, we will delete associated personal
+                data from our systems unless we must retain certain information
+                for legal, security, or fraud-prevention reasons.
               </Text>
             </View>
 
