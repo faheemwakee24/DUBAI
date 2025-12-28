@@ -128,8 +128,103 @@ export default function TermsAndConditions() {
                 7. Subscriptions and Payments
               </Text>
               <Text style={styles.sectionText}>
-                Paid subscriptions are billed through Apple In-App Purchases
-                and are subject to Apple’s payment policies.
+                Dub NXT offers auto-renewable subscriptions through the Apple App Store. 
+                All payments are processed by Apple and subject to Apple's payment policies.
+              </Text>
+
+              <Text style={styles.subsectionTitle}>7.1 Subscription Plans</Text>
+              <Text style={styles.sectionText}>
+                We offer the following monthly subscription plans:
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Basic Plan - Monthly subscription
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Creator Plan - Monthly subscription
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Business Pro Plan - Monthly subscription
+              </Text>
+              <Text style={styles.sectionText}>
+                Subscription prices are displayed in the app and may vary by region. 
+                Prices are shown in your local currency at the time of purchase.
+              </Text>
+
+              <Text style={styles.subsectionTitle}>7.2 Auto-Renewal</Text>
+              <Text style={styles.sectionText}>
+                Your subscription will automatically renew at the end of each billing 
+                period unless you cancel at least 24 hours before the end of the current 
+                period. Payment will be charged to your Apple ID account at the 
+                confirmation of purchase.
+              </Text>
+              <Text style={styles.sectionText}>
+                Your account will be charged for renewal within 24 hours prior to the 
+                end of the current period. You can manage or cancel your subscription 
+                in your Apple ID account settings.
+              </Text>
+
+              <Text style={styles.subsectionTitle}>7.3 Cancellation</Text>
+              <Text style={styles.sectionText}>
+                You can cancel your subscription at any time through your Apple ID 
+                account settings. To cancel:
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Open Settings on your iOS device
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Tap your name, then tap Subscriptions
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Select Dub NXT and tap Cancel Subscription
+              </Text>
+              <Text style={styles.sectionText}>
+                Cancellation will take effect at the end of the current billing period. 
+                You will continue to have access to subscription features until the end 
+                of the current period. No refunds will be provided for the unused 
+                portion of the current billing period.
+              </Text>
+
+              <Text style={styles.subsectionTitle}>7.4 Refunds</Text>
+              <Text style={styles.sectionText}>
+                Refunds are handled by Apple according to Apple's refund policy. 
+                To request a refund, contact Apple Support or visit:
+              </Text>
+              <Text style={styles.contactInfo}>
+                https://support.apple.com/en-us/HT204084
+              </Text>
+              <Text style={styles.sectionText}>
+                We do not process refunds directly. All refund requests must be 
+                submitted through Apple.
+              </Text>
+
+              <Text style={styles.subsectionTitle}>7.5 Price Changes</Text>
+              <Text style={styles.sectionText}>
+                We reserve the right to change subscription prices at any time. 
+                You will be notified of any price changes at least 30 days in advance. 
+                If you do not wish to accept the new price, you may cancel your 
+                subscription before the new price takes effect. If you continue your 
+                subscription after the price change, you agree to pay the new price.
+              </Text>
+
+              <Text style={styles.subsectionTitle}>7.6 Subscription Features</Text>
+              <Text style={styles.sectionText}>
+                Each subscription plan includes specific features such as:
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Number of videos per week
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Video resolution and quality
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Watermark options
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Access to premium AI features
+              </Text>
+              <Text style={styles.sectionText}>
+                Feature availability may vary by subscription plan. Please refer to 
+                the subscription details in the app for specific plan features.
               </Text>
             </View>
 
@@ -243,6 +338,13 @@ const styles = StyleSheet.create({
     lineHeight: metrics.width(22),
     marginLeft: metrics.width(8),
     marginBottom: metrics.width(4),
+  },
+  subsectionTitle: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    fontSize: metrics.width(16),
+    color: colors.white,
+    marginTop: metrics.width(12),
+    marginBottom: metrics.width(8),
   },
   contactInfo: {
     fontFamily: FontFamily.spaceGrotesk.regular,

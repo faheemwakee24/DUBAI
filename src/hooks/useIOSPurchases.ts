@@ -74,6 +74,7 @@ export const useIOSPurchases = (): UseIOSPurchasesReturn => {
 
   /**
    * Purchase a product
+   * Note: Transaction should be finished AFTER backend confirmation, not here
    */
   const purchaseProduct = useCallback(async (productId: string): Promise<Purchase> => {
     if (Platform.OS !== 'ios') {
@@ -84,8 +85,8 @@ export const useIOSPurchases = (): UseIOSPurchasesReturn => {
 
     try {
       const purchase = await iosPurchaseService.purchaseProduct(productId);
-      // Finish the transaction after successful purchase
-      await iosPurchaseService.finishPurchase(purchase);
+      // DO NOT finish transaction here - it should be finished AFTER backend confirmation
+      // The transaction will be finished in the component after successful backend sync
       return purchase;
     } catch (err: any) {
       console.error('Error purchasing product:', err);

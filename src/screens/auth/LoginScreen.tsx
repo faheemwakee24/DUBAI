@@ -78,6 +78,7 @@ export default function AuthLoginScreen() {
             const nameParts = firebaseUser.displayName?.split(' ') || [];
             const firstName = nameParts[0] || '';
             const lastName = nameParts.slice(1).join(' ') || '';
+console.log('firebaseUser',firebaseUser);
 
             // Then authenticate with your backend API
             const result = await socialAuth({
@@ -119,7 +120,7 @@ export default function AuthLoginScreen() {
             setAppleLoading(true);
             // First, authenticate with Firebase/Apple
             const firebaseUser = await authService.signInWithApple();
-            
+            console.log('firebaseUser',firebaseUser);
             // Extract name parts
             const nameParts = firebaseUser.displayName?.split(' ') || [];
             const firstName = nameParts[0] || '';

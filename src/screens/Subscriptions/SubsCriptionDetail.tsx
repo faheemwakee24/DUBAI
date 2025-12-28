@@ -1,4 +1,10 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+} from 'react';
 import {
   View,
   Text,
@@ -39,6 +45,7 @@ import {
   useConfirmIOSSubscriptionMutation,
 } from '../../store/api/subscriptionsApi';
 import { useIOSPurchases } from '../../hooks/useIOSPurchases';
+import { iosPurchaseService } from '../../services/iosPurchaseService';
 
 type SubsCriptionDetailRouteProp = RouteProp<
   RootStackParamList,
@@ -50,9 +57,9 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 >;
 // Map plan keys to iOS product IDs
 const PLAN_TO_IOS_PRODUCT_ID: Record<string, string> = {
-  'basic': 'com.dubnnxt.basic.monthly',
-  'creator': 'com.dubnnxt.creator.monthly',
-  'business_pro': 'com.dubnnxt.business.monthly',
+  basic: 'com.dubnnxt.basic.monthly',
+  creator: 'com.dubnnxt.creator.monthly',
+  business_pro: 'com.dubnnxt.business.monthly',
   // Add more mappings as needed
 };
 
@@ -96,12 +103,17 @@ export default function SubsCriptionDetail() {
   // Get iOS product ID for selected plan
   const iosProductId = useMemo(() => {
     if (!selectedPlan?.key) return null;
-    return selectedPlan.iosProductId || PLAN_TO_IOS_PRODUCT_ID[selectedPlan.key] || null;
+    return (
+      selectedPlan.iosProductId ||
+      PLAN_TO_IOS_PRODUCT_ID[selectedPlan.key] ||
+      null
+    );
   }, [selectedPlan]);
-console.log('iosProductId', iosProductId);
+  console.log('iosProductId', iosProductId);
 
   // Check if we should show loading for price (iOS only, when fetching)
-  const isPriceLoading = Platform.OS === 'ios' && iosProductId && isLoadingIOSProducts;
+  const isPriceLoading =
+    Platform.OS === 'ios' && iosProductId && isLoadingIOSProducts;
 
   // Fetch iOS products when plan is selected (iOS only)
   useEffect(() => {
@@ -126,7 +138,9 @@ console.log('iosProductId', iosProductId);
     if (selectedPlan?.amount === 0) {
       return '$0';
     }
-    return selectedPlan?.amount ? `$${(selectedPlan.amount / 100).toFixed(2)}` : '$0';
+    return selectedPlan?.amount
+      ? `$${(selectedPlan.amount / 100).toFixed(2)}`
+      : '$0';
   }, [Platform.OS, iosProductId, getIOSProductPrice, selectedPlan]);
 
   // Confirm subscription after returning from URL
@@ -140,16 +154,16 @@ console.log('iosProductId', iosProductId);
       const result = await confirmSubscription({
         sessionId: pendingSessionId,
       }).unwrap();
-      
+
       console.log('Confirm subscription result:', JSON.stringify(result));
 
       // Show success message with subscription details
       const planName = result.plan?.name || 'Subscription';
       showToast.success('Success', `${planName} activated successfully!`);
-      
+
       // Clear pending session ID
       setPendingSessionId(null);
-      
+
       // Navigate back after success
       setTimeout(() => {
         navigation.goBack();
@@ -245,23 +259,23 @@ console.log('iosProductId', iosProductId);
           style: 'destructive',
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
   const cancelSubscriptionFlow = async (immediate: boolean) => {
     setIsProcessing(true);
     try {
-    const result = await cancelSubscription({
+      const result = await cancelSubscription({
         immediate,
       }).unwrap();
       console.log('result', JSON.stringify(result));
-      
+
       showToast.success(
         'Success',
         immediate
           ? 'Subscription canceled immediately'
-          : 'Subscription will be canceled at the end of the billing period'
+          : 'Subscription will be canceled at the end of the billing period',
       );
 
       // Navigate back after success
@@ -291,39 +305,99 @@ console.log('iosProductId', iosProductId);
       if (Platform.OS === 'ios' && iosProductId) {
         try {
           // Purchase the product through iOS IAP
+          console.log('Initiating iOS purchase for product:', iosProductId);
           const purchase = await purchaseIOSProduct(iosProductId);
-          
+          console.log('Purchase completed, purchase object received');
+
           // Get receipt data for iOS (if available)
           // For iOS, we use purchaseToken which contains the receipt
           const receiptData = purchase.purchaseToken || purchase.id || '';
-          
+
+          if (!receiptData) {
+            console.warn('Warning: No receipt data available in purchase object');
+          }
+
           // Get transaction ID - for iOS, check if it's PurchaseIOS type
           let transactionId = purchase.id;
-          if (purchase.platform === 'ios' && 'originalTransactionIdentifierIOS' in purchase) {
-            transactionId = (purchase as any).originalTransactionIdentifierIOS || purchase.id;
+          if (
+            purchase.platform === 'ios' &&
+            'originalTransactionIdentifierIOS' in purchase
+          ) {
+            transactionId =
+              (purchase as any).originalTransactionIdentifierIOS || purchase.id;
           }
-          
-          // Confirm with backend
-          const result = await confirmIOSSubscription({
+
+          const confirmationPayload = {
             planKey: selectedPlan.key,
             transactionReceipt: receiptData,
             transactionId: transactionId || '',
             productId: purchase.productId,
-          }).unwrap();
+          };
 
-          console.log('iOS subscription confirmed:', JSON.stringify(result));
+          console.log('Preparing to confirm subscription with backend:', {
+            planKey: confirmationPayload.planKey,
+            transactionId: confirmationPayload.transactionId,
+            productId: confirmationPayload.productId,
+            receiptDataLength: confirmationPayload.transactionReceipt.length,
+          });
 
+          // Confirm with backend - MUST complete before finishing transaction
+          // This is critical - we must wait for backend confirmation
+          console.log('Calling backend API to confirm subscription...');
+          console.log('confirmationPayload', JSON.stringify(confirmationPayload, null, 2));
+          
+          let result;
+          try {
+            result = await confirmIOSSubscription(confirmationPayload).unwrap();
+            console.log('Backend confirmation successful, result:', JSON.stringify(result, null, 2));
+          } catch (apiError: any) {
+            console.error('Backend API confirmation failed:', apiError);
+            console.error('API Error details:', {
+              message: apiError?.message,
+              data: apiError?.data,
+              status: apiError?.status,
+            });
+            // Don't finish transaction if backend confirmation fails
+            // User can retry later or restore purchases
+            throw new Error(
+              apiError?.data?.message ||
+              apiError?.message ||
+              'Failed to confirm subscription with server. Please try again or restore purchases.'
+            );
+          }
+
+          // Finish the transaction ONLY after backend confirms successfully
+          // This acknowledges the purchase with Apple
+          try {
+            console.log('Finishing transaction with Apple...');
+            await iosPurchaseService.finishPurchase(purchase);
+            console.log('Transaction finished successfully with Apple');
+          } catch (finishError: any) {
+            console.error('Error finishing transaction with Apple (non-critical):', finishError);
+            // Don't fail the whole flow if finishTransaction fails
+            // The transaction will be retried on next app launch
+            // Backend already confirmed, so subscription is active
+          }
+
+          // Only show success after backend confirms and transaction is finished
           const planName = result.plan?.name || 'Subscription';
+          console.log('Showing success message and navigating back...');
           showToast.success('Success', `${planName} activated successfully!`);
 
-          // Navigate back after success
+          // Navigate back after success (give user time to see success message)
           setTimeout(() => {
             navigation.goBack();
           }, 1500);
         } catch (error: any) {
           // Handle user cancellation gracefully
-          if (error?.code === 'E_USER_CANCELLED' || error?.message?.includes('cancel')) {
+          if (
+            error?.code === 'E_USER_CANCELLED' ||
+            error?.message?.includes('cancel') ||
+            error?.message?.includes('cancelled')
+          ) {
             showToast.info('Info', 'Purchase was cancelled');
+          } else if (error?.message?.includes('timeout')) {
+            showToast.error('Error', 'Purchase timed out. Please try again.');
           } else {
             const errorMessage =
               error?.data?.message ||
@@ -443,21 +517,53 @@ console.log('iosProductId', iosProductId);
               {Platform.OS === 'ios' && (
                 <View style={styles.termsContainer}>
                   <Text style={styles.termsText}>
-                    • Payment will be charged to your Apple ID account.{'\n'}
-                    • Subscription automatically renews unless canceled at least 24 hours before the end of the current period.{'\n'}
-                    • Account will be charged for renewal within 24 hours prior to the end of the current period.{'\n'}
-                    • Manage or cancel your subscription in Apple ID Settings.
+                    • Payment will be charged to your Apple ID account.{'\n'}•
+                    Subscription automatically renews unless canceled at least
+                    24 hours before the end of the current period.{'\n'}•
+                    Account will be charged for renewal within 24 hours prior to
+                    the end of the current period.{'\n'}• Manage or cancel your
+                    subscription in Apple ID Settings.
                   </Text>
                   <TouchableOpacity
                     onPress={() => {
-                      Linking.openURL('https://apps.apple.com/account/subscriptions').catch(err => {
-                        console.error('Error opening subscription management:', err);
-                        showToast.error('Error', 'Unable to open subscription management');
+                      Linking.openURL(
+                        'https://apps.apple.com/account/subscriptions',
+                      ).catch(err => {
+                        console.error(
+                          'Error opening subscription management:',
+                          err,
+                        );
+                        showToast.error(
+                          'Error',
+                          'Unable to open subscription management',
+                        );
                       });
                     }}
                     style={styles.manageLinkContainer}
                   >
-                    <Text style={styles.manageLinkText}>Manage Subscription</Text>
+                    <Text style={styles.manageLinkText}>
+                      Manage Subscription
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      navigation.navigate('TermsAndConditions');
+                    }}
+                    style={styles.manageLinkContainer}
+                  >
+                    <Text style={styles.manageLinkText}>
+                      Terms of Use
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      navigation.navigate('PrivacyAndPolicy');
+                    }}
+                    style={styles.manageLinkContainer}
+                  >
+                    <Text style={styles.manageLinkText}>
+                      Privacy Policy
+                    </Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -475,18 +581,20 @@ console.log('iosProductId', iosProductId);
           )
         ) : (
           <>
-            {selectedPlan && selectedPlan.amount > 0 &&Platform.OS === 'android' && (
-              <PrimaryButton
-                title="Cancel Subscription"
-                onPress={handleCancelSubscription}
-                variant="secondary"
-                style={{
-                  marginBottom: metrics.width(15),
-                }}
-                loading={isProcessing}
-                disabled={isProcessing}
-              />
-            )}
+            {selectedPlan &&
+              selectedPlan.amount > 0 &&
+              Platform.OS === 'android' && (
+                <PrimaryButton
+                  title="Cancel Subscription"
+                  onPress={handleCancelSubscription}
+                  variant="secondary"
+                  style={{
+                    marginBottom: metrics.width(15),
+                  }}
+                  loading={isProcessing}
+                  disabled={isProcessing}
+                />
+              )}
             <PrimaryButton
               title="Back"
               onPress={() => navigation.goBack()}
@@ -746,9 +854,7 @@ const styles = StyleSheet.create({
     color: colors.subtitle,
     lineHeight: metrics.width(18),
   },
-  manageLinkContainer: {
-    
-  },
+  manageLinkContainer: {},
   manageLinkText: {
     fontFamily: FontFamily.spaceGrotesk.medium,
     fontSize: metrics.width(13),

@@ -62,7 +62,18 @@ export default function PrivacyAndPolicy() {
                 • Content you create, upload, or share through our services
               </Text>
               <Text style={styles.bulletPoint}>
-                • Payment and billing information
+                • Subscription information (plan type, status, renewal dates)
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Transaction and purchase history
+              </Text>
+
+              <Text style={styles.sectionText}>
+                <Text style={styles.boldText}>Payment Information:</Text> All payments 
+                for subscriptions are processed by Apple through the App Store. We do 
+                not collect, store, or have access to your credit card or payment 
+                information. Apple handles all payment processing and we only receive 
+                confirmation of successful transactions and subscription status.
               </Text>
 
               <Text style={styles.sectionText}>
@@ -120,6 +131,9 @@ export default function PrivacyAndPolicy() {
                 • With service providers who help operate our app
               </Text>
               <Text style={styles.bulletPoint}>
+                • With Apple for subscription management and verification
+              </Text>
+              <Text style={styles.bulletPoint}>
                 • When required by law or to protect our rights
               </Text>
               <Text style={styles.bulletPoint}>
@@ -128,12 +142,54 @@ export default function PrivacyAndPolicy() {
               <Text style={styles.bulletPoint}>
                 • With your consent or at your direction
               </Text>
+              <Text style={styles.sectionText}>
+                <Text style={styles.boldText}>Apple Services:</Text> When you purchase 
+                a subscription, Apple processes the payment and shares subscription 
+                status and transaction information with us so we can provide you with 
+                access to subscription features. We do not receive your payment 
+                details from Apple.
+              </Text>
             </View>
 
-            {/* 5. AI Processing */}
+            {/* 5. Subscription Data */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>
-                5. AI Processing and Generated Content
+                5. Subscription Data and Management
+              </Text>
+              <Text style={styles.sectionText}>
+                We store information about your subscription status, including:
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Your current subscription plan and tier
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Subscription start and end dates
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Renewal status and billing cycle
+              </Text>
+              <Text style={styles.bulletPoint}>
+                • Transaction identifiers from Apple
+              </Text>
+              <Text style={styles.sectionText}>
+                This information is used to provide you with access to subscription 
+                features and to manage your account. Subscription data is stored 
+                securely on our servers and is retained for as long as your account 
+                is active and for a reasonable period thereafter for legal and 
+                accounting purposes.
+              </Text>
+              <Text style={styles.sectionText}>
+                You can manage your subscription settings, including cancellation, 
+                through your Apple ID account settings. We do not have the ability 
+                to cancel subscriptions on your behalf - all subscription management 
+                must be done through Apple.
+              </Text>
+            </View>
+
+            {/* 6. AI Processing */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                6. AI Processing and Generated Content
               </Text>
               <Text style={styles.sectionText}>
                 Dub NXT uses artificial intelligence to generate characters,
@@ -144,19 +200,24 @@ export default function PrivacyAndPolicy() {
               </Text>
             </View>
 
-            {/* 6. Data Security */}
+            {/* 7. Data Security */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>6. Data Security</Text>
+              <Text style={styles.sectionTitle}>7. Data Security</Text>
               <Text style={styles.sectionText}>
                 We implement appropriate technical and organizational measures
                 to protect your personal information. However, no method of
                 transmission or storage is 100% secure.
               </Text>
+              <Text style={styles.sectionText}>
+                Payment information is handled exclusively by Apple through their 
+                secure payment processing systems. We do not store or process 
+                payment card information.
+              </Text>
             </View>
 
-            {/* 7. Your Rights */}
+            {/* 8. Your Rights */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>7. Your Rights and Choices</Text>
+              <Text style={styles.sectionTitle}>8. Your Rights and Choices</Text>
               <Text style={styles.sectionText}>
                 You have the right to:
               </Text>
@@ -175,9 +236,9 @@ export default function PrivacyAndPolicy() {
               </Text>
             </View>
 
-            {/* 8. Children */}
+            {/* 9. Children */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>8. Children&apos;s Privacy</Text>
+              <Text style={styles.sectionTitle}>9. Children&apos;s Privacy</Text>
               <Text style={styles.sectionText}>
                 Our services are intended for users aged 13 and older. We do
                 not knowingly collect personal information from children under
@@ -185,10 +246,10 @@ export default function PrivacyAndPolicy() {
               </Text>
             </View>
 
-            {/* 9. Changes */}
+            {/* 10. Changes */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>
-                9. Changes to This Privacy Policy
+                10. Changes to This Privacy Policy
               </Text>
               <Text style={styles.sectionText}>
                 We may update this Privacy Policy from time to time. Changes
@@ -196,9 +257,9 @@ export default function PrivacyAndPolicy() {
               </Text>
             </View>
 
-            {/* 10. Contact */}
+            {/* 11. Contact */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>10. Contact Us</Text>
+              <Text style={styles.sectionTitle}>11. Contact Us</Text>
               <Text style={styles.sectionText}>
                 If you have any questions about this Privacy Policy, please
                 contact us at:
@@ -276,5 +337,9 @@ const styles = StyleSheet.create({
     color: colors.primary,
     lineHeight: metrics.width(22),
     marginTop: metrics.width(8),
+  },
+  boldText: {
+    fontFamily: FontFamily.spaceGrotesk.bold,
+    color: colors.white,
   },
 });

@@ -54,11 +54,34 @@ class IOSPurchaseService {
     }
 
     try {
+      if (!productIds || productIds.length === 0) {
+        console.warn('IAP: No product IDs provided');
+        return [];
+      }
+
       const products = await fetchProducts({ skus: productIds, type: 'subs' });
       console.log('IAP: Products fetched', products);
+      
+      if (!products || products.length === 0) {
+        console.warn('IAP: No products returned from App Store. Product IDs:', productIds);
+        console.warn('IAP: Make sure products are configured in App Store Connect');
+      }
+      
       return products as Product[];
-    } catch (error) {
+    } catch (error: any) {
       console.error('IAP: Error fetching products', error);
+      console.error('IAP: Product IDs attempted:', productIds);
+      
+      // Provide more helpful error message
+      if (error?.message?.includes('runtime_error') || error?.message?.includes('Unknown')) {
+        const errorMsg = `Failed to fetch products. Please verify:\n` +
+          `1. Product IDs are configured in App Store Connect\n` +
+          `2. Products are approved and available\n` +
+          `3. App is signed with correct provisioning profile\n` +
+          `4. Using sandbox account for testing`;
+        throw new Error(errorMsg);
+      }
+      
       throw error;
     }
   }
@@ -75,39 +98,65 @@ class IOSPurchaseService {
       await this.initialize();
     }
 
-    try {
-      await requestPurchase({
+    // Set up listeners BEFORE making the purchase request to avoid race conditions
+    return new Promise((resolve, reject) => {
+      let updateSub: any = null;
+      let errorSub: any = null;
+      let timeout: NodeJS.Timeout | null = null;
+
+      const cleanup = () => {
+        if (timeout) {
+          clearTimeout(timeout);
+          timeout = null;
+        }
+        if (updateSub) {
+          updateSub.remove();
+          updateSub = null;
+        }
+        if (errorSub) {
+          errorSub.remove();
+          errorSub = null;
+        }
+      };
+
+      // Set up purchase success listener BEFORE request
+      updateSub = purchaseUpdatedListener((purchase: Purchase) => {
+        if (purchase.productId === productId) {
+          cleanup();
+          resolve(purchase);
+        }
+      });
+
+      // Set up error listener BEFORE request
+      errorSub = purchaseErrorListener((error: PurchaseError) => {
+        cleanup();
+        // Handle user cancellation gracefully
+        if (error.code === 'E_USER_CANCELLED' || error.message?.includes('cancel')) {
+          reject(new Error('Purchase cancelled by user'));
+        } else {
+          reject(error);
+        }
+      });
+
+      // Set timeout
+      timeout = setTimeout(() => {
+        cleanup();
+        reject(new Error('Purchase timeout - please try again'));
+      }, 120000); // 120 second timeout (increased from 60)
+
+      // Now make the purchase request
+      requestPurchase({
         request: {
           ios: { sku: productId },
         },
         type: 'subs',
+      }).catch((error) => {
+        // If requestPurchase itself fails, clean up and reject
+        cleanup();
+        console.error('IAP: Error initiating purchase request', error);
+        reject(error);
       });
-      // The actual purchase result will come through the purchaseUpdatedListener
-      // We'll return a promise that resolves when purchase is complete
-      return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Purchase timeout'));
-        }, 60000); // 60 second timeout
-
-        const updateSub = purchaseUpdatedListener((purchase: Purchase) => {
-          if (purchase.productId === productId) {
-            clearTimeout(timeout);
-            updateSub.remove();
-            resolve(purchase);
-          }
-        });
-
-        const errorSub = purchaseErrorListener((error: PurchaseError) => {
-          clearTimeout(timeout);
-          updateSub.remove();
-          errorSub.remove();
-          reject(error);
-        });
-      });
-    } catch (error) {
-      console.error('IAP: Error purchasing product', error);
-      throw error;
-    }
+    });
   }
 
   /**

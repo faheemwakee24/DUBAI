@@ -1,7 +1,10 @@
 import auth from '@react-native-firebase/auth';
-import {GoogleSignin, statusCodes} from '@react-native-google-signin/google-signin';
-import {appleAuth} from '@invertase/react-native-apple-authentication';
-import {Platform} from 'react-native';
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
+import { appleAuth } from '@invertase/react-native-apple-authentication';
+import { Platform } from 'react-native';
 
 // Configure Google Sign-In
 // Use Web Client ID (client_type: 3) which works for both iOS and Android
@@ -25,7 +28,9 @@ class AuthService {
   async signInWithGoogle(): Promise<AuthUser> {
     try {
       // Check if your device supports Google Play
-      await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
+      await GoogleSignin.hasPlayServices({
+        showPlayServicesUpdateDialog: true,
+      });
 
       // Sign in with Google
       await GoogleSignin.signIn();
@@ -33,7 +38,7 @@ class AuthService {
       // Get the user's ID token after sign in
       const tokens = await GoogleSignin.getTokens();
       const idToken = tokens.idToken;
-      
+
       if (!idToken) {
         throw new Error('Google Sign-In failed - no ID token returned');
       }
@@ -42,7 +47,9 @@ class AuthService {
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
 
       // Sign-in the user with the credential
-      const userCredential = await auth().signInWithCredential(googleCredential);
+      const userCredential = await auth().signInWithCredential(
+        googleCredential,
+      );
 
       return {
         uid: userCredential.user.uid,
@@ -57,13 +64,15 @@ class AuthService {
       if (error.code) {
         console.log('ERROR CODE =>', error.code);
       }
-  
+
       if (error.message) {
         console.log('ERROR MESSAGE =>', error.message);
       }
-  
+
       if (error.code === statusCodes?.DEVELOPER_ERROR) {
-        console.log('DEVELOPER_ERROR – usually config / SHA1 / client ID issue');
+        console.log(
+          'DEVELOPER_ERROR – usually config / SHA1 / client ID issue',
+        );
       }
       throw new Error(error?.message || 'Google sign-in failed');
     }
@@ -72,78 +81,152 @@ class AuthService {
   /**
    * Sign in with Apple
    */
+  //   async signInWithApple(): Promise<AuthUser> {
+  //     try {
+  //       // Only available on iOS
+  //       if (Platform.OS !== 'ios') {
+  //         throw new Error('Apple Sign-In is only available on iOS');
+  //       }
+
+  //       // Check if Apple Sign-In is available
+  //       // isSupported is a property, not a method for @invertase/react-native-apple-authentication
+  //       if (!appleAuth.isSupported) {
+  //         throw new Error('Apple Sign-In is not available on this device');
+  //       }
+
+  //       // Perform the sign-in request
+  //       const appleAuthRequestResponse = await appleAuth.performRequest({
+  //         requestedOperation: appleAuth.Operation.LOGIN,
+  //         requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+  //       });
+
+  //       // Handle cancellation or errors from Apple
+  //       if (appleAuthRequestResponse.error) {
+  //         throw new Error(
+  //           `Apple Sign-In error: ${appleAuthRequestResponse.error.localizedDescription || appleAuthRequestResponse.error.code}`
+  //         );
+  //       }
+
+  //       // Ensure the request was successful
+  //       if (!appleAuthRequestResponse.identityToken) {
+  //         throw new Error('Apple Sign-In failed - no identity token returned');
+  //       }
+
+  //       // Create a Firebase credential from the response
+  //       const {identityToken} = appleAuthRequestResponse;
+
+  //       // Create Apple credential for Firebase
+  //       // Note: Firebase can work with just identityToken, but if nonce was provided, use it
+  //       const appleCredential = auth.AppleAuthProvider.credential(
+  //         identityToken,
+  //         appleAuthRequestResponse.nonce || undefined,
+  //       );
+
+  //       // Sign the user in with the credential
+  //       const userCredential = await auth().signInWithCredential(appleCredential);
+  // console.log('userCredential',JSON.stringify(userCredential,null,2));
+
+  //       return {
+  //         uid: userCredential.user.uid,
+  //         email: userCredential.user.email,
+  //         displayName: userCredential.user.displayName,
+  //         photoURL: '',
+  //       };
+  //     } catch (error: any) {
+  //       console.error('Apple Sign-In Error:', error);
+
+  //       // Provide more helpful error messages
+  //       if (error?.code === 1000 || error?.message?.includes('1000')) {
+  //         const isSimulator = Platform.OS === 'ios' && !appleAuth.isSupported;
+  //         throw new Error(
+  //           `Apple Sign-In Error 1000:\n` +
+  //           `1. Ensure "Sign in with Apple" capability is enabled in Xcode\n` +
+  //           (isSimulator
+  //             ? `2. Simulator Setup: Go to Settings → iCloud and sign in with Apple ID\n` +
+  //               `3. Accept Terms & Conditions at iCloud.com\n` +
+  //               `4. For best results, test on a real device`
+  //             : `2. Test on a real device for best results`)
+  //         );
+  //       }
+
+  //       if (error?.code === 1001) {
+  //         throw new Error('Apple Sign-In was cancelled by the user.');
+  //       }
+
+  //       throw new Error(error?.message || 'Apple sign-in failed. Please try again.');
+  //     }
+  //   }
+
+  /**
+   * Sign in with Apple (NO STORAGE)
+   */
   async signInWithApple(): Promise<AuthUser> {
     try {
-      // Only available on iOS
       if (Platform.OS !== 'ios') {
         throw new Error('Apple Sign-In is only available on iOS');
       }
 
-      // Check if Apple Sign-In is available
-      // isSupported is a property, not a method for @invertase/react-native-apple-authentication
       if (!appleAuth.isSupported) {
         throw new Error('Apple Sign-In is not available on this device');
       }
 
-      // Perform the sign-in request
       const appleAuthRequestResponse = await appleAuth.performRequest({
         requestedOperation: appleAuth.Operation.LOGIN,
         requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
       });
 
-      // Handle cancellation or errors from Apple
-      if (appleAuthRequestResponse.error) {
-        throw new Error(
-          `Apple Sign-In error: ${appleAuthRequestResponse.error.localizedDescription || appleAuthRequestResponse.error.code}`
-        );
-      }
-
-      // Ensure the request was successful
       if (!appleAuthRequestResponse.identityToken) {
         throw new Error('Apple Sign-In failed - no identity token returned');
       }
 
-      // Create a Firebase credential from the response
-      const {identityToken} = appleAuthRequestResponse;
+      const { identityToken, nonce, fullName } = appleAuthRequestResponse;
+      console.log(
+        'appleAuthRequestResponse',
+        JSON.stringify(appleAuthRequestResponse, null, 2),
+      );
+      console.log('identityToken', identityToken);
+      console.log('nonce', nonce);
+      console.log('fullName', fullName);
+      // 👇 Name ONLY exists first time
+      let displayName = '';
 
-      // Create Apple credential for Firebase
-      // Note: Firebase can work with just identityToken, but if nonce was provided, use it
+      if (fullName?.givenName || fullName?.familyName) {
+        displayName = `${fullName.givenName ?? ''} ${
+          fullName.familyName ?? ''
+        }`.trim();
+      }
+
       const appleCredential = auth.AppleAuthProvider.credential(
         identityToken,
-        appleAuthRequestResponse.nonce || undefined,
+        nonce || undefined,
       );
 
-      // Sign the user in with the credential
       const userCredential = await auth().signInWithCredential(appleCredential);
 
       return {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
-        displayName: userCredential.user.displayName,
+        displayName, // may be empty string
         photoURL: '',
       };
     } catch (error: any) {
       console.error('Apple Sign-In Error:', error);
-      
-      // Provide more helpful error messages
-      if (error?.code === 1000 || error?.message?.includes('1000')) {
-        const isSimulator = Platform.OS === 'ios' && !appleAuth.isSupported;
-        throw new Error(
-          `Apple Sign-In Error 1000:\n` +
-          `1. Ensure "Sign in with Apple" capability is enabled in Xcode\n` +
-          (isSimulator 
-            ? `2. Simulator Setup: Go to Settings → iCloud and sign in with Apple ID\n` +
-              `3. Accept Terms & Conditions at iCloud.com\n` +
-              `4. For best results, test on a real device`
-            : `2. Test on a real device for best results`)
-        );
-      }
-      
+
       if (error?.code === 1001) {
         throw new Error('Apple Sign-In was cancelled by the user.');
       }
-      
-      throw new Error(error?.message || 'Apple sign-in failed. Please try again.');
+
+      if (error?.code === 1000 || error?.message?.includes('1000')) {
+        throw new Error(
+          `Apple Sign-In Error 1000:\n` +
+            `• Ensure "Sign in with Apple" capability is enabled\n` +
+            `• Test on a real device`,
+        );
+      }
+
+      throw new Error(
+        error?.message || 'Apple sign-in failed. Please try again.',
+      );
     }
   }
 
@@ -188,7 +271,7 @@ class AuthService {
           uid: user.uid,
           email: user.email,
           displayName: user.displayName,
-          photoURL: '' 
+          photoURL: '',
         });
       } else {
         callback(null);
@@ -198,4 +281,3 @@ class AuthService {
 }
 
 export default new AuthService();
-
