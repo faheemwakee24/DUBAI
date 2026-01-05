@@ -60,7 +60,8 @@ export default function NewProject() {
   const [description, setDescription] = useState('');
   // State for all dropdowns
   const [selectedHairStyle, setSelectedHairStyle] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState('enå');
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [selectedCategory, setSelectedCategory] = useState('Mixed');
   const [selectedProjectType, setSelectedProjectType] = useState<
     'video-dubbing' | 'character-reader'
   >('video-dubbing');
@@ -78,6 +79,7 @@ export default function NewProject() {
 
   // Options for all dropdowns
   const hairStyleOptions = ['Facebook', 'Tiktok', 'Instagram', 'Youtube'];
+  const categoryOptions = ['Video', 'Character', 'Mixed'];
 
   const handleHairStyleSelect = (hairStyle: string) => {
     setSelectedHairStyle(hairStyle);
@@ -85,6 +87,10 @@ export default function NewProject() {
 
   const handleLanguageSelect = (language: string) => {
     setSelectedLanguage(language);
+  };
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
   };
 
   const handleProjectTypeSelect = (
@@ -177,9 +183,8 @@ export default function NewProject() {
     }
 
     // Step 2: Create project
-    // Map category from project type
-    const category =
-      selectedProjectType === 'video-dubbing' ? 'video' : 'character';
+    // Use selected category (convert to lowercase for API)
+    const category = selectedCategory.toLowerCase();
 
     // Get language code
     const languageCode =
@@ -297,15 +302,30 @@ export default function NewProject() {
                 containerStyle={{ alignItems: 'flex-start' }}
               />
             </View>
-            {/* <View style={styles.tempCharacherContainer}>
+            
+            {/* Category Dropdown */}
+            <View style={styles.dropdownContainer}>
               <CustomDropdown
-                title="Project"
-                options={hairStyleOptions}
-                selectedValue={selectedHairStyle}
-                onSelect={handleHairStyleSelect}
-                placeholder="Select Project"
+                title="Category"
+                options={categoryOptions}
+                selectedValue={selectedCategory}
+                onSelect={handleCategorySelect}
+                placeholder="Select Category"
+                required
               />
-            </View> */}
+            </View>
+
+            {/* Language Dropdown */}
+            <View style={styles.dropdownContainer}>
+              <LanguageDropdown
+                title="Language"
+                options={languageOptions}
+                selectedValue={selectedLanguage}
+                onSelect={handleLanguageSelect}
+                placeholder="Select Language"
+                required
+              />
+            </View>
 
             <TouchableOpacity
               activeOpacity={0.8}
@@ -591,6 +611,9 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     borderWidth: 2,
     backgroundColor: colors.primary40,
+  },
+  dropdownContainer: {
+    marginBottom: metrics.width(15),
   },
   imageUploadContainer: {
     // marginTop: metrics.width(15),
