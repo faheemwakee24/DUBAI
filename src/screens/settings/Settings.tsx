@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Linking,
+  Platform,
 } from 'react-native';
 import ScreenBackground from '../../components/ui/ScreenBackground';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -25,6 +27,7 @@ import {
 import { Images } from '../../assets/images';
 import { LiquidGlassContainerView } from '@callstack/liquid-glass';
 import { tokenStorage } from '../../utils/tokenStorage';
+import { EXTERNAL_URLS } from '../../constants/urls';
 import {
   useGetProfileQuery,
   useLogoutMutation,
@@ -344,7 +347,15 @@ export default function Settings() {
               <LiquidGlassBackground style={styles.optionCard}>
                 <TouchableOpacity
                   style={styles.optionRow}
-                  onPress={() => navigation.navigate('PrivacyAndPolicy')}
+                  onPress={() => {
+                    Linking.openURL(EXTERNAL_URLS.PRIVACY_POLICY).catch(err => {
+                      console.error('Error opening Privacy Policy:', err);
+                      showToast.error(
+                        'Error',
+                        'Unable to open Privacy Policy',
+                      );
+                    });
+                  }}
                 >
                   <Text style={styles.optionText}>Privacy & Policy</Text>
                   <Svgs.WhiteArrowRight />
@@ -353,9 +364,17 @@ export default function Settings() {
               <LiquidGlassBackground style={styles.optionCard}>
                 <TouchableOpacity
                   style={styles.optionRow}
-                  onPress={() => navigation.navigate('TermsAndConditions')}
+                  onPress={() => {
+                    Linking.openURL(EXTERNAL_URLS.TERMS_OF_USE).catch(err => {
+                      console.error('Error opening Terms of Use:', err);
+                      showToast.error(
+                        'Error',
+                        'Unable to open Terms of Use',
+                      );
+                    });
+                  }}
                 >
-                  <Text style={styles.optionText}>Terms & Conditions</Text>
+                  <Text style={styles.optionText}>Terms of Use (EULA)</Text>
                   <Svgs.WhiteArrowRight />
                 </TouchableOpacity>
               </LiquidGlassBackground>

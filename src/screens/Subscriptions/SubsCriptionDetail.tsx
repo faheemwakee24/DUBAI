@@ -46,6 +46,7 @@ import {
 } from '../../store/api/subscriptionsApi';
 import { useIOSPurchases } from '../../hooks/useIOSPurchases';
 import { iosPurchaseService } from '../../services/iosPurchaseService';
+import { EXTERNAL_URLS } from '../../constants/urls';
 
 type SubsCriptionDetailRouteProp = RouteProp<
   RootStackParamList,
@@ -547,17 +548,29 @@ export default function SubsCriptionDetail() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
-                      navigation.navigate('TermsAndConditions');
+                      Linking.openURL(EXTERNAL_URLS.TERMS_OF_USE).catch(err => {
+                        console.error('Error opening Terms of Use:', err);
+                        showToast.error(
+                          'Error',
+                          'Unable to open Terms of Use',
+                        );
+                      });
                     }}
                     style={styles.manageLinkContainer}
                   >
                     <Text style={styles.manageLinkText}>
-                      Terms of Use
+                      Terms of Use (EULA)
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
-                      navigation.navigate('PrivacyAndPolicy');
+                      Linking.openURL(EXTERNAL_URLS.PRIVACY_POLICY).catch(err => {
+                        console.error('Error opening Privacy Policy:', err);
+                        showToast.error(
+                          'Error',
+                          'Unable to open Privacy Policy',
+                        );
+                      });
                     }}
                     style={styles.manageLinkContainer}
                   >
